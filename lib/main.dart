@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import './common/request.dart';
+import './common/persistent.dart';
+import './ui/loading.dart';
 
 void main() => runApp(MyApp());
 
@@ -8,8 +11,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      theme:
-          ThemeData(primaryColor: Colors.teal, accentColor: Colors.redAccent),
+      theme: ThemeData(
+        primaryColor: Colors.teal,
+        accentColor: Colors.redAccent,
+      ),
       home: MyHomePage(),
     );
   }
@@ -50,9 +55,10 @@ class MyHomePage extends StatelessWidget {
               ),
               Container(height: 48.0),
               SizedBox(
-                  width: double.infinity,
-                  height: 40,
-                  child: Stack(children: [
+                width: double.infinity,
+                height: 40,
+                child: Stack(
+                  children: [
                     SizedBox(
                         width: double.infinity,
                         height: 40,
@@ -73,7 +79,9 @@ class MyHomePage extends StatelessWidget {
                       left: 16,
                       top: 8,
                     )
-                  ])),
+                  ],
+                ),
+              ),
               Container(height: 16.0),
               SizedBox(
                 width: double.infinity,
@@ -116,6 +124,10 @@ class _LoginState extends State<Login> {
   // Focus action
   FocusNode myFocusNode;
 
+  var request = new Request();
+
+  var persistent = new Persistent();
+
   @override
   void initState() {
     super.initState();
@@ -131,13 +143,13 @@ class _LoginState extends State<Login> {
     super.dispose();
   }
 
-  String _phoneNumber = '';
+  String _phoneNumber = '18817301665';
 
-  String _password = '';
+  String _password = '12345678';
 
   String _error;
 
-  _currentTextFiled() {
+  _currentTextField() {
     if (_status == 'account') {
       return TextField(
           key: Key('account'),
@@ -145,6 +157,7 @@ class _LoginState extends State<Login> {
             setState(() => _error = null);
             _phoneNumber = text;
           },
+          controller: new TextEditingController(text: _phoneNumber),
           autofocus: true,
           decoration: InputDecoration(
               labelText: "手机号",
@@ -160,12 +173,56 @@ class _LoginState extends State<Login> {
         setState(() => _error = null);
         _password = text;
       },
+      controller: new TextEditingController(text: _password),
       focusNode: myFocusNode,
       decoration: InputDecoration(
           labelText: "密码", prefixIcon: Icon(Icons.lock), errorText: _error),
       style: TextStyle(color: Colors.white, fontSize: 24),
       obscureText: true,
     );
+  }
+
+  accoutLogin(context, args) async {
+    // dismiss keyboard
+    FocusScope.of(context).requestFocus(new FocusNode());
+
+    // show loading
+    var _loading = showLoading(
+      barrierDismissible: false,
+      builder: (ctx) {
+        return Container(
+          constraints: BoxConstraints.expand(),
+          child: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      },
+      context: context,
+    );
+
+    var res = await request.req('token', args);
+    assert(res.data['token'] != null);
+    await persistent.setString('token', res.data['token']);
+    var stationsRes = await request.req('stations', null);
+
+    var stationLists = stationsRes.data['ownStations'];
+    final currentDevice =
+        stationLists.firstWhere((s) => s['online'] == 1, orElse: () => null);
+    assert(currentDevice != null);
+    print(currentDevice);
+    var deviceSN = currentDevice['sn'];
+    var lanIp = currentDevice['LANIP'];
+    var deviceName = currentDevice['name'];
+
+    List results = await Future.wait([
+      request.req('localBoot', {'deviceSN': deviceSN}),
+      request.req('localUsers', {'deviceSN': deviceSN}),
+      request.req('localToken', {'deviceSN': deviceSN}),
+      request.req('localDrives', {'deviceSN': deviceSN})
+    ]);
+    print('get results');
+    Navigator.pop(context, _loading);
+    return results;
   }
 
   void _nextStep(BuildContext context) {
@@ -188,6 +245,14 @@ class _LoginState extends State<Login> {
         return;
       }
       print('$_password, $_phoneNumber');
+      final args = {
+        'clientId': 'flutter_Test',
+        'username': _phoneNumber,
+        'password': _password
+      };
+      accoutLogin(context, args).then((res) {
+        print('login success !');
+      }).catchError((err) => print(err));
     }
   }
 
@@ -204,10 +269,12 @@ class _LoginState extends State<Login> {
                 var a = Theme.of(context);
                 print(a);
                 // Navigator to Login
-                Navigator.push(context,
-                    new MaterialPageRoute(builder: (context) {
-                  return new ForgetPassword();
-                }));
+                Navigator.push(
+                  context,
+                  new MaterialPageRoute(builder: (context) {
+                    return new ForgetPassword();
+                  }),
+                );
               }),
         ],
       ),
@@ -223,26 +290,30 @@ class _LoginState extends State<Login> {
         ),
       ),
       body: Theme(
-          data: Theme.of(context).copyWith(primaryColor: Colors.white),
-          child: Center(
-              child: Container(
-                  constraints: BoxConstraints.expand(),
-                  padding: EdgeInsets.all(16),
-                  color: Colors.teal,
-                  child: Column(
-                    children: <Widget>[
-                      SizedBox(
-                        child: Text(
-                          '登录',
-                          textAlign: TextAlign.left,
-                          style: TextStyle(fontSize: 28.0, color: Colors.white),
-                        ),
-                        width: double.infinity,
-                      ),
-                      Container(height: 48.0),
-                      _currentTextFiled(),
-                    ],
-                  )))),
+        data: Theme.of(context).copyWith(primaryColor: Colors.white),
+        child: Center(
+          child: Container(
+            constraints: BoxConstraints.expand(),
+            padding: EdgeInsets.all(16),
+            color: Colors.teal,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                SizedBox(
+                  child: Text(
+                    '登录',
+                    textAlign: TextAlign.left,
+                    style: TextStyle(fontSize: 28.0, color: Colors.white),
+                  ),
+                  width: double.infinity,
+                ),
+                Container(height: 48.0),
+                _currentTextField(),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -276,61 +347,3 @@ class ForgetPassword extends StatelessWidget {
     );
   }
 }
-
-// class MyHomePage extends StatefulWidget {
-//   MyHomePage({Key key, this.title}) : super(key: key);
-
-//   final String title;
-
-//   @override
-//   _MyHomePageState createState() => _MyHomePageState();
-// }
-
-// class _MyHomePageState extends State<MyHomePage> {
-//   int _counter = 0;
-
-//   void _incrementCounter() {
-//     setState(() {
-//       _counter++;
-//     });
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text(widget.title),
-//       ),
-//       body: Center(
-//         child: Column(
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: <Widget>[
-//             Text(
-//               'You have pushed the button this many times:',
-//             ),
-//             Text(
-//               '$_counter',
-//               style: Theme.of(context).textTheme.display1,
-//             ),
-//             FlatButton(
-//               child: Text("open new route"),
-//               textColor: Colors.blue,
-//               onPressed: () {
-//                 // Navigator to new router
-//                 Navigator.push(context,
-//                     new MaterialPageRoute(builder: (context) {
-//                   return new NewRoute();
-//                 }));
-//               },
-//             ),
-//           ],
-//         ),
-//       ),
-//       floatingActionButton: FloatingActionButton(
-//         onPressed: _incrementCounter,
-//         tooltip: 'Increment',
-//         child: Icon(Icons.add),
-//       ),
-//     );
-//   }
-// }
