@@ -23,9 +23,11 @@ class NavigationIconView {
           duration: kThemeAnimationDuration,
           vsync: vsync,
         ) {
-    _animation = controller.drive(CurveTween(
-      curve: const Interval(0.5, 1.0, curve: Curves.fastOutSlowIn),
-    ));
+    _animation = controller.drive(
+      CurveTween(
+        curve: const Interval(0.5, 1.0, curve: Curves.fastOutSlowIn),
+      ),
+    );
   }
   final Widget _view;
   final BottomNavigationBarItem item;
