@@ -1,0 +1,11 @@
+{
+  "uuid": "ccf2bec4-996d-4952-9e6c-f4f90b60d810",
+  "username": "username",
+  "isFirstUser": true,
+  "password": false,
+  "smbPassword": false,
+  "status": "ACTIVE",
+  "phoneNumber": "18817301665",
+  "winasUserId": "6947667a-f8ff-498c-b0cb-ebc4d97715d7",
+  "avatarUrl": "https://wisnuc.s3.cn-north-1.amazonaws.com.cn/avatar/8a35501b-4d99-4830-95b8-649233d59658"
+}

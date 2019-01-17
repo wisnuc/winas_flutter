@@ -3,6 +3,8 @@ import '../ui/loading.dart';
 import '../common/request.dart';
 import '../common/persistent.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
+import '../models/vEntry.dart';
+import '../icons/winas_icons.dart';
 
 class FileNavView {
   final Widget _icon;
@@ -20,6 +22,7 @@ class FileNavView {
         _title = title,
         _nav = nav,
         _color = color;
+
   Widget navButton() {
     return Container(
       width: 72,
@@ -57,6 +60,98 @@ class FileNavView {
   }
 }
 
+class FileRow extends StatelessWidget {
+  FileRow({
+    @required this.name,
+    @required this.type,
+    @required this.onPress,
+    this.mtime,
+    this.size,
+    this.metadata,
+  });
+
+  final name;
+  final type;
+  final size;
+  final mtime;
+  final Function onPress;
+  final metadata;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 64,
+      child: Material(
+        child: InkWell(
+          onTap: () => print('tap: $name'),
+          onLongPress: () => print('long press: $name'),
+          child: Row(
+            children: <Widget>[
+              Container(width: 24),
+              Icon(type == 'file' ? Winas.word : Icons.folder,
+                  color: Colors.blue),
+              Container(width: 32),
+              Expanded(
+                flex: 1,
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(width: 1.0, color: Colors.grey[300]),
+                    ),
+                  ),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        flex: 10,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              name,
+                              textAlign: TextAlign.start,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                            Container(height: 4),
+                            Row(
+                              children: <Widget>[
+                                Text(
+                                  mtime,
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.black54),
+                                ),
+                                Container(width: 8),
+                                Text(
+                                  size,
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.black54),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(),
+                        flex: 1,
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.more_horiz),
+                        onPressed: () => print('press icon button'),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class Files extends StatefulWidget {
   Files({Key key, this.title}) : super(key: key);
   final String title;
@@ -88,6 +183,7 @@ class _FilesState extends State<Files> {
       color: Colors.purple,
     ),
   ];
+
   Widget _buildItem(BuildContext context, int index) {
     if (index == 0) {
       return Container(
@@ -99,19 +195,22 @@ class _FilesState extends State<Files> {
         ),
       );
     }
-    return Container(
-      padding: EdgeInsets.fromLTRB(0, 8, 0, 8),
-      child: Material(
-        elevation: 4.0,
-        borderRadius: BorderRadius.circular(4.0),
-        color: Colors.purple[index % 9 * 100],
-        child: Center(
-          child: Text(
-            index.toString(),
-          ),
-        ),
-      ),
+
+    return FileRow(
+      name: 'filename-${index.toString()}',
+      type: index % 2 == 0 ? 'file' : 'directory',
+      onPress: () => {},
+      mtime: '2019.01.12',
+      size: '2.4MB',
     );
+    // return Container(
+    //   height: 64,
+    //   child: Center(
+    //     child: Text(
+    //       index.toString(),
+    //     ),
+    //   ),
+    // );
   }
 
   @override
@@ -134,8 +233,7 @@ class _FilesState extends State<Files> {
                   child: ListView.builder(
                     controller: myScrollController,
                     padding: EdgeInsets.zero,
-                    itemCount: 100000,
-                    itemExtent: 100.0,
+                    itemCount: 100,
                     itemBuilder: _buildItem,
                   ),
                 ),
