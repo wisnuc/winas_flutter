@@ -73,7 +73,7 @@ class BottomNavigation extends StatefulWidget {
 class _BottomNavigationState extends State<BottomNavigation>
     with TickerProviderStateMixin {
   int _currentIndex = 0;
-  BottomNavigationBarType _type = BottomNavigationBarType.shifting;
+  BottomNavigationBarType _type = BottomNavigationBarType.fixed;
   List<NavigationIconView> _navigationViews;
 
   @override
@@ -165,29 +165,6 @@ class _BottomNavigationState extends State<BottomNavigation>
     );
 
     return Scaffold(
-      // appBar: AppBar(
-      //   title: const Text('Bottom navigation'),
-      //   actions: <Widget>[
-      //     PopupMenuButton<BottomNavigationBarType>(
-      //       onSelected: (BottomNavigationBarType value) {
-      //         setState(() {
-      //           _type = value;
-      //         });
-      //       },
-      //       itemBuilder: (BuildContext context) =>
-      //           <PopupMenuItem<BottomNavigationBarType>>[
-      //             const PopupMenuItem<BottomNavigationBarType>(
-      //               value: BottomNavigationBarType.fixed,
-      //               child: Text('Fixed'),
-      //             ),
-      //             const PopupMenuItem<BottomNavigationBarType>(
-      //               value: BottomNavigationBarType.shifting,
-      //               child: Text('Shifting'),
-      //             )
-      //           ],
-      //     )
-      //   ],
-      // ),
       body: Center(child: _buildTransitionsStack()),
       bottomNavigationBar: botNavBar,
     );

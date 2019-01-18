@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
         '/login': (BuildContext context) => new LoginPage(),
         '/station': (BuildContext context) => new BottomNavigation(),
       },
-      home: BottomNavigation(),
+      home: LoginPage(),
     );
   }
 }

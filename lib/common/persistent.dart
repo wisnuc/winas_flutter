@@ -8,7 +8,7 @@ class Persistent {
 
   setString(String name, String data) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    print('save $name : $data');
+    // print('save $name : $data');
     prefs.setString(name, data);
   }
 }

@@ -21,9 +21,9 @@ class FileNavView {
 
   Widget navButton() {
     return Container(
-      width: 72,
-      height: 72,
-      margin: EdgeInsets.fromLTRB(8, 12, 0, 12),
+      width: 63,
+      height: 63,
+      margin: EdgeInsets.fromLTRB(8, 12, 8, 0),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -32,8 +32,8 @@ class FileNavView {
           child: Column(
             children: <Widget>[
               Container(
-                height: 48,
-                width: 48,
+                height: 36,
+                width: 36,
                 child: _icon,
                 decoration: BoxDecoration(
                   color: _color,
@@ -43,7 +43,7 @@ class FileNavView {
                 ),
               ),
               Container(
-                height: 24,
+                height: 15,
                 width: 72,
                 child: Center(
                   child: Text(
@@ -55,6 +55,50 @@ class FileNavView {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class TitleRow extends StatelessWidget {
+  TitleRow({
+    @required this.type, // directory or file
+    @required this.isFirst,
+  });
+
+  final type;
+  final isFirst;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isFirst)
+      return Container(
+        height: 48,
+        padding: EdgeInsets.fromLTRB(16, 0, 0, 0),
+        alignment: Alignment.centerLeft,
+        child: type == 'file' ? Text('文件') : Text('文件夹'),
+      );
+
+    return Container(
+      height: 48,
+      child: Row(
+        children: <Widget>[
+          Container(width: 16),
+          Container(
+            child: type == 'file' ? Text('文件') : Text('文件夹'),
+          ),
+          Expanded(
+            flex: 1,
+            child: Container(),
+          ),
+          Container(
+            child: Text(
+              '名称',
+              style: TextStyle(color: Colors.black54),
+            ),
+          ),
+          Container(width: 16),
+        ],
       ),
     );
   }
@@ -251,6 +295,67 @@ class FileRow extends StatelessWidget {
   }
 }
 
+List<FileNavView> _fileNavViews = [
+  FileNavView(
+    icon: Icon(Icons.people, color: Colors.white),
+    title: '共享空间',
+    nav: 'public',
+    color: Colors.orange,
+  ),
+  FileNavView(
+    icon: Icon(Icons.refresh, color: Colors.white),
+    title: '备份空间',
+    nav: 'backup',
+    color: Colors.blue,
+  ),
+  FileNavView(
+    icon: Icon(Icons.swap_vert, color: Colors.white),
+    title: '传输任务',
+    nav: 'transfer',
+    color: Colors.purple,
+  ),
+];
+
+Widget _buildRow(BuildContext context, int index, bool hasNav) {
+  if (index == 0 && hasNav) {
+    return Container(
+      height: 64,
+      child: Row(
+        children: _fileNavViews
+            .map<Widget>((FileNavView fileNavView) => fileNavView.navButton())
+            .toList(),
+      ),
+      // decoration: BoxDecoration(
+      //   color: Colors.grey[200],
+      //   border: Border(
+      //     bottom: BorderSide(width: 1.0, color: Colors.grey[300]),
+      //   ),
+      // ),
+    );
+  } else if (index == 0) return TitleRow(isFirst: true, type: 'directory');
+
+  if (hasNav && index == 1) return TitleRow(isFirst: true, type: 'directory');
+
+  if (index == 10) return TitleRow(isFirst: false, type: 'file');
+
+  return FileRow(
+    name: 'filename-${index.toString()}',
+    type: index > 10 ? 'file' : 'directory',
+    onPress: () => index > 10
+        ? print(index.toString())
+        : Navigator.push(
+            context,
+            new MaterialPageRoute(
+              builder: (context) {
+                return new DirectoryView();
+              },
+            ),
+          ),
+    mtime: '2019.01.12',
+    size: '2.4MB',
+  );
+}
+
 class Files extends StatefulWidget {
   Files({Key key, this.title}) : super(key: key);
   final String title;
@@ -261,101 +366,6 @@ class Files extends StatefulWidget {
 
 class _FilesState extends State<Files> {
   ScrollController myScrollController = ScrollController();
-
-  List<FileNavView> _fileNavViews = [
-    FileNavView(
-      icon: Icon(Icons.people, color: Colors.white),
-      title: '共享空间',
-      nav: 'public',
-      color: Colors.orange,
-    ),
-    FileNavView(
-      icon: Icon(Icons.refresh, color: Colors.white),
-      title: '备份空间',
-      nav: 'backup',
-      color: Colors.blue,
-    ),
-    FileNavView(
-      icon: Icon(Icons.swap_vert, color: Colors.white),
-      title: '传输任务',
-      nav: 'transfer',
-      color: Colors.purple,
-    ),
-  ];
-
-  Widget _buildItem(BuildContext context, int index) {
-    if (index == 0) {
-      return Container(
-        height: 97,
-        child: Row(
-          children: _fileNavViews
-              .map<Widget>((FileNavView fileNavView) => fileNavView.navButton())
-              .toList(),
-        ),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(width: 1.0, color: Colors.grey[300]),
-          ),
-        ),
-      );
-    }
-
-    if (index == 1) {
-      return Container(
-        height: 48,
-        child: Row(
-          children: <Widget>[
-            Container(width: 16),
-            Container(
-              child: Text('文件夹'),
-            ),
-            Expanded(
-              flex: 1,
-              child: Container(),
-            ),
-            Container(
-              child: Text(
-                '名称',
-                style: TextStyle(color: Colors.black54),
-              ),
-            ),
-            Container(width: 16),
-          ],
-        ),
-      );
-    }
-
-    if (index == 10) {
-      return Container(
-        height: 48,
-        child: Row(
-          children: <Widget>[
-            Container(width: 16),
-            Container(
-              child: Text('文件'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return FileRow(
-      name: 'filename-${index.toString()}',
-      type: index > 10 ? 'file' : 'directory',
-      onPress: () => index > 10
-          ? print(index.toString())
-          : Navigator.push(
-              context,
-              new MaterialPageRoute(
-                builder: (context) {
-                  return new DirectoryView();
-                },
-              ),
-            ),
-      mtime: '2019.01.12',
-      size: '2.4MB',
-    );
-  }
 
   Future _onRefresh() {
     var action = new Future.delayed(
@@ -373,6 +383,7 @@ class _FilesState extends State<Files> {
         child: Stack(
           alignment: Alignment.center,
           children: <Widget>[
+            // File list
             Positioned(
               top: 48,
               left: 0,
@@ -385,15 +396,21 @@ class _FilesState extends State<Files> {
                   child: DraggableScrollbar.semicircle(
                     controller: myScrollController,
                     child: ListView.builder(
+                      physics:
+                          const AlwaysScrollableScrollPhysics(), // important for performance
                       controller: myScrollController,
-                      padding: EdgeInsets.zero,
-                      itemCount: 100,
-                      itemBuilder: _buildItem,
+                      padding: EdgeInsets.zero, // important for performance
+                      itemCount: 100000,
+                      itemExtent: 64,
+                      itemBuilder: (BuildContext context, int index) =>
+                          _buildRow(context, index, true),
                     ),
                   ),
                 ),
               ),
             ),
+
+            // Search input
             Positioned(
               top: 0,
               left: 0,
@@ -442,55 +459,6 @@ class DirectoryView extends StatefulWidget {
 class _DirectoryViewState extends State<DirectoryView> {
   ScrollController myScrollController = ScrollController();
 
-  Widget _buildItem(BuildContext context, int index) {
-    if (index == 0) {
-      return Container(
-        height: 48,
-        child: Row(
-          children: <Widget>[
-            Container(width: 16),
-            Container(
-              child: Text('文件夹'),
-            ),
-            Expanded(
-              flex: 1,
-              child: Container(),
-            ),
-            Container(
-              child: Text(
-                '名称',
-                style: TextStyle(color: Colors.black54),
-              ),
-            ),
-            Container(width: 16),
-          ],
-        ),
-      );
-    }
-
-    if (index == 10) {
-      return Container(
-        height: 48,
-        child: Row(
-          children: <Widget>[
-            Container(width: 16),
-            Container(
-              child: Text('文件'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return FileRow(
-      name: 'filename-${index.toString()}',
-      type: index > 10 ? 'file' : 'directory',
-      onPress: () => {},
-      mtime: '2019.01.12',
-      size: '2.4MB',
-    );
-  }
-
   List<Widget> _actions = [
     IconButton(
       icon: Icon(Icons.create_new_folder),
@@ -534,11 +502,14 @@ class _DirectoryViewState extends State<DirectoryView> {
             child: DraggableScrollbar.semicircle(
               controller: myScrollController,
               child: ListView.builder(
-                physics: const AlwaysScrollableScrollPhysics(),
+                physics:
+                    const AlwaysScrollableScrollPhysics(), // important for performance
                 controller: myScrollController,
                 padding: EdgeInsets.zero,
-                itemCount: 100,
-                itemBuilder: _buildItem,
+                itemExtent: 64, // important for performance
+                itemCount: 100000,
+                itemBuilder: (BuildContext context, int index) =>
+                    _buildRow(context, index, false),
               ),
             ),
           ),

@@ -196,20 +196,19 @@ class _LoginState extends State<Login> {
     final currentDevice =
         stationLists.firstWhere((s) => s['online'] == 1, orElse: () => null);
     assert(currentDevice != null);
-    print(currentDevice);
+    // print(currentDevice);
     var deviceSN = currentDevice['sn'];
     var lanIp = currentDevice['LANIP'];
     var deviceName = currentDevice['name'];
-
-    // List results = await Future.wait([
-    //   request.req('localBoot', {'deviceSN': deviceSN}),
-    //   request.req('localUsers', {'deviceSN': deviceSN}),
-    //   request.req('localToken', {'deviceSN': deviceSN}),
-    //   request.req('localDrives', {'deviceSN': deviceSN})
-    // ]);
-    // print('get results');
-
-    // return results;
+    print('$deviceSN, $lanIp, $deviceName');
+    List results = await Future.wait([
+      request.req('localBoot', {'deviceSN': deviceSN}),
+      request.req('localUsers', {'deviceSN': deviceSN}),
+      request.req('localToken', {'deviceSN': deviceSN}),
+      request.req('localDrives', {'deviceSN': deviceSN})
+    ]);
+    print('get results');
+    return results;
   }
 
   void _nextStep(BuildContext context) {

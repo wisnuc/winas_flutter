@@ -2,7 +2,7 @@ import 'dart:io' show Platform;
 import 'package:dio/dio.dart';
 
 class Request {
-  bool isIOS = Platform.isAndroid;
+  bool isIOS = !Platform.isAndroid;
   String cloudAddress = 'https://test.nodetribe.com/c/v1';
   String token;
   String cookie;
