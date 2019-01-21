@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_redux/flutter_redux.dart';
+import '../redux/redux.dart';
 import '../common/request.dart';
 import '../common/persistent.dart';
 import '../ui/loading.dart';
@@ -169,11 +171,11 @@ class _LoginState extends State<Login> {
     );
   }
 
-  accoutLogin(context, args) async {
+  accoutLogin(context, store, args) async {
     // dismiss keyboard
     FocusScope.of(context).requestFocus(new FocusNode());
 
-    // show loading
+    // show loading, need `Navigator.pop(context)` to dismiss
     showLoading(
       barrierDismissible: false,
       builder: (ctx) {
@@ -189,6 +191,10 @@ class _LoginState extends State<Login> {
 
     var res = await request.req('token', args);
     assert(res.data['token'] != null);
+
+    // update AccountData
+    store.dispatch(LoginAction(AccountData.fromMap(res.data)));
+
     await persistent.setString('token', res.data['token']);
     var stationsRes = await request.req('stations', null);
 
@@ -196,22 +202,32 @@ class _LoginState extends State<Login> {
     final currentDevice =
         stationLists.firstWhere((s) => s['online'] == 1, orElse: () => null);
     assert(currentDevice != null);
-    // print(currentDevice);
+
     var deviceSN = currentDevice['sn'];
     var lanIp = currentDevice['LANIP'];
     var deviceName = currentDevice['name'];
-    print('$deviceSN, $lanIp, $deviceName');
+
     List results = await Future.wait([
       request.req('localBoot', {'deviceSN': deviceSN}),
       request.req('localUsers', {'deviceSN': deviceSN}),
       request.req('localToken', {'deviceSN': deviceSN}),
       request.req('localDrives', {'deviceSN': deviceSN})
     ]);
-    print('get results');
+    var lanToken = results[2].data['token'];
+
+    assert(lanToken != null);
+
+    // update StatinData
+    store.dispatch(
+      DeviceLoginAction(
+        DeviceData(deviceSN, deviceName, lanIp, lanToken),
+      ),
+    );
+
     return results;
   }
 
-  void _nextStep(BuildContext context) {
+  void _nextStep(BuildContext context, store) {
     if (_status == 'account') {
       if (_phoneNumber.length != 11) {
         setState(() {
@@ -230,14 +246,13 @@ class _LoginState extends State<Login> {
       if (_password.length == 0) {
         return;
       }
-      print('$_password, $_phoneNumber');
       final args = {
         'clientId': 'flutter_Test',
         'username': _phoneNumber,
         'password': _password
       };
-      accoutLogin(context, args).then((res) {
-        print('login success !');
+      // login to account and device
+      accoutLogin(context, store, args).then((res) {
         Navigator.pop(context);
         Navigator.pop(context);
         Navigator.pushReplacementNamed(context, '/station');
@@ -270,16 +285,24 @@ class _LoginState extends State<Login> {
               }),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _nextStep(context),
-        tooltip: '下一步',
-        backgroundColor: Colors.white70,
-        elevation: 0.0,
-        child: Icon(
-          Icons.chevron_right,
-          color: Colors.teal,
-          size: 48,
-        ),
+      floatingActionButton: new StoreConnector<AppState, VoidCallback>(
+        converter: (store) {
+          return () => _nextStep(context, store);
+        },
+        builder: (context, callback) {
+          return new FloatingActionButton(
+            // Attach the `callback` to the `onPressed` attribute
+            onPressed: callback,
+            tooltip: '下一步',
+            backgroundColor: Colors.white70,
+            elevation: 0.0,
+            child: Icon(
+              Icons.chevron_right,
+              color: Colors.teal,
+              size: 48,
+            ),
+          );
+        },
       ),
       body: Theme(
         data: Theme.of(context).copyWith(primaryColor: Colors.white),
