@@ -8,53 +8,20 @@ class NavigationIconView {
   NavigationIconView({
     Widget icon,
     Widget activeIcon,
-    Widget view,
+    Function view,
     String title,
     String nav,
     Color color,
-    TickerProvider vsync,
-  })  : _view = view,
+  })  : view = view,
         item = BottomNavigationBarItem(
           icon: icon,
           activeIcon: activeIcon,
           title: Text(title),
           backgroundColor: color,
-        ),
-        controller = AnimationController(
-          // duration: Duration(milliseconds: 2000),
-          duration: kThemeAnimationDuration,
-          vsync: vsync,
-        ) {
-    _animation = controller.drive(
-      CurveTween(
-        curve: const Interval(0.5, 1.0, curve: Curves.fastOutSlowIn),
-      ),
-    );
-  }
-  final Widget _view;
-  final BottomNavigationBarItem item;
-  final AnimationController controller;
-  Animation<double> _animation;
+        );
 
-  FadeTransition transition(
-    BottomNavigationBarType type,
-    BuildContext context,
-  ) {
-    return FadeTransition(
-      opacity: _animation,
-      child: SlideTransition(
-        position: _animation.drive(
-          Tween<Offset>(
-            begin: const Offset(0.0, 0.02), // Slightly down.
-            end: Offset.zero,
-          ),
-        ),
-        child: Center(
-          child: _view,
-        ),
-      ),
-    );
-  }
+  final Function view;
+  final BottomNavigationBarItem item;
 }
 
 class BottomNavigation extends StatefulWidget {
@@ -77,65 +44,35 @@ class _BottomNavigationState extends State<BottomNavigation>
         activeIcon: Icon(Icons.folder),
         title: '云盘',
         nav: 'files',
-        view: Files(node: Node(tag: 'home')),
+        view: () => Files(node: Node(tag: 'home')),
         color: Colors.teal,
-        vsync: this,
       ),
       NavigationIconView(
         activeIcon: Icon(Icons.photo_library),
         icon: Icon(OMIcons.photoLibrary),
         title: '相簿',
         nav: 'photos',
-        view: CircularProgressIndicator(backgroundColor: Colors.indigo),
+        view: () => CircularProgressIndicator(backgroundColor: Colors.indigo),
         color: Colors.indigo,
-        vsync: this,
       ),
       NavigationIconView(
         activeIcon: const Icon(Icons.router),
         icon: const Icon(OMIcons.router),
         title: '设备',
         nav: 'device',
-        view: Station(),
+        view: () => Station(),
         color: Colors.deepPurple,
-        vsync: this,
       ),
       NavigationIconView(
         activeIcon: const Icon(Icons.person),
         icon: const Icon(Icons.person_outline),
         title: '我的',
         nav: 'user',
-        view: CircularProgressIndicator(backgroundColor: Colors.deepOrange),
+        view: () =>
+            CircularProgressIndicator(backgroundColor: Colors.deepOrange),
         color: Colors.deepOrange,
-        vsync: this,
       ),
     ];
-
-    _navigationViews[_currentIndex].controller.value = 1.0;
-  }
-
-  @override
-  void dispose() {
-    for (NavigationIconView view in _navigationViews) view.controller.dispose();
-    super.dispose();
-  }
-
-  Widget _buildTransitionsStack() {
-    final List<FadeTransition> transitions = <FadeTransition>[];
-
-    for (NavigationIconView view in _navigationViews) {
-      transitions.add(view.transition(_type, context));
-    }
-
-    // We want to have the newly animating (fading in) views on top.
-    transitions.sort((FadeTransition a, FadeTransition b) {
-      final Animation<double> aAnimation = a.opacity;
-      final Animation<double> bAnimation = b.opacity;
-      final double aValue = aAnimation.value;
-      final double bValue = bAnimation.value;
-      return aValue.compareTo(bValue);
-    });
-
-    return Stack(children: transitions);
   }
 
   @override
@@ -149,15 +86,13 @@ class _BottomNavigationState extends State<BottomNavigation>
       type: _type,
       onTap: (int index) {
         setState(() {
-          _navigationViews[_currentIndex].controller.reverse();
           _currentIndex = index;
-          _navigationViews[_currentIndex].controller.forward();
         });
       },
     );
 
     return Scaffold(
-      body: Center(child: _buildTransitionsStack()),
+      body: Center(child: _navigationViews[_currentIndex].view()),
       bottomNavigationBar: botNavBar,
     );
   }

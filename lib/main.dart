@@ -7,7 +7,7 @@ import './redux/redux.dart';
 
 void main() => runApp(MyApp());
 
-bool logged = false;
+bool logged = true;
 
 class MyApp extends StatelessWidget {
   final store = Store<AppState>(
