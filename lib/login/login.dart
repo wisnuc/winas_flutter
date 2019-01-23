@@ -4,6 +4,7 @@ import '../redux/redux.dart';
 import '../common/request.dart';
 import '../common/persistent.dart';
 import '../ui/loading.dart';
+import '../common/stationApis.dart';
 
 class LoginPage extends StatelessWidget {
   @override
@@ -190,12 +191,15 @@ class _LoginState extends State<Login> {
     );
 
     var res = await request.req('token', args);
-    assert(res.data['token'] != null);
+    var token = res.data['token'];
+    var userUUID = res.data['id'];
+    assert(token != null);
+    assert(userUUID != null);
 
-    // update AccountData
-    store.dispatch(LoginAction(AccountData.fromMap(res.data)));
+    // update Account
+    store.dispatch(LoginAction(Account.fromMap(res.data)));
 
-    await persistent.setString('token', res.data['token']);
+    await persistent.setString('token', token);
     var stationsRes = await request.req('stations', null);
 
     var stationLists = stationsRes.data['ownStations'];
@@ -213,6 +217,7 @@ class _LoginState extends State<Login> {
       request.req('localToken', {'deviceSN': deviceSN}),
       request.req('localDrives', {'deviceSN': deviceSN})
     ]);
+
     var lanToken = results[2].data['token'];
 
     assert(lanToken != null);
@@ -220,10 +225,40 @@ class _LoginState extends State<Login> {
     // update StatinData
     store.dispatch(
       DeviceLoginAction(
-        DeviceData(deviceSN, deviceName, lanIp, lanToken),
+        Device(deviceSN, deviceName, lanIp, lanToken),
+      ),
+    );
+    assert(results[1].data is List);
+
+    // get current user data
+    var user = results[1].data.firstWhere(
+          (s) => s['winasUserId'] == userUUID,
+          orElse: () => null,
+        );
+    store.dispatch(
+      UpdateUserAction(
+        User.fromMap(user),
       ),
     );
 
+    // get current drives data
+    List<Drive> drives = List.from(
+      results[3].data.map((drive) => Drive.fromMap(drive)),
+    );
+
+    store.dispatch(
+      UpdateDrivesAction(drives),
+    );
+
+    // station apis
+    bool isCloud = false;
+    String cookie = 'blabla';
+    Apis apis =
+        new Apis(token, lanIp, lanToken, userUUID, isCloud, deviceSN, cookie);
+
+    store.dispatch(
+      UpdateApisAction(apis),
+    );
     return results;
   }
 

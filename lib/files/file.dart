@@ -1,6 +1,8 @@
+import 'package:flutter_redux/flutter_redux.dart';
 import 'package:flutter/material.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import '../icons/winas_icons.dart';
+import '../redux/redux.dart';
 
 class FileNavView {
   final Widget _icon;
@@ -265,11 +267,14 @@ class FileRow extends StatelessWidget {
                                       fontSize: 12, color: Colors.black54),
                                 ),
                                 Container(width: 8),
-                                Text(
-                                  size,
-                                  style: TextStyle(
-                                      fontSize: 12, color: Colors.black54),
-                                ),
+                                size != null
+                                    ? Text(
+                                        size,
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.black54),
+                                      )
+                                    : Container(),
                               ],
                             ),
                           ],
@@ -316,49 +321,58 @@ List<FileNavView> _fileNavViews = [
   ),
 ];
 
-Widget _buildRow(BuildContext context, int index, bool hasNav) {
-  if (index == 0 && hasNav) {
-    return Container(
-      height: 64,
-      child: Row(
-        children: _fileNavViews
-            .map<Widget>((FileNavView fileNavView) => fileNavView.navButton())
-            .toList(),
-      ),
-      // decoration: BoxDecoration(
-      //   color: Colors.grey[200],
-      //   border: Border(
-      //     bottom: BorderSide(width: 1.0, color: Colors.grey[300]),
-      //   ),
-      // ),
-    );
-  } else if (index == 0) return TitleRow(isFirst: true, type: 'directory');
-
-  if (hasNav && index == 1) return TitleRow(isFirst: true, type: 'directory');
-
-  if (index == 10) return TitleRow(isFirst: false, type: 'file');
-
-  return FileRow(
-    name: 'filename-${index.toString()}',
-    type: index > 10 ? 'file' : 'directory',
-    onPress: () => index > 10
-        ? print(index.toString())
-        : Navigator.push(
-            context,
-            new MaterialPageRoute(
-              builder: (context) {
-                return new DirectoryView();
-              },
+Widget buildRow(
+  BuildContext context,
+  List<Entry> entries,
+  int index,
+  Node parentNode,
+) {
+  final entry = entries[index];
+  switch (entry.type) {
+    case 'nav':
+      return Container(
+        height: 64,
+        child: Row(
+          children: _fileNavViews
+              .map<Widget>((FileNavView fileNavView) => fileNavView.navButton())
+              .toList(),
+        ),
+      );
+    case 'dirTitle':
+      return TitleRow(isFirst: true, type: 'directory');
+    case 'fileTitle':
+      return TitleRow(isFirst: index == 0, type: 'file');
+    case 'file':
+      return FileRow(
+        name: entry.name,
+        type: 'file',
+        onPress: () => print(entry.name),
+        mtime: entry.hmtime,
+        size: entry.hsize,
+      );
+    case 'directory':
+      return FileRow(
+        name: entry.name,
+        type: 'directory',
+        onPress: () => Navigator.push(
+              context,
+              new MaterialPageRoute(
+                builder: (context) {
+                  return new DirectoryView(
+                    node: Node(entry.name, parentNode.driveUUID, entry.uuid),
+                  );
+                },
+              ),
             ),
-          ),
-    mtime: '2019.01.12',
-    size: '2.4MB',
-  );
+        mtime: entry.hmtime,
+      );
+  }
+  return null;
 }
 
 class Files extends StatefulWidget {
-  Files({Key key, this.title}) : super(key: key);
-  final String title;
+  Files({Key key, this.tag}) : super(key: key);
+  final String tag;
 
   @override
   _FilesState createState() => new _FilesState();
@@ -366,98 +380,207 @@ class Files extends StatefulWidget {
 
 class _FilesState extends State<Files> {
   ScrollController myScrollController = ScrollController();
+  bool loading = true;
+  List<Entry> entries = [];
+  List<DirPath> paths = [];
+  Node rootNode;
 
-  Future _onRefresh() {
-    var action = new Future.delayed(
-      const Duration(milliseconds: 1000),
-      () => print('refresh 1s later'),
-    );
-    return action;
+  Future refresh(state) async {
+    Drive homeDrive = state.drives
+        .firstWhere((drive) => drive.tag == 'home', orElse: () => null);
+
+    String driveUUID = homeDrive?.uuid;
+
+    // rootNode
+    rootNode = Node('云盘', driveUUID, driveUUID);
+
+    // request listNav
+    var listNav;
+    try {
+      listNav = await state.apis
+          .req('listNavDir', {'driveUUID': driveUUID, 'dirUUID': driveUUID});
+    } catch (error) {
+      setState(() {
+        loading = false;
+      });
+      return null;
+    }
+
+    // assert(listNav.data is Map<String, List>);
+
+    List<Entry> rawEntries =
+        List.from(listNav.data['entries'].map((entry) => Entry.fromMap(entry)));
+    List<DirPath> rawPath =
+        List.from(listNav.data['path'].map((path) => DirPath.fromMap(path)));
+
+    // sort by type
+    rawEntries.sort((a, b) => a.type.compareTo(b.type));
+
+    // insert FileNavView, DirectoryTitle, or FileTitle
+    Entry navEntry = Entry.fromMap({'type': 'nav'});
+    Entry fileTitleEntry = Entry.fromMap({'type': 'fileTitle'});
+    Entry dirTitleEntry = Entry.fromMap({'type': 'dirTitle'});
+    List<Entry> newEntries = [navEntry];
+    if (rawEntries[0]?.type == 'directory') {
+      newEntries.add(dirTitleEntry);
+      int index = rawEntries.indexWhere((entry) => entry.type == 'file');
+      if (index > -1) rawEntries.insert(index, fileTitleEntry);
+    } else if (rawEntries[0]?.type == 'file') {
+      newEntries.add(fileTitleEntry);
+    } else {
+      print('empty entries or some error');
+    }
+    newEntries.addAll(rawEntries);
+
+    setState(() {
+      entries = newEntries;
+      paths = rawPath;
+    });
+    return null;
+  }
+
+  void refreshAsync(state) {
+    refresh(state).then((data) {
+      setState(() {
+        loading = false;
+      });
+      print('refresh success');
+    }).catchError((error) {
+      setState(() {
+        loading = false;
+      });
+      print(error); // TODO
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: Theme.of(context).copyWith(primaryColor: Colors.teal),
-      child: SafeArea(
-        child: Stack(
-          alignment: Alignment.center,
-          children: <Widget>[
-            // File list
-            Positioned(
-              top: 48,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: RefreshIndicator(
-                onRefresh: _onRefresh,
-                child: Container(
-                  color: Colors.grey[200],
-                  child: DraggableScrollbar.semicircle(
-                    controller: myScrollController,
-                    child: ListView.builder(
-                      physics:
-                          const AlwaysScrollableScrollPhysics(), // important for performance
-                      controller: myScrollController,
-                      padding: EdgeInsets.zero, // important for performance
-                      itemCount: 100000,
-                      itemExtent: 64,
-                      itemBuilder: (BuildContext context, int index) =>
-                          _buildRow(context, index, true),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Search input
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 48,
-              child: Container(
-                color: Colors.grey[200],
-                child: Container(
-                  padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
-                  child: Container(
-                    height: 48,
-                    // color: Colors.white,
-                    padding: EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      boxShadow: <BoxShadow>[
-                        BoxShadow(
-                          color: Colors.grey,
-                          offset: Offset(0.0, 2.0),
-                          blurRadius: 4.0,
+    return new StoreConnector<AppState, AppState>(
+      onInit: (store) => refreshAsync(store.state),
+      onDispose: (store) => {},
+      converter: (store) => store.state,
+      builder: (context, state) {
+        return Theme(
+          data: Theme.of(context).copyWith(primaryColor: Colors.teal),
+          child: SafeArea(
+            child: Stack(
+              alignment: Alignment.center,
+              children: <Widget>[
+                // File list
+                Positioned(
+                  top: 48,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: RefreshIndicator(
+                    onRefresh: () => refresh(state),
+                    child: Container(
+                      color: Colors.grey[200],
+                      child: DraggableScrollbar.semicircle(
+                        controller: myScrollController,
+                        child: ListView.builder(
+                          physics:
+                              const AlwaysScrollableScrollPhysics(), // important for performance
+                          controller: myScrollController,
+                          padding: EdgeInsets.zero, // important for performance
+                          itemCount: entries.length,
+                          itemExtent: 64,
+                          itemBuilder: (BuildContext context, int index) =>
+                              buildRow(context, entries, index, rootNode),
                         ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text('搜索'),
+                      ),
                     ),
                   ),
                 ),
-              ),
+
+                // FileNav
+                loading
+                    ? Positioned(
+                        top: 48,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          color: Colors.grey[200],
+                          height: 64,
+                          child: Row(
+                            children: _fileNavViews
+                                .map<Widget>((FileNavView fileNavView) =>
+                                    fileNavView.navButton())
+                                .toList(),
+                          ),
+                        ),
+                      )
+                    : Container(),
+
+                // Search input
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 48,
+                  child: Container(
+                    color: Colors.grey[200],
+                    child: Container(
+                      padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
+                      child: Container(
+                        height: 48,
+                        // color: Colors.white,
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          boxShadow: <BoxShadow>[
+                            BoxShadow(
+                              color: Colors.grey,
+                              offset: Offset(0.0, 2.0),
+                              blurRadius: 4.0,
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text('搜索'),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // CircularProgressIndicator
+                loading
+                    ? Positioned(
+                        top: 48,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    : Container(),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
 
 class DirectoryView extends StatefulWidget {
-  DirectoryView({Key key, this.title}) : super(key: key);
-  final String title;
+  DirectoryView({Key key, this.node}) : super(key: key);
+
+  final Node node;
 
   @override
-  _DirectoryViewState createState() => new _DirectoryViewState();
+  _DirectoryViewState createState() => new _DirectoryViewState(node);
 }
 
 class _DirectoryViewState extends State<DirectoryView> {
+  _DirectoryViewState(this.node);
+
   ScrollController myScrollController = ScrollController();
+  final Node node;
+  List<Entry> entries = [];
+  bool loading = true;
 
   List<Widget> _actions = [
     IconButton(
@@ -478,43 +601,104 @@ class _DirectoryViewState extends State<DirectoryView> {
     ),
   ];
 
-  Future _onRefresh() {
-    var action = new Future.delayed(
-      const Duration(milliseconds: 1000),
-      () => print('refresh 1s later'),
-    );
-    return action;
+  Future refresh(state) async {
+    String driveUUID = node.driveUUID;
+    String dirUUID = node.dirUUID;
+
+    // request listNav
+    var listNav;
+    try {
+      listNav = await state.apis
+          .req('listNavDir', {'driveUUID': driveUUID, 'dirUUID': dirUUID});
+    } catch (error) {
+      setState(() {
+        loading = false;
+      });
+      return null;
+    }
+    List<Entry> rawEntries =
+        List.from(listNav.data['entries'].map((entry) => Entry.fromMap(entry)));
+    // List<DirPath> rawPath =
+    //     List.from(listNav.data['path'].map((path) => DirPath.fromMap(path)));
+
+    // sort by type
+    rawEntries.sort((a, b) => a.type.compareTo(b.type));
+
+    // insert FileNavView, DirectoryTitle, or FileTitle
+    Entry fileTitleEntry = Entry.fromMap({'type': 'fileTitle'});
+    Entry dirTitleEntry = Entry.fromMap({'type': 'dirTitle'});
+    List<Entry> newEntries = [];
+    if (rawEntries[0]?.type == 'directory') {
+      newEntries.add(dirTitleEntry);
+      int index = rawEntries.indexWhere((entry) => entry.type == 'file');
+      if (index > -1) rawEntries.insert(index, fileTitleEntry);
+    } else if (rawEntries[0]?.type == 'file') {
+      newEntries.add(fileTitleEntry);
+    } else {
+      print('empty entries or some error');
+    }
+    newEntries.addAll(rawEntries);
+
+    setState(() {
+      entries = newEntries;
+    });
+    return null;
+  }
+
+  void refreshAsync(state) {
+    refresh(state).then((data) {
+      setState(() {
+        loading = false;
+      });
+      print('refresh success');
+    }).catchError((error) {
+      setState(() {
+        loading = false;
+      });
+      print(error); // TODO
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('文件夹xxxxxxxxxx'),
-        actions: _actions,
-      ),
-      body: Theme(
-        data: Theme.of(context).copyWith(primaryColor: Colors.teal),
-        child: RefreshIndicator(
-          onRefresh: _onRefresh,
-          child: Container(
-            color: Colors.grey[200],
-            child: DraggableScrollbar.semicircle(
-              controller: myScrollController,
-              child: ListView.builder(
-                physics:
-                    const AlwaysScrollableScrollPhysics(), // important for performance
-                controller: myScrollController,
-                padding: EdgeInsets.zero,
-                itemExtent: 64, // important for performance
-                itemCount: 100000,
-                itemBuilder: (BuildContext context, int index) =>
-                    _buildRow(context, index, false),
-              ),
-            ),
+    return new StoreConnector<AppState, AppState>(
+      onInit: (store) => refreshAsync(store.state),
+      onDispose: (store) => {},
+      converter: (store) => store.state,
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(node.name),
+            actions: _actions,
           ),
-        ),
-      ),
+          body: loading
+              ? Center(
+                  child: CircularProgressIndicator(),
+                )
+              : Theme(
+                  data: Theme.of(context).copyWith(primaryColor: Colors.teal),
+                  child: RefreshIndicator(
+                    onRefresh: () => refresh(state),
+                    child: Container(
+                      color: Colors.grey[200],
+                      child: DraggableScrollbar.semicircle(
+                        controller: myScrollController,
+                        child: ListView.builder(
+                          physics:
+                              const AlwaysScrollableScrollPhysics(), // important for performance
+                          controller: myScrollController,
+                          padding: EdgeInsets.zero,
+                          itemExtent: 64, // important for performance
+                          itemCount: entries.length,
+                          itemBuilder: (BuildContext context, int index) =>
+                              buildRow(context, entries, index, node),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+        );
+      },
     );
   }
 }

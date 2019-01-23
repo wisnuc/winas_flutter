@@ -46,7 +46,7 @@ class Request {
     return dio.post('$cloudAddress/station/$deviceSN/json', data: data);
   }
 
-  req(name, args) {
+  req(String name, Map<String, dynamic> args) {
     Future r;
     interceptDio();
     switch (name) {
