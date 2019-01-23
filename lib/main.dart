@@ -7,10 +7,12 @@ import './redux/redux.dart';
 
 void main() => runApp(MyApp());
 
+bool logged = false;
+
 class MyApp extends StatelessWidget {
   final store = Store<AppState>(
     appReducer,
-    initialState: AppState.initial(),
+    initialState: logged ? AppState.autologin() : AppState.initial(),
   );
 
   @override
@@ -25,10 +27,10 @@ class MyApp extends StatelessWidget {
           iconTheme: IconThemeData(color: Colors.black54),
         ),
         routes: <String, WidgetBuilder>{
-          '/login': (BuildContext context) => new LoginPage(),
-          '/station': (BuildContext context) => new BottomNavigation(),
+          '/login': (BuildContext context) => LoginPage(),
+          '/station': (BuildContext context) => BottomNavigation(),
         },
-        home: LoginPage(),
+        home: logged ? BottomNavigation() : LoginPage(),
       ),
     );
   }

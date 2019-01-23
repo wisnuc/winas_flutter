@@ -57,6 +57,12 @@ class Apis {
           {'metadata': 'true'},
         );
         break;
+      case 'space':
+        r = tget('boot/space', null);
+        break;
+      case 'stats':
+        r = tget('fruitmix/stats', null);
+        break;
     }
     return r;
   }

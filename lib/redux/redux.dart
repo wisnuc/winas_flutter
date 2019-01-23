@@ -61,6 +61,7 @@ class Drive {
   int ctime;
   int mtime;
   Map<String, dynamic> client;
+  Drive({this.uuid, this.tag});
   Drive.fromMap(Map m) {
     this.uuid = m['uuid'];
     this.type = m['type'];
@@ -185,6 +186,24 @@ AppState appReducer(AppState state, action) {
   );
 }
 
+AppState fakeState = AppState(
+  account: null,
+  device: Device(deviceName: 'Fake winas'),
+  localUser: null,
+  drives: [
+    Drive(tag: 'home', uuid: "15a5b6d7-74da-4a0f-bdd7-64ecad6498aa"),
+    Drive(tag: 'built-in', uuid: "6afcf55e-8482-4542-a33d-4791a7277f96"),
+  ],
+  apis: new Apis(
+      '0@eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6IjY5NDc2NjdhLWY4ZmYtNDk4Yy1iMGNiLWViYzRkOTc3MTVkNyIsInBhc3N3b3JkIjoiKjg0QUFDMTJGNTRBQjY2NkVDRkMyQTgzQzY3NjkwOEM4QkJDMzgxQjEiLCJjbGllbnRJZCI6ImZsdXR0ZXJfVGVzdCIsInR5cGUiOiJBbmRyb2lkIn0.9cwn6OHlNfwQAQR7DciV9E2DPIcl-yWGBfvpdWUluaM',
+      "10.10.9.234",
+      'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1dWlkIjoiY2NmMmJlYzQtOTk2ZC00OTUyLTllNmMtZjRmOTBiNjBkODEwIiwid2luYXNVc2VySWQiOiI2OTQ3NjY3YS1mOGZmLTQ5OGMtYjBjYi1lYmM0ZDk3NzE1ZDciLCJ0aW1lc3RhbXAiOjE1NDgyMjU0ODI2NzB9.qYZv8CyLUxxNu0UrMsx7Y-4wkhW64sv1cE5Qu2JYJus',
+      "6947667a-f8ff-498c-b0cb-ebc4d97715d7",
+      false,
+      "test_b44-a529-4dcf-aa30-240a151d8e03",
+      'cookie'),
+);
+
 class AppState {
   final Account account;
   final Device device;
@@ -201,4 +220,6 @@ class AppState {
 
   factory AppState.initial() => new AppState(
       account: null, device: null, localUser: null, drives: [], apis: null);
+
+  factory AppState.autologin() => fakeState;
 }

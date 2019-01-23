@@ -1,8 +1,8 @@
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:flutter/material.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
-import '../icons/winas_icons.dart';
 import '../redux/redux.dart';
+import '../common/renderIcon.dart';
 
 class FileNavView {
   final Widget _icon;
@@ -181,8 +181,9 @@ class FileRow extends StatelessWidget {
               Row(
                 children: <Widget>[
                   Container(width: 24),
-                  Icon(type == 'file' ? Winas.word : Icons.folder,
-                      color: Colors.blue),
+                  type == 'file'
+                      ? renderIcon(name, metadata)
+                      : Icon(Icons.folder, color: Colors.orange),
                   Container(width: 32),
                   Text(
                     name,
@@ -233,8 +234,9 @@ class FileRow extends StatelessWidget {
           child: Row(
             children: <Widget>[
               Container(width: 24),
-              Icon(type == 'file' ? Winas.word : Icons.folder,
-                  color: Colors.blue),
+              type == 'file'
+                  ? renderIcon(name, metadata)
+                  : Icon(Icons.folder, color: Colors.orange),
               Container(width: 32),
               Expanded(
                 flex: 1,
@@ -456,10 +458,13 @@ class _FilesState extends State<Files> {
     }
     newEntries.addAll(rawEntries);
 
-    setState(() {
-      entries = newEntries;
-      paths = rawPath;
-    });
+    if (this.mounted) {
+      // avoid calling setState after dispose()
+      setState(() {
+        entries = newEntries;
+        paths = rawPath;
+      });
+    }
     return null;
   }
 

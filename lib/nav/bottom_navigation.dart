@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:outline_material_icons/outline_material_icons.dart';
 import '../files/file.dart';
+import '../device/station.dart';
 import '../redux/redux.dart';
 
 class NavigationIconView {
@@ -39,16 +40,6 @@ class NavigationIconView {
     BottomNavigationBarType type,
     BuildContext context,
   ) {
-    // Color iconColor;
-    // if (type == BottomNavigationBarType.shifting) {
-    //   iconColor = _color;
-    // } else {
-    //   final ThemeData themeData = Theme.of(context);
-    //   iconColor = themeData.brightness == Brightness.light
-    //       ? themeData.primaryColor
-    //       : themeData.accentColor;
-    // }
-
     return FadeTransition(
       opacity: _animation,
       child: SlideTransition(
@@ -104,7 +95,7 @@ class _BottomNavigationState extends State<BottomNavigation>
         icon: const Icon(OMIcons.router),
         title: '设备',
         nav: 'device',
-        view: CircularProgressIndicator(backgroundColor: Colors.deepPurple),
+        view: Station(),
         color: Colors.deepPurple,
         vsync: this,
       ),
