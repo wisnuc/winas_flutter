@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:outline_material_icons/outline_material_icons.dart';
 import '../files/file.dart';
+import '../redux/redux.dart';
 
 class NavigationIconView {
   NavigationIconView({
@@ -85,7 +86,7 @@ class _BottomNavigationState extends State<BottomNavigation>
         activeIcon: Icon(Icons.folder),
         title: '云盘',
         nav: 'files',
-        view: Files(),
+        view: Files(node: Node(tag: 'home')),
         color: Colors.teal,
         vsync: this,
       ),

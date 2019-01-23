@@ -225,7 +225,12 @@ class _LoginState extends State<Login> {
     // update StatinData
     store.dispatch(
       DeviceLoginAction(
-        Device(deviceSN, deviceName, lanIp, lanToken),
+        Device(
+          deviceSN: deviceSN,
+          deviceName: deviceName,
+          lanIp: lanIp,
+          lanToken: lanToken,
+        ),
       ),
     );
     assert(results[1].data is List);

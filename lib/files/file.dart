@@ -121,7 +121,7 @@ class FileRow extends StatelessWidget {
   final size;
   final mtime;
   final Function onPress;
-  final metadata;
+  final Metadata metadata;
   final List actions = [
     {
       'icon': Icons.edit,
@@ -349,6 +349,7 @@ Widget buildRow(
         onPress: () => print(entry.name),
         mtime: entry.hmtime,
         size: entry.hsize,
+        metadata: entry.metadata,
       );
     case 'directory':
       return FileRow(
@@ -358,8 +359,13 @@ Widget buildRow(
               context,
               new MaterialPageRoute(
                 builder: (context) {
-                  return new DirectoryView(
-                    node: Node(entry.name, parentNode.driveUUID, entry.uuid),
+                  return new Files(
+                    node: Node(
+                      name: entry.name,
+                      driveUUID: parentNode.driveUUID,
+                      dirUUID: entry.uuid,
+                      tag: 'dir',
+                    ),
                   );
                 },
               ),
@@ -371,34 +377,49 @@ Widget buildRow(
 }
 
 class Files extends StatefulWidget {
-  Files({Key key, this.tag}) : super(key: key);
-  final String tag;
+  Files({Key key, this.node}) : super(key: key);
 
+  final Node node;
   @override
-  _FilesState createState() => new _FilesState();
+  _FilesState createState() => new _FilesState(node);
 }
 
 class _FilesState extends State<Files> {
-  ScrollController myScrollController = ScrollController();
+  _FilesState(this.node);
+
+  final Node node;
+  Node currentNode;
   bool loading = true;
   List<Entry> entries = [];
   List<DirPath> paths = [];
-  Node rootNode;
+  ScrollController myScrollController = ScrollController();
 
   Future refresh(state) async {
-    Drive homeDrive = state.drives
-        .firstWhere((drive) => drive.tag == 'home', orElse: () => null);
+    String driveUUID;
+    String dirUUID;
+    if (node.tag == 'home') {
+      Drive homeDrive = state.drives
+          .firstWhere((drive) => drive.tag == 'home', orElse: () => null);
 
-    String driveUUID = homeDrive?.uuid;
-
-    // rootNode
-    rootNode = Node('云盘', driveUUID, driveUUID);
+      driveUUID = homeDrive?.uuid;
+      dirUUID = driveUUID;
+      currentNode = Node(
+        name: '云盘',
+        driveUUID: driveUUID,
+        dirUUID: driveUUID,
+        tag: 'home',
+      );
+    } else if (node.tag == 'dir') {
+      driveUUID = node.driveUUID;
+      dirUUID = node.dirUUID;
+      currentNode = node;
+    }
 
     // request listNav
     var listNav;
     try {
       listNav = await state.apis
-          .req('listNavDir', {'driveUUID': driveUUID, 'dirUUID': driveUUID});
+          .req('listNavDir', {'driveUUID': driveUUID, 'dirUUID': dirUUID});
     } catch (error) {
       setState(() {
         loading = false;
@@ -416,11 +437,14 @@ class _FilesState extends State<Files> {
     // sort by type
     rawEntries.sort((a, b) => a.type.compareTo(b.type));
 
-    // insert FileNavView, DirectoryTitle, or FileTitle
     Entry navEntry = Entry.fromMap({'type': 'nav'});
     Entry fileTitleEntry = Entry.fromMap({'type': 'fileTitle'});
     Entry dirTitleEntry = Entry.fromMap({'type': 'dirTitle'});
-    List<Entry> newEntries = [navEntry];
+
+    // insert FileNavView
+    List<Entry> newEntries = node.tag == 'home' ? [navEntry] : [];
+
+    // insert DirectoryTitle, or FileTitle
     if (rawEntries[0]?.type == 'directory') {
       newEntries.add(dirTitleEntry);
       int index = rawEntries.indexWhere((entry) => entry.type == 'file');
@@ -453,9 +477,69 @@ class _FilesState extends State<Files> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return new StoreConnector<AppState, AppState>(
+  List<Widget> _actions = [
+    IconButton(
+      icon: Icon(Icons.create_new_folder),
+      onPressed: () => {},
+    ),
+    IconButton(
+      icon: Icon(Icons.search),
+      onPressed: () => {},
+    ),
+    IconButton(
+      icon: Icon(Icons.view_list),
+      onPressed: () => {},
+    ),
+    IconButton(
+      icon: Icon(Icons.more_horiz),
+      onPressed: () => {},
+    ),
+  ];
+
+  Widget directoryView() {
+    return StoreConnector<AppState, AppState>(
+      onInit: (store) => refreshAsync(store.state),
+      onDispose: (store) => {},
+      converter: (store) => store.state,
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(node.name),
+            actions: _actions,
+          ),
+          body: loading
+              ? Center(
+                  child: CircularProgressIndicator(),
+                )
+              : Theme(
+                  data: Theme.of(context).copyWith(primaryColor: Colors.teal),
+                  child: RefreshIndicator(
+                    onRefresh: () => refresh(state),
+                    child: Container(
+                      color: Colors.grey[200],
+                      child: DraggableScrollbar.semicircle(
+                        controller: myScrollController,
+                        child: ListView.builder(
+                          physics:
+                              const AlwaysScrollableScrollPhysics(), // important for performance
+                          controller: myScrollController,
+                          padding: EdgeInsets.zero,
+                          itemExtent: 64, // important for performance
+                          itemCount: entries.length,
+                          itemBuilder: (BuildContext context, int index) =>
+                              buildRow(context, entries, index, currentNode),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+        );
+      },
+    );
+  }
+
+  Widget homeView() {
+    return StoreConnector<AppState, AppState>(
       onInit: (store) => refreshAsync(store.state),
       onDispose: (store) => {},
       converter: (store) => store.state,
@@ -486,7 +570,7 @@ class _FilesState extends State<Files> {
                           itemCount: entries.length,
                           itemExtent: 64,
                           itemBuilder: (BuildContext context, int index) =>
-                              buildRow(context, entries, index, rootNode),
+                              buildRow(context, entries, index, currentNode),
                         ),
                       ),
                     ),
@@ -563,142 +647,11 @@ class _FilesState extends State<Files> {
       },
     );
   }
-}
-
-class DirectoryView extends StatefulWidget {
-  DirectoryView({Key key, this.node}) : super(key: key);
-
-  final Node node;
-
-  @override
-  _DirectoryViewState createState() => new _DirectoryViewState(node);
-}
-
-class _DirectoryViewState extends State<DirectoryView> {
-  _DirectoryViewState(this.node);
-
-  ScrollController myScrollController = ScrollController();
-  final Node node;
-  List<Entry> entries = [];
-  bool loading = true;
-
-  List<Widget> _actions = [
-    IconButton(
-      icon: Icon(Icons.create_new_folder),
-      onPressed: () => {},
-    ),
-    IconButton(
-      icon: Icon(Icons.search),
-      onPressed: () => {},
-    ),
-    IconButton(
-      icon: Icon(Icons.view_list),
-      onPressed: () => {},
-    ),
-    IconButton(
-      icon: Icon(Icons.more_horiz),
-      onPressed: () => {},
-    ),
-  ];
-
-  Future refresh(state) async {
-    String driveUUID = node.driveUUID;
-    String dirUUID = node.dirUUID;
-
-    // request listNav
-    var listNav;
-    try {
-      listNav = await state.apis
-          .req('listNavDir', {'driveUUID': driveUUID, 'dirUUID': dirUUID});
-    } catch (error) {
-      setState(() {
-        loading = false;
-      });
-      return null;
-    }
-    List<Entry> rawEntries =
-        List.from(listNav.data['entries'].map((entry) => Entry.fromMap(entry)));
-    // List<DirPath> rawPath =
-    //     List.from(listNav.data['path'].map((path) => DirPath.fromMap(path)));
-
-    // sort by type
-    rawEntries.sort((a, b) => a.type.compareTo(b.type));
-
-    // insert FileNavView, DirectoryTitle, or FileTitle
-    Entry fileTitleEntry = Entry.fromMap({'type': 'fileTitle'});
-    Entry dirTitleEntry = Entry.fromMap({'type': 'dirTitle'});
-    List<Entry> newEntries = [];
-    if (rawEntries[0]?.type == 'directory') {
-      newEntries.add(dirTitleEntry);
-      int index = rawEntries.indexWhere((entry) => entry.type == 'file');
-      if (index > -1) rawEntries.insert(index, fileTitleEntry);
-    } else if (rawEntries[0]?.type == 'file') {
-      newEntries.add(fileTitleEntry);
-    } else {
-      print('empty entries or some error');
-    }
-    newEntries.addAll(rawEntries);
-
-    setState(() {
-      entries = newEntries;
-    });
-    return null;
-  }
-
-  void refreshAsync(state) {
-    refresh(state).then((data) {
-      setState(() {
-        loading = false;
-      });
-      print('refresh success');
-    }).catchError((error) {
-      setState(() {
-        loading = false;
-      });
-      print(error); // TODO
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
-    return new StoreConnector<AppState, AppState>(
-      onInit: (store) => refreshAsync(store.state),
-      onDispose: (store) => {},
-      converter: (store) => store.state,
-      builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(node.name),
-            actions: _actions,
-          ),
-          body: loading
-              ? Center(
-                  child: CircularProgressIndicator(),
-                )
-              : Theme(
-                  data: Theme.of(context).copyWith(primaryColor: Colors.teal),
-                  child: RefreshIndicator(
-                    onRefresh: () => refresh(state),
-                    child: Container(
-                      color: Colors.grey[200],
-                      child: DraggableScrollbar.semicircle(
-                        controller: myScrollController,
-                        child: ListView.builder(
-                          physics:
-                              const AlwaysScrollableScrollPhysics(), // important for performance
-                          controller: myScrollController,
-                          padding: EdgeInsets.zero,
-                          itemExtent: 64, // important for performance
-                          itemCount: entries.length,
-                          itemBuilder: (BuildContext context, int index) =>
-                              buildRow(context, entries, index, node),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-        );
-      },
-    );
+    if (node.tag == 'home') return homeView();
+    if (node.tag == 'dir') return directoryView();
+    return Container();
   }
 }

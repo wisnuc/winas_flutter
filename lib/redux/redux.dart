@@ -26,7 +26,7 @@ class Device {
   String deviceName;
   String lanIp;
   String lanToken;
-  Device(this.deviceSN, this.deviceName, this.lanIp, this.lanToken);
+  Device({this.deviceSN, this.deviceName, this.lanIp, this.lanToken});
 }
 
 class User {
@@ -76,9 +76,9 @@ class Drive {
   }
 }
 
-class MetaData {
+class Metadata {
   String type;
-  MetaData.fromMap(Map m) {
+  Metadata.fromMap(Map m) {
     this.type = m['type'];
   }
 }
@@ -93,7 +93,7 @@ class Entry {
   String hash;
   String hsize;
   String hmtime;
-  MetaData metaData;
+  Metadata metadata;
   Entry.fromMap(Map m) {
     this.size = m['size'];
     this.ctime = m['ctime'];
@@ -104,8 +104,8 @@ class Entry {
     this.hash = m['hash'];
     this.hsize = prettySize(this.size);
     this.hmtime = prettyDate(this.mtime);
-    this.metaData =
-        m['metadata'] == null ? null : MetaData.fromMap(m['metadata']);
+    this.metadata =
+        m['metadata'] == null ? null : Metadata.fromMap(m['metadata']);
   }
 }
 
@@ -125,7 +125,8 @@ class Node {
   String name;
   String driveUUID;
   String dirUUID;
-  Node(this.name, this.driveUUID, this.dirUUID);
+  String tag;
+  Node({this.name, this.driveUUID, this.dirUUID, this.tag});
 }
 
 // actions
