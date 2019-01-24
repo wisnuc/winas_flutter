@@ -142,20 +142,21 @@ class _LoginState extends State<Login> {
   _currentTextField() {
     if (_status == 'account') {
       return TextField(
-          key: Key('account'),
-          onChanged: (text) {
-            setState(() => _error = null);
-            _phoneNumber = text;
-          },
-          controller: new TextEditingController(text: _phoneNumber),
-          autofocus: true,
-          decoration: InputDecoration(
-              labelText: "手机号",
-              prefixIcon: Icon(Icons.person),
-              errorText: _error),
-          style: TextStyle(color: Colors.white, fontSize: 24),
-          maxLength: 11,
-          keyboardType: TextInputType.number);
+        key: Key('account'),
+        onChanged: (text) {
+          setState(() => _error = null);
+          _phoneNumber = text;
+        },
+        controller: new TextEditingController(text: _phoneNumber),
+        autofocus: true,
+        decoration: InputDecoration(
+            labelText: "手机号",
+            prefixIcon: Icon(Icons.person),
+            errorText: _error),
+        style: TextStyle(color: Colors.white, fontSize: 24),
+        maxLength: 11,
+        keyboardType: TextInputType.number,
+      );
     }
     return TextField(
       key: Key('password'),

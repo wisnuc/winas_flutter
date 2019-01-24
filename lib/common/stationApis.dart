@@ -1,4 +1,5 @@
 import 'dart:io' show Platform;
+import 'dart:convert';
 import 'package:dio/dio.dart';
 
 class Apis {
@@ -22,8 +23,9 @@ class Apis {
   // handle data.data response
   void interceptDio() {
     dio.interceptor.response.onSuccess = (Response response) {
-      var res = response.data['data'];
-      if (res != null) return res;
+      if (response.data is Map && response.data['data'] != null) {
+        return response.data['data'];
+      }
       return response.data;
     };
   }
@@ -33,6 +35,12 @@ class Apis {
     assert(token != null);
     dio.options.headers['Authorization'] = 'JWT $lanToken';
     return dio.get('$lanAdrress/$ep', data: args);
+  }
+
+  tpost(String ep, args) {
+    assert(token != null);
+    dio.options.headers['Authorization'] = 'JWT $lanToken';
+    return dio.post('$lanAdrress/$ep', data: args);
   }
 
   command(data) {
@@ -62,6 +70,14 @@ class Apis {
         break;
       case 'stats':
         r = tget('fruitmix/stats', null);
+        break;
+
+      case 'mkdir':
+        r = tpost(
+            'drives/${args['driveUUID']}/dirs/${args['dirUUID']}/entries',
+            FormData.from({
+              args['dirname']: jsonEncode({'op': 'mkdir'}),
+            }));
         break;
     }
     return r;

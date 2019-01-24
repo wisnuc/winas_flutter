@@ -3,25 +3,29 @@ import 'package:flutter/material.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import '../redux/redux.dart';
 import '../common/renderIcon.dart';
+import './newFolder.dart';
 
 class FileNavView {
   final Widget _icon;
   final String _title;
   final String _nav;
   final Color _color;
+  final Function _onTap;
 
   FileNavView({
     Widget icon,
     String title,
     String nav,
     Color color,
+    Function onTap,
     TickerProvider vsync,
   })  : _icon = icon,
         _title = title,
         _nav = nav,
-        _color = color;
+        _color = color,
+        _onTap = onTap;
 
-  Widget navButton() {
+  Widget navButton(context) {
     return Container(
       width: 63,
       height: 63,
@@ -29,7 +33,7 @@ class FileNavView {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => print(_nav),
+          onTap: () => _onTap(context),
           onLongPress: () => print('long press: $_nav'),
           child: Column(
             children: <Widget>[
@@ -308,6 +312,19 @@ List<FileNavView> _fileNavViews = [
     title: '共享空间',
     nav: 'public',
     color: Colors.orange,
+    onTap: (context) => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) {
+              return Files(
+                node: Node(
+                  name: '共享空间',
+                  tag: 'built-in',
+                ),
+              );
+            },
+          ),
+        ),
   ),
   FileNavView(
     icon: Icon(Icons.refresh, color: Colors.white),
@@ -336,7 +353,8 @@ Widget buildRow(
         height: 64,
         child: Row(
           children: _fileNavViews
-              .map<Widget>((FileNavView fileNavView) => fileNavView.navButton())
+              .map<Widget>(
+                  (FileNavView fileNavView) => fileNavView.navButton(context))
               .toList(),
         ),
       );
@@ -359,9 +377,9 @@ Widget buildRow(
         type: 'directory',
         onPress: () => Navigator.push(
               context,
-              new MaterialPageRoute(
+              MaterialPageRoute(
                 builder: (context) {
-                  return new Files(
+                  return Files(
                     node: Node(
                       name: entry.name,
                       driveUUID: parentNode.driveUUID,
@@ -383,7 +401,7 @@ class Files extends StatefulWidget {
 
   final Node node;
   @override
-  _FilesState createState() => new _FilesState(node);
+  _FilesState createState() => _FilesState(node);
 }
 
 class _FilesState extends State<Files> {
@@ -415,6 +433,18 @@ class _FilesState extends State<Files> {
       driveUUID = node.driveUUID;
       dirUUID = node.dirUUID;
       currentNode = node;
+    } else if (node.tag == 'built-in') {
+      Drive homeDrive = state.drives
+          .firstWhere((drive) => drive.tag == 'built-in', orElse: () => null);
+
+      driveUUID = homeDrive?.uuid;
+      dirUUID = driveUUID;
+      currentNode = Node(
+        name: '共享空间',
+        driveUUID: driveUUID,
+        dirUUID: driveUUID,
+        tag: 'built-in',
+      );
     }
 
     // request listNav
@@ -482,25 +512,6 @@ class _FilesState extends State<Files> {
     });
   }
 
-  List<Widget> _actions = [
-    IconButton(
-      icon: Icon(Icons.create_new_folder),
-      onPressed: () => {},
-    ),
-    IconButton(
-      icon: Icon(Icons.search),
-      onPressed: () => {},
-    ),
-    IconButton(
-      icon: Icon(Icons.view_list),
-      onPressed: () => {},
-    ),
-    IconButton(
-      icon: Icon(Icons.more_horiz),
-      onPressed: () => {},
-    ),
-  ];
-
   Widget directoryView() {
     return StoreConnector<AppState, AppState>(
       onInit: (store) => refreshAsync(store.state),
@@ -510,7 +521,28 @@ class _FilesState extends State<Files> {
         return Scaffold(
           appBar: AppBar(
             title: Text(node.name),
-            actions: _actions,
+            actions: [
+              IconButton(
+                icon: Icon(Icons.create_new_folder),
+                onPressed: () => showDialog(
+                      context: context,
+                      builder: (BuildContext context) =>
+                          NewFolder(node: currentNode),
+                    ).then((success) => success ? refreshAsync(state) : null),
+              ),
+              IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () => {},
+              ),
+              IconButton(
+                icon: Icon(Icons.view_list),
+                onPressed: () => {},
+              ),
+              IconButton(
+                icon: Icon(Icons.more_horiz),
+                onPressed: () => {},
+              ),
+            ],
           ),
           body: loading
               ? Center(
@@ -594,7 +626,7 @@ class _FilesState extends State<Files> {
                           child: Row(
                             children: _fileNavViews
                                 .map<Widget>((FileNavView fileNavView) =>
-                                    fileNavView.navButton())
+                                    fileNavView.navButton(context))
                                 .toList(),
                           ),
                         ),
@@ -656,7 +688,7 @@ class _FilesState extends State<Files> {
   @override
   Widget build(BuildContext context) {
     if (node.tag == 'home') return homeView();
-    if (node.tag == 'dir') return directoryView();
-    return Container();
+    if (node.tag == 'dir' || node.tag == 'built-in') return directoryView();
+    return Center(child: Text('Error !'));
   }
 }
