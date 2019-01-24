@@ -7,6 +7,97 @@ import './backup.dart';
 import './network.dart';
 import './advanced_settings.dart';
 
+class StorageDetail extends StatelessWidget {
+  StorageDetail(this.usageData);
+  final List usageData;
+  Widget row(u) {
+    return Container(
+      height: 72,
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(width: 1.0, color: Colors.grey[200]),
+        ),
+      ),
+      child: Row(
+        children: <Widget>[
+          Container(
+            height: 40,
+            width: 40,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.all(Radius.circular(20)),
+              color: u['color'],
+            ),
+            child: Icon(u['icon'], color: Colors.white),
+          ),
+          Container(width: 16),
+          Expanded(
+            flex: 1,
+            child: Container(
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    flex: 10,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          u['title'],
+                          textAlign: TextAlign.start,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: TextStyle(fontSize: 16, color: Colors.black87),
+                        ),
+                        Container(height: 4),
+                        Text(
+                          u['count'].toString(),
+                          style: TextStyle(fontSize: 12, color: Colors.black54),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Container(),
+                    flex: 1,
+                  ),
+                  Text(
+                    u['size'],
+                    style: TextStyle(fontSize: 14, color: Colors.black54),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 0.0, // no shadow
+        backgroundColor: Colors.white10,
+        iconTheme: IconThemeData(color: Colors.black38),
+        title: Text('存储详情', style: TextStyle(color: Colors.black87)),
+      ),
+      body: Center(
+        child: Container(
+          constraints: BoxConstraints.expand(),
+          padding: EdgeInsets.all(16),
+          child: Column(
+            children: usageData
+                .where((d) => d['title'] != null)
+                .map((u) => row(u))
+                .toList(),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class Station extends StatefulWidget {
   Station({Key key}) : super(key: key);
 
@@ -67,31 +158,41 @@ class _StationState extends State<Station> {
         'color': Color(0xFF2196f3),
         'flex': videoSize,
         'title': '视频',
-        'size': prettySize(videoRaw)
+        'size': prettySize(videoRaw),
+        'icon': Icons.folder,
+        'count': stats['video']['count'],
       },
       {
         'color': Color(0xFFaa00ff),
         'flex': imageSize,
         'title': '图片',
-        'size': prettySize(imageSize)
+        'size': prettySize(imageRaw),
+        'icon': Icons.image,
+        'count': stats['image']['count'],
       },
       {
         'color': Color(0xFFf2497d),
         'flex': audioSize,
         'title': '音乐',
-        'size': prettySize(audioSize)
+        'size': prettySize(audioRaw),
+        'icon': Icons.music_note,
+        'count': stats['audio']['count'],
       },
       {
         'color': Color(0xFFffb300),
         'flex': documentSize,
         'title': '文档',
-        'size': prettySize(documentSize)
+        'size': prettySize(documentRaw),
+        'icon': Icons.text_fields,
+        'count': stats['document']['count'],
       },
       {
         'color': Color(0xFF00c853),
         'flex': otherSize,
         'title': '其他',
-        'size': prettySize(otherSize)
+        'size': prettySize(othersRaw),
+        'icon': Icons.insert_drive_file,
+        'count': stats['others']['count'],
       },
       {
         'color': Colors.grey[200],
@@ -227,16 +328,16 @@ class _StationState extends State<Station> {
                         child: Container(
                           height: 24,
                           child: Row(
-                              children: usageData
-                                  .map((u) => Expanded(
-                                        flex: u['flex'],
-                                        child: Container(
-                                          color: u['color'],
-                                          margin:
-                                              EdgeInsets.fromLTRB(0, 0, 3, 0),
-                                        ),
-                                      ))
-                                  .toList()),
+                            children: usageData
+                                .map((u) => Expanded(
+                                      flex: u['flex'],
+                                      child: Container(
+                                        color: u['color'],
+                                        margin: EdgeInsets.fromLTRB(0, 0, 3, 0),
+                                      ),
+                                    ))
+                                .toList(),
+                          ),
                         ),
                       ),
                       Container(
@@ -265,6 +366,33 @@ class _StationState extends State<Station> {
                                       ],
                                     ))
                                 .toList()),
+                      ),
+                      Container(
+                        height: 64,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) {
+                                    return StorageDetail(usageData);
+                                  }),
+                                ),
+                            child: Row(
+                              children: <Widget>[
+                                Text(
+                                  '设备运行健康，存储详情查看',
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                                Expanded(
+                                  flex: 1,
+                                  child: Container(),
+                                ),
+                                Icon(Icons.keyboard_arrow_right),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                       actionItem(
                         '备份',
