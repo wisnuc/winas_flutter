@@ -10,7 +10,13 @@ class Account {
   String avatarUrl;
   String id;
   String mail;
-
+  Account(
+      {this.token,
+      this.nickName,
+      this.username,
+      this.avatarUrl,
+      this.id,
+      this.mail});
   Account.fromMap(Map m) {
     this.token = m['token'];
     this.nickName = m['nickName'];
@@ -187,7 +193,16 @@ AppState appReducer(AppState state, action) {
 }
 
 AppState fakeState = AppState(
-  account: null,
+  account: Account(
+    token:
+        '1@eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6IjY5NDc2NjdhLWY4ZmYtNDk4Yy1iMGNiLWViYzRkOTc3MTVkNyIsInBhc3N3b3JkIjoiKjg0QUFDMTJGNTRBQjY2NkVDRkMyQTgzQzY3NjkwOEM4QkJDMzgxQjEiLCJjbGllbnRJZCI6ImZsdXR0ZXJfVGVzdCIsInR5cGUiOiJBbmRyb2lkIn0.kiODgW5nfxnQylcUSgRHChEA8DV8SzL7FCkQ115tDBo',
+    nickName: '斯德哥尔摩',
+    username: '18817301665',
+    avatarUrl:
+        "https://wisnuc.s3.cn-north-1.amazonaws.com.cn/avatar/8a35501b-4d99-4830-95b8-649233d59658",
+    id: "6947667a-f8ff-498c-b0cb-ebc4d97715d7",
+    mail: "xu.kang@winsuntech.cn",
+  ),
   device: Device(deviceName: 'Fake winas'),
   localUser: null,
   drives: [

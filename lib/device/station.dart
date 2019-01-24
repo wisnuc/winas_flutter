@@ -239,6 +239,11 @@ class _StationState extends State<Station> {
 
   Widget actionItem(String title, Function action) {
     return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(width: 1.0, color: Colors.grey[200]),
+        ),
+      ),
       height: 64,
       child: Material(
         color: Colors.transparent,
@@ -259,14 +264,6 @@ class _StationState extends State<Station> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget divider() {
-    return Container(
-      width: double.infinity,
-      height: 1,
-      color: Color(0x08000000),
     );
   }
 
@@ -403,7 +400,6 @@ class _StationState extends State<Station> {
                               }),
                             ),
                       ),
-                      divider(),
                       actionItem(
                         '网络',
                         () => Navigator.push(
@@ -413,7 +409,6 @@ class _StationState extends State<Station> {
                               }),
                             ),
                       ),
-                      divider(),
                       actionItem(
                         '高级',
                         () => Navigator.push(

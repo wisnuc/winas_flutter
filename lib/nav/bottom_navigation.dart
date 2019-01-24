@@ -3,6 +3,7 @@ import 'package:outline_material_icons/outline_material_icons.dart';
 import '../files/file.dart';
 import '../device/station.dart';
 import '../redux/redux.dart';
+import '../user/account_info.dart';
 
 class NavigationIconView {
   NavigationIconView({
@@ -56,7 +57,9 @@ class _BottomNavigationState extends State<BottomNavigation>
         icon: Icon(OMIcons.photoLibrary),
         title: '相簿',
         nav: 'photos',
-        view: () => CircularProgressIndicator(backgroundColor: Colors.indigo),
+        view: () => Center(
+              child: Text('相簿'),
+            ),
         color: Colors.indigo,
       ),
       NavigationIconView(
@@ -72,8 +75,7 @@ class _BottomNavigationState extends State<BottomNavigation>
         icon: const Icon(Icons.person_outline),
         title: '我的',
         nav: 'user',
-        view: () =>
-            CircularProgressIndicator(backgroundColor: Colors.deepOrange),
+        view: () => AccountInfo(),
         color: Colors.deepOrange,
       ),
     ];
