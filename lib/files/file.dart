@@ -154,7 +154,7 @@ class FileRow extends StatelessWidget {
         showDialog(
           context: ctx,
           builder: (BuildContext context) => DeleteDialog(entries: entries),
-        ).then((success) => success ? null : null);
+        ).then((success) => {});
       }
     },
   ];
@@ -545,7 +545,7 @@ class _FilesState extends State<Files> {
                       context: context,
                       builder: (BuildContext context) =>
                           NewFolder(node: currentNode),
-                    ).then((success) => success ? refreshAsync(state) : null),
+                    ).then((success) => success ? refresh(state) : null),
               ),
               IconButton(
                 icon: Icon(Icons.search),

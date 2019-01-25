@@ -76,7 +76,7 @@ class Apis {
         r = tpost(
             'drives/${args['driveUUID']}/dirs/${args['dirUUID']}/entries',
             FormData.from({
-              args['entries']: jsonEncode({'op': 'mkdir'}),
+              args['dirname']: jsonEncode({'op': 'mkdir'}),
             }));
         break;
 
