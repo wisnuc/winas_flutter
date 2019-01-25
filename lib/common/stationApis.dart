@@ -76,8 +76,13 @@ class Apis {
         r = tpost(
             'drives/${args['driveUUID']}/dirs/${args['dirUUID']}/entries',
             FormData.from({
-              args['dirname']: jsonEncode({'op': 'mkdir'}),
+              args['entries']: jsonEncode({'op': 'mkdir'}),
             }));
+        break;
+
+      case 'deleteDirOrFile':
+        r = tpost('drives/${args['driveUUID']}/dirs/${args['dirUUID']}/entries',
+            args['formdata']);
         break;
     }
     return r;

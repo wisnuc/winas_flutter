@@ -4,6 +4,7 @@ import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import '../redux/redux.dart';
 import '../common/renderIcon.dart';
 import './newFolder.dart';
+import './delete.dart';
 
 class FileNavView {
   final Widget _icon;
@@ -117,6 +118,7 @@ class FileRow extends StatelessWidget {
     @required this.onPress,
     this.mtime,
     this.size,
+    this.entry,
     this.metadata,
   });
 
@@ -124,8 +126,10 @@ class FileRow extends StatelessWidget {
   final type;
   final size;
   final mtime;
+  final Entry entry;
   final Function onPress;
   final Metadata metadata;
+
   final List actions = [
     {
       'icon': Icons.edit,
@@ -145,16 +149,24 @@ class FileRow extends StatelessWidget {
     {
       'icon': Icons.delete,
       'title': '删除',
-      'action': () => print('delete'),
+      'action': (BuildContext ctx, List<Entry> entries) {
+        Navigator.pop(ctx);
+        showDialog(
+          context: ctx,
+          builder: (BuildContext context) => DeleteDialog(entries: entries),
+        ).then((success) => success ? null : null);
+      }
     },
   ];
-  Widget actionItem(IconData icon, String title, Function action) {
+
+  Widget actionItem(
+      BuildContext ctx, IconData icon, String title, Function action) {
     return Container(
       height: 40,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => action,
+          onTap: () => action(ctx, [entry]),
           child: Row(
             children: <Widget>[
               Container(width: 24),
@@ -214,6 +226,7 @@ class FileRow extends StatelessWidget {
               Column(
                 children: actions
                     .map<Widget>((value) => actionItem(
+                          context,
                           value['icon'],
                           value['title'],
                           value['action'],
@@ -370,6 +383,7 @@ Widget buildRow(
         mtime: entry.hmtime,
         size: entry.hsize,
         metadata: entry.metadata,
+        entry: entry,
       );
     case 'directory':
       return FileRow(
@@ -391,6 +405,7 @@ Widget buildRow(
               ),
             ),
         mtime: entry.hmtime,
+        entry: entry,
       );
   }
   return null;
@@ -461,8 +476,8 @@ class _FilesState extends State<Files> {
 
     // assert(listNav.data is Map<String, List>);
 
-    List<Entry> rawEntries =
-        List.from(listNav.data['entries'].map((entry) => Entry.fromMap(entry)));
+    List<Entry> rawEntries = List.from(listNav.data['entries']
+        .map((entry) => Entry.mixNode(entry, currentNode)));
     List<DirPath> rawPath =
         List.from(listNav.data['path'].map((path) => DirPath.fromMap(path)));
 
@@ -477,14 +492,16 @@ class _FilesState extends State<Files> {
     List<Entry> newEntries = node.tag == 'home' ? [navEntry] : [];
 
     // insert DirectoryTitle, or FileTitle
-    if (rawEntries[0]?.type == 'directory') {
+    if (rawEntries.length == 0) {
+      print('empty entries or some error');
+    } else if (rawEntries[0]?.type == 'directory') {
       newEntries.add(dirTitleEntry);
       int index = rawEntries.indexWhere((entry) => entry.type == 'file');
       if (index > -1) rawEntries.insert(index, fileTitleEntry);
     } else if (rawEntries[0]?.type == 'file') {
       newEntries.add(fileTitleEntry);
     } else {
-      print('empty entries or some error');
+      print('other entries!!!!');
     }
     newEntries.addAll(rawEntries);
 
