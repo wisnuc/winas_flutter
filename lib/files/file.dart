@@ -1,323 +1,13 @@
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:flutter/material.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
-import '../redux/redux.dart';
-import '../common/renderIcon.dart';
-import './newFolder.dart';
+
 import './delete.dart';
-
-class FileNavView {
-  final Widget _icon;
-  final String _title;
-  final String _nav;
-  final Color _color;
-  final Function _onTap;
-
-  FileNavView({
-    Widget icon,
-    String title,
-    String nav,
-    Color color,
-    Function onTap,
-    TickerProvider vsync,
-  })  : _icon = icon,
-        _title = title,
-        _nav = nav,
-        _color = color,
-        _onTap = onTap;
-
-  Widget navButton(context) {
-    return Container(
-      width: 63,
-      height: 63,
-      margin: EdgeInsets.fromLTRB(8, 12, 8, 0),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _onTap(context),
-          onLongPress: () => print('long press: $_nav'),
-          child: Column(
-            children: <Widget>[
-              Container(
-                height: 36,
-                width: 36,
-                child: _icon,
-                decoration: BoxDecoration(
-                  color: _color,
-                  borderRadius: BorderRadius.all(
-                    const Radius.circular(24),
-                  ),
-                ),
-              ),
-              Container(
-                height: 15,
-                width: 72,
-                child: Center(
-                  child: Text(
-                    _title,
-                    style: TextStyle(fontSize: 14),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class TitleRow extends StatelessWidget {
-  TitleRow({
-    @required this.type, // directory or file
-    @required this.isFirst,
-  });
-
-  final type;
-  final isFirst;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!isFirst)
-      return Container(
-        height: 48,
-        padding: EdgeInsets.fromLTRB(16, 0, 0, 0),
-        alignment: Alignment.centerLeft,
-        child: type == 'file' ? Text('文件') : Text('文件夹'),
-      );
-
-    return Container(
-      height: 48,
-      child: Row(
-        children: <Widget>[
-          Container(width: 16),
-          Container(
-            child: type == 'file' ? Text('文件') : Text('文件夹'),
-          ),
-          Expanded(
-            flex: 1,
-            child: Container(),
-          ),
-          Container(
-            child: Text(
-              '名称',
-              style: TextStyle(color: Colors.black54),
-            ),
-          ),
-          Container(width: 16),
-        ],
-      ),
-    );
-  }
-}
-
-class FileRow extends StatelessWidget {
-  FileRow({
-    @required this.name,
-    @required this.type,
-    @required this.onPress,
-    this.mtime,
-    this.size,
-    this.entry,
-    this.metadata,
-  });
-
-  final name;
-  final type;
-  final size;
-  final mtime;
-  final Entry entry;
-  final Function onPress;
-  final Metadata metadata;
-
-  final List actions = [
-    {
-      'icon': Icons.edit,
-      'title': '重命名',
-      'action': () => print('rename'),
-    },
-    {
-      'icon': Icons.forward,
-      'title': '移动到...',
-      'action': () => print('move to'),
-    },
-    {
-      'icon': Icons.open_in_browser,
-      'title': '使用其它应用打开',
-      'action': () => print('rename'),
-    },
-    {
-      'icon': Icons.delete,
-      'title': '删除',
-      'action': (BuildContext ctx, List<Entry> entries) {
-        Navigator.pop(ctx);
-        showDialog(
-          context: ctx,
-          builder: (BuildContext context) => DeleteDialog(entries: entries),
-        ).then((success) => {});
-      }
-    },
-  ];
-
-  Widget actionItem(
-      BuildContext ctx, IconData icon, String title, Function action) {
-    return Container(
-      height: 40,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => action(ctx, [entry]),
-          child: Row(
-            children: <Widget>[
-              Container(width: 24),
-              Icon(icon),
-              Container(width: 32),
-              Text(
-                title,
-                textAlign: TextAlign.start,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  _onPress(ctx) {
-    print('context: $ctx');
-    showModalBottomSheet(
-      context: ctx,
-      builder: (BuildContext context) {
-        return Container(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Container(width: 24),
-                  type == 'file'
-                      ? renderIcon(name, metadata)
-                      : Icon(Icons.folder, color: Colors.orange),
-                  Container(width: 32),
-                  Text(
-                    name,
-                    textAlign: TextAlign.start,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                  Expanded(
-                    child: Container(),
-                    flex: 1,
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.info),
-                    onPressed: () => print('press info'),
-                  ),
-                ],
-              ),
-              Container(
-                width: double.infinity,
-                height: 1,
-                color: Colors.grey[300],
-              ),
-              Container(height: 8),
-              Column(
-                children: actions
-                    .map<Widget>((value) => actionItem(
-                          context,
-                          value['icon'],
-                          value['title'],
-                          value['action'],
-                        ))
-                    .toList(),
-              )
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 64,
-      child: Material(
-        child: InkWell(
-          onTap: onPress,
-          onLongPress: () => print('long press: $name'),
-          child: Row(
-            children: <Widget>[
-              Container(width: 24),
-              type == 'file'
-                  ? renderIcon(name, metadata)
-                  : Icon(Icons.folder, color: Colors.orange),
-              Container(width: 32),
-              Expanded(
-                flex: 1,
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(width: 1.0, color: Colors.grey[300]),
-                    ),
-                  ),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        flex: 10,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              name,
-                              textAlign: TextAlign.start,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                            Container(height: 4),
-                            Row(
-                              children: <Widget>[
-                                Text(
-                                  mtime,
-                                  style: TextStyle(
-                                      fontSize: 12, color: Colors.black54),
-                                ),
-                                Container(width: 8),
-                                size != null
-                                    ? Text(
-                                        size,
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.black54),
-                                      )
-                                    : Container(),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: Container(),
-                        flex: 1,
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.more_horiz),
-                        onPressed: () => _onPress(context),
-                      )
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+import './rename.dart';
+import './fileRow.dart';
+import './newFolder.dart';
+import '../redux/redux.dart';
+import '../common/loading.dart';
 
 List<FileNavView> _fileNavViews = [
   FileNavView(
@@ -353,11 +43,12 @@ List<FileNavView> _fileNavViews = [
   ),
 ];
 
-Widget buildRow(
+Widget _buildRow(
   BuildContext context,
   List<Entry> entries,
   int index,
   Node parentNode,
+  List actions,
 ) {
   final entry = entries[index];
   switch (entry.type) {
@@ -384,6 +75,7 @@ Widget buildRow(
         size: entry.hsize,
         metadata: entry.metadata,
         entry: entry,
+        actions: actions,
       );
     case 'directory':
       return FileRow(
@@ -406,9 +98,20 @@ Widget buildRow(
             ),
         mtime: entry.hmtime,
         entry: entry,
+        actions: actions,
       );
   }
   return null;
+}
+
+void showSnackBar(BuildContext ctx, String message) {
+  final snackBar = SnackBar(
+    content: Text(message),
+    duration: Duration(seconds: 1),
+  );
+
+  // Find the Scaffold in the Widget tree and use it to show a SnackBar!
+  Scaffold.of(ctx, nullOk: true)?.showSnackBar(snackBar);
 }
 
 class Files extends StatefulWidget {
@@ -529,6 +232,8 @@ class _FilesState extends State<Files> {
     });
   }
 
+  Function actions;
+
   Widget directoryView() {
     return StoreConnector<AppState, AppState>(
       onInit: (store) => refreshAsync(store.state),
@@ -581,7 +286,13 @@ class _FilesState extends State<Files> {
                           itemExtent: 64, // important for performance
                           itemCount: entries.length,
                           itemBuilder: (BuildContext context, int index) =>
-                              buildRow(context, entries, index, currentNode),
+                              _buildRow(
+                                context,
+                                entries,
+                                index,
+                                currentNode,
+                                actions(state),
+                              ),
                         ),
                       ),
                     ),
@@ -624,7 +335,13 @@ class _FilesState extends State<Files> {
                           itemCount: entries.length,
                           itemExtent: 64,
                           itemBuilder: (BuildContext context, int index) =>
-                              buildRow(context, entries, index, currentNode),
+                              _buildRow(
+                                context,
+                                entries,
+                                index,
+                                currentNode,
+                                actions(state),
+                              ),
                         ),
                       ),
                     ),
@@ -700,6 +417,123 @@ class _FilesState extends State<Files> {
         );
       },
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    // actions in menu
+    actions = (state) => [
+          {
+            'icon': Icons.edit,
+            'title': '重命名',
+            'types': ['file', 'directory'],
+            'action': (BuildContext ctx, Entry entry) {
+              Navigator.pop(ctx);
+              showDialog(
+                context: ctx,
+                builder: (BuildContext context) => RenameDialog(
+                      entry: entry,
+                      node: currentNode,
+                    ),
+              ).then((success) => refresh(state));
+            },
+          },
+          {
+            'icon': Icons.content_copy,
+            'title': '复制到...',
+            'types': ['file', 'directory'],
+            'action': () => print('copy to'),
+          },
+          {
+            'icon': Icons.forward,
+            'title': '移动到...',
+            'types': ['file', 'directory'],
+            'action': () => print('move to'),
+          },
+          {
+            'icon': Icons.file_download,
+            'title': '离线可用',
+            'types': ['file'],
+            'action': () => print('move to'),
+          },
+          {
+            'icon': Icons.share,
+            'title': '分享到共享空间',
+            'types': node.tag == 'home' ? ['file', 'directory'] : [],
+            'action': (BuildContext ctx, Entry entry) async {
+              Navigator.pop(ctx);
+              showLoading(
+                barrierDismissible: false,
+                builder: (ctx) {
+                  return Container(
+                    constraints: BoxConstraints.expand(),
+                    child: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                },
+                context: this.context,
+              );
+
+              // get built-in public drive
+              Drive publicDrive = state.drives.firstWhere(
+                  (drive) => drive.tag == 'built-in',
+                  orElse: () => null);
+
+              String driveUUID = publicDrive?.uuid;
+
+              var args = {
+                'type': 'copy',
+                'entries': [entry.name],
+                'policies': {
+                  'dir': ['rename', 'rename'],
+                  'file': ['rename', 'rename']
+                },
+                'dst': {'drive': driveUUID, 'dir': driveUUID},
+                'src': {
+                  'drive': currentNode.driveUUID,
+                  'dir': currentNode.dirUUID
+                },
+              };
+              try {
+                await state.apis.req('xcopy', args);
+                Navigator.pop(this.context);
+                showSnackBar(ctx, '分享成功');
+              } catch (error) {
+                Navigator.pop(this.context);
+                showSnackBar(ctx, '分享失败');
+              }
+            },
+          },
+          {
+            'icon': Icons.open_in_new,
+            'title': '使用其它应用打开',
+            'types': ['file'],
+            'action': () => print('rename'),
+          },
+          {
+            'icon': Icons.delete,
+            'title': '删除',
+            'types': ['file', 'directory'],
+            'action': (BuildContext ctx, Entry entry) async {
+              Navigator.pop(ctx);
+              bool success = await showDialog(
+                context: this.context,
+                builder: (BuildContext context) =>
+                    DeleteDialog(entries: [entry]),
+              );
+
+              if (success) {
+                await refresh(state);
+                showSnackBar(ctx, '删除成功');
+              } else {
+                showSnackBar(ctx, '删除失败');
+              }
+            },
+          },
+        ];
   }
 
   @override

@@ -41,7 +41,7 @@ class _DeleteDialogState extends State<DeleteDialog> {
       print(error);
       setState(() {
         loading = false;
-        _error = '创建失败';
+        _error = '删除失败';
         print(_error);
       });
       Navigator.pop(context, false);

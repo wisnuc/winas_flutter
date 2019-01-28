@@ -79,10 +79,20 @@ class Apis {
               args['dirname']: jsonEncode({'op': 'mkdir'}),
             }));
         break;
-
+      case 'rename':
+        r = tpost(
+            'drives/${args['driveUUID']}/dirs/${args['dirUUID']}/entries',
+            FormData.from({
+              '${args['oldName']}|${args['newName']}':
+                  jsonEncode({'op': 'rename'}),
+            }));
+        break;
       case 'deleteDirOrFile':
         r = tpost('drives/${args['driveUUID']}/dirs/${args['dirUUID']}/entries',
             args['formdata']);
+        break;
+      case 'xcopy':
+        r = tpost('tasks', args);
         break;
     }
     return r;

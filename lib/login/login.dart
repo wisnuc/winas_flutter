@@ -3,7 +3,7 @@ import 'package:flutter_redux/flutter_redux.dart';
 import '../redux/redux.dart';
 import '../common/request.dart';
 import '../common/persistent.dart';
-import '../ui/loading.dart';
+import '../common/loading.dart';
 import '../common/stationApis.dart';
 
 class LoginPage extends StatelessWidget {
