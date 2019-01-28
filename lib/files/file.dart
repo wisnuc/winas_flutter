@@ -128,6 +128,7 @@ class _FilesState extends State<Files> {
   final Node node;
   Node currentNode;
   bool loading = true;
+  Error _error;
   List<Entry> entries = [];
   List<DirPath> paths = [];
   ScrollController myScrollController = ScrollController();
@@ -170,10 +171,14 @@ class _FilesState extends State<Files> {
     try {
       listNav = await state.apis
           .req('listNavDir', {'driveUUID': driveUUID, 'dirUUID': dirUUID});
+      _error = null;
     } catch (error) {
       setState(() {
         loading = false;
+        _error = error;
       });
+
+      print(error);
       return null;
     }
 
@@ -213,6 +218,8 @@ class _FilesState extends State<Files> {
       setState(() {
         entries = newEntries;
         paths = rawPath;
+        loading = false;
+        _error = null;
       });
     }
     return null;
@@ -220,19 +227,45 @@ class _FilesState extends State<Files> {
 
   void refreshAsync(state) {
     refresh(state).then((data) {
-      setState(() {
-        loading = false;
-      });
       print('refresh success');
     }).catchError((error) {
-      setState(() {
-        loading = false;
-      });
+      print('refresh error');
       print(error); // TODO
     });
   }
 
   Function actions;
+
+  Widget searchBar(state) {
+    return Material(
+      elevation: 2.0,
+      child: Row(
+        children: <Widget>[
+          Container(width: 16),
+          Icon(Icons.search),
+          Container(width: 32),
+          Text('搜索文件', style: TextStyle(color: Colors.black54)),
+          Expanded(flex: 1, child: Container()),
+          IconButton(
+            icon: Icon(Icons.create_new_folder),
+            onPressed: () => showDialog(
+                  context: context,
+                  builder: (BuildContext context) =>
+                      NewFolder(node: currentNode),
+                ).then((success) => success == true ? refresh(state) : null),
+          ),
+          IconButton(
+            icon: Icon(Icons.view_list),
+            onPressed: () => {},
+          ),
+          IconButton(
+            icon: Icon(Icons.more_horiz),
+            onPressed: () => {},
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget directoryView() {
     return StoreConnector<AppState, AppState>(
@@ -245,16 +278,16 @@ class _FilesState extends State<Files> {
             title: Text(node.name),
             actions: [
               IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () => {},
+              ),
+              IconButton(
                 icon: Icon(Icons.create_new_folder),
                 onPressed: () => showDialog(
                       context: context,
                       builder: (BuildContext context) =>
                           NewFolder(node: currentNode),
                     ).then((success) => success ? refresh(state) : null),
-              ),
-              IconButton(
-                icon: Icon(Icons.search),
-                onPressed: () => {},
               ),
               IconButton(
                 icon: Icon(Icons.view_list),
@@ -274,28 +307,37 @@ class _FilesState extends State<Files> {
                   data: Theme.of(context).copyWith(primaryColor: Colors.teal),
                   child: RefreshIndicator(
                     onRefresh: () => refresh(state),
-                    child: Container(
-                      color: Colors.grey[200],
-                      child: DraggableScrollbar.semicircle(
-                        controller: myScrollController,
-                        child: ListView.builder(
-                          physics:
-                              const AlwaysScrollableScrollPhysics(), // important for performance
-                          controller: myScrollController,
-                          padding: EdgeInsets.zero,
-                          itemExtent: 64, // important for performance
-                          itemCount: entries.length,
-                          itemBuilder: (BuildContext context, int index) =>
-                              _buildRow(
-                                context,
-                                entries,
-                                index,
-                                currentNode,
-                                actions(state),
+                    child: _error != null
+                        ? Center(
+                            child: Text('出错啦！'),
+                          )
+                        : entries.length == 0
+                            ? Center(
+                                child: Text('空文件夹'),
+                              )
+                            : Container(
+                                color: Colors.grey[200],
+                                child: DraggableScrollbar.semicircle(
+                                  controller: myScrollController,
+                                  child: ListView.builder(
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(), // important for performance
+                                    controller: myScrollController,
+                                    padding: EdgeInsets.zero,
+                                    itemExtent: 64, // important for performance
+                                    itemCount: entries.length,
+                                    itemBuilder:
+                                        (BuildContext context, int index) =>
+                                            _buildRow(
+                                              context,
+                                              entries,
+                                              index,
+                                              currentNode,
+                                              actions(state),
+                                            ),
+                                  ),
+                                ),
                               ),
-                        ),
-                      ),
-                    ),
                   ),
                 ),
         );
@@ -317,41 +359,51 @@ class _FilesState extends State<Files> {
               children: <Widget>[
                 // File list
                 Positioned(
-                  top: 48,
+                  top: 56,
                   left: 0,
                   right: 0,
                   bottom: 0,
                   child: RefreshIndicator(
                     onRefresh: () => refresh(state),
-                    child: Container(
-                      color: Colors.grey[200],
-                      child: DraggableScrollbar.semicircle(
-                        controller: myScrollController,
-                        child: ListView.builder(
-                          physics:
-                              const AlwaysScrollableScrollPhysics(), // important for performance
-                          controller: myScrollController,
-                          padding: EdgeInsets.zero, // important for performance
-                          itemCount: entries.length,
-                          itemExtent: 64,
-                          itemBuilder: (BuildContext context, int index) =>
-                              _buildRow(
-                                context,
-                                entries,
-                                index,
-                                currentNode,
-                                actions(state),
+                    child: _error != null
+                        ? Center(
+                            child: Text('出错啦！'),
+                          )
+                        : entries.length == 0 && !loading
+                            ? Center(
+                                child: Text('空文件夹'),
+                              )
+                            : Container(
+                                color: Colors.grey[200],
+                                child: DraggableScrollbar.semicircle(
+                                  controller: myScrollController,
+                                  child: ListView.builder(
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(), // important for performance
+                                    controller: myScrollController,
+                                    padding: EdgeInsets
+                                        .zero, // important for performance
+                                    itemCount: entries.length,
+                                    itemExtent: 64,
+                                    itemBuilder:
+                                        (BuildContext context, int index) =>
+                                            _buildRow(
+                                              context,
+                                              entries,
+                                              index,
+                                              currentNode,
+                                              actions(state),
+                                            ),
+                                  ),
+                                ),
                               ),
-                        ),
-                      ),
-                    ),
                   ),
                 ),
 
                 // FileNav
                 loading
                     ? Positioned(
-                        top: 48,
+                        top: 56,
                         left: 0,
                         right: 0,
                         child: Container(
@@ -369,7 +421,7 @@ class _FilesState extends State<Files> {
 
                 // Search input
                 Positioned(
-                  top: 0,
+                  top: 8,
                   left: 0,
                   right: 0,
                   height: 48,
@@ -377,24 +429,7 @@ class _FilesState extends State<Files> {
                     color: Colors.grey[200],
                     child: Container(
                       padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
-                      child: Container(
-                        height: 48,
-                        // color: Colors.white,
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          boxShadow: <BoxShadow>[
-                            BoxShadow(
-                              color: Colors.grey,
-                              offset: Offset(0.0, 2.0),
-                              blurRadius: 4.0,
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Text('搜索'),
-                        ),
-                      ),
+                      child: searchBar(state),
                     ),
                   ),
                 ),
@@ -402,7 +437,7 @@ class _FilesState extends State<Files> {
                 // CircularProgressIndicator
                 loading
                     ? Positioned(
-                        top: 48,
+                        top: 56,
                         left: 0,
                         right: 0,
                         bottom: 0,
