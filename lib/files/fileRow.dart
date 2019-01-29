@@ -24,8 +24,8 @@ class FileNavView {
 
   Widget navButton(context) {
     return Container(
-      width: 63,
-      height: 63,
+      width: 71,
+      height: 79,
       margin: EdgeInsets.fromLTRB(8, 12, 8, 0),
       child: Material(
         color: Colors.transparent,
@@ -35,8 +35,8 @@ class FileNavView {
           child: Column(
             children: <Widget>[
               Container(
-                height: 36,
-                width: 36,
+                height: 48,
+                width: 48,
                 child: _icon,
                 decoration: BoxDecoration(
                   color: _color,
@@ -46,8 +46,8 @@ class FileNavView {
                 ),
               ),
               Container(
-                height: 15,
-                width: 72,
+                height: 31,
+                width: 71,
                 child: Center(
                   child: Text(
                     _title,

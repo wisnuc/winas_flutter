@@ -26,7 +26,10 @@ dependencies:
   dio: ^1.0.13
   shared_preferences: ^0.4.3
   outline_material_icons: ^0.1.0
-  draggable_scrollbar: ^0.0.4
+  # draggable_scrollbar: ^0.0.4
+  # to use draggable-scrollbar with sliver list
+  draggable_scrollbar:
+    git: https://github.com/juncaixinchi/flutter-draggable-scrollbar.git
 
 dev_dependencies:
   flutter_test:

@@ -52,16 +52,6 @@ Widget _buildRow(
 ) {
   final entry = entries[index];
   switch (entry.type) {
-    case 'nav':
-      return Container(
-        height: 64,
-        child: Row(
-          children: _fileNavViews
-              .map<Widget>(
-                  (FileNavView fileNavView) => fileNavView.navButton(context))
-              .toList(),
-        ),
-      );
     case 'dirTitle':
       return TitleRow(isFirst: true, type: 'directory');
     case 'fileTitle':
@@ -192,12 +182,12 @@ class _FilesState extends State<Files> {
     // sort by type
     rawEntries.sort((a, b) => a.type.compareTo(b.type));
 
-    Entry navEntry = Entry.fromMap({'type': 'nav'});
+    // Entry navEntry = Entry.fromMap({'type': 'nav'});
     Entry fileTitleEntry = Entry.fromMap({'type': 'fileTitle'});
     Entry dirTitleEntry = Entry.fromMap({'type': 'dirTitle'});
 
     // insert FileNavView
-    List<Entry> newEntries = node.tag == 'home' ? [navEntry] : [];
+    List<Entry> newEntries = [];
 
     // insert DirectoryTitle, or FileTitle
     if (rawEntries.length == 0) {
@@ -321,7 +311,7 @@ class _FilesState extends State<Files> {
                                   controller: myScrollController,
                                   child: ListView.builder(
                                     physics:
-                                        const AlwaysScrollableScrollPhysics(), // important for performance
+                                        AlwaysScrollableScrollPhysics(), // important for performance
                                     controller: myScrollController,
                                     padding: EdgeInsets.zero,
                                     itemExtent: 64, // important for performance
@@ -377,23 +367,46 @@ class _FilesState extends State<Files> {
                                 color: Colors.grey[200],
                                 child: DraggableScrollbar.semicircle(
                                   controller: myScrollController,
-                                  child: ListView.builder(
-                                    physics:
-                                        const AlwaysScrollableScrollPhysics(), // important for performance
+                                  child: CustomScrollView(
                                     controller: myScrollController,
-                                    padding: EdgeInsets
-                                        .zero, // important for performance
-                                    itemCount: entries.length,
-                                    itemExtent: 64,
-                                    itemBuilder:
-                                        (BuildContext context, int index) =>
-                                            _buildRow(
-                                              context,
-                                              entries,
-                                              index,
-                                              currentNode,
-                                              actions(state),
-                                            ),
+                                    physics: AlwaysScrollableScrollPhysics(),
+                                    slivers: <Widget>[
+                                      SliverFixedExtentList(
+                                        itemExtent: 96.0,
+                                        delegate: SliverChildBuilderDelegate(
+                                          (BuildContext context, int index) {
+                                            return Container(
+                                              color: Colors.grey[200],
+                                              height: 96,
+                                              child: Row(
+                                                children: _fileNavViews
+                                                    .map<Widget>((FileNavView
+                                                            fileNavView) =>
+                                                        fileNavView
+                                                            .navButton(context))
+                                                    .toList(),
+                                              ),
+                                            );
+                                          },
+                                          childCount: 1,
+                                        ),
+                                      ),
+
+                                      // List
+                                      SliverFixedExtentList(
+                                        itemExtent: 64.0,
+                                        delegate: SliverChildBuilderDelegate(
+                                            (BuildContext context, int index) {
+                                          return _buildRow(
+                                            context,
+                                            entries,
+                                            index,
+                                            currentNode,
+                                            actions(state),
+                                          );
+                                        }, childCount: entries.length),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -408,7 +421,7 @@ class _FilesState extends State<Files> {
                         right: 0,
                         child: Container(
                           color: Colors.grey[200],
-                          height: 64,
+                          height: 96,
                           child: Row(
                             children: _fileNavViews
                                 .map<Widget>((FileNavView fileNavView) =>
