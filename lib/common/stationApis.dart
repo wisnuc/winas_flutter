@@ -97,4 +97,16 @@ class Apis {
     }
     return r;
   }
+
+  download(ep, qs, downloadPath) async {
+    assert(token != null);
+    dio.options.headers['Authorization'] = 'JWT $lanToken';
+    var response = await dio.download(
+      '$lanAdrress/$ep',
+      downloadPath,
+      data: qs,
+      onProgress: (a, b) => a == b ? print('finished, size: $b') : null,
+    );
+    print(response);
+  }
 }

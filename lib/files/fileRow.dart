@@ -288,3 +288,158 @@ class FileRow extends StatelessWidget {
     );
   }
 }
+
+class FileGrid extends StatelessWidget {
+  FileGrid({
+    @required this.name,
+    @required this.type,
+    @required this.onPress,
+    this.mtime,
+    this.size,
+    this.entry,
+    this.actions,
+    this.metadata,
+  });
+
+  final name;
+  final type;
+  final size;
+  final mtime;
+  final Entry entry;
+  final Function onPress;
+  final Metadata metadata;
+  final List actions;
+
+  Widget actionItem(
+      BuildContext ctx, IconData icon, String title, Function action) {
+    return Container(
+      height: 40,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => action(ctx, entry),
+          child: Row(
+            children: <Widget>[
+              Container(width: 24),
+              Icon(icon),
+              Container(width: 32),
+              Text(
+                title,
+                textAlign: TextAlign.start,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  _onPress(ctx) {
+    print('context in FileRow._onPress: $ctx');
+    showModalBottomSheet(
+      context: ctx,
+      builder: (BuildContext context) {
+        return Container(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Container(width: 24),
+                  type == 'file'
+                      ? renderIcon(name, metadata)
+                      : Icon(Icons.folder, color: Colors.orange),
+                  Container(width: 32),
+                  Text(
+                    name,
+                    textAlign: TextAlign.start,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                  Expanded(
+                    child: Container(),
+                    flex: 1,
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.info),
+                    onPressed: () => print('press info'),
+                  ),
+                ],
+              ),
+              Container(
+                width: double.infinity,
+                height: 1,
+                color: Colors.grey[300],
+              ),
+              Container(height: 8),
+              Column(
+                children: actions
+                    .where((action) => action['types'].contains(type))
+                    .map<Widget>((value) => actionItem(
+                          ctx,
+                          value['icon'],
+                          value['title'],
+                          value['action'],
+                        ))
+                    .toList(),
+              )
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 64,
+      child: Material(
+        child: InkWell(
+          onTap: onPress,
+          onLongPress: () => print('long press: $name'),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              type == 'file'
+                  ? Expanded(
+                      flex: 1,
+                      child: renderIcon(name, metadata, size: 72.0),
+                    )
+                  : Container(),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Container(width: 16),
+                  type == 'file'
+                      ? renderIcon(name, metadata)
+                      : Icon(Icons.folder, color: Colors.orange),
+                  Container(width: 16),
+                  Expanded(
+                    child: Text(
+                      name,
+                      textAlign: TextAlign.start,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                    flex: 10,
+                  ),
+                  Expanded(
+                    child: Container(),
+                    flex: 1,
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.more_horiz),
+                    onPressed: () => _onPress(context),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

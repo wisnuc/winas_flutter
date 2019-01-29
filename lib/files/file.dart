@@ -1,5 +1,7 @@
-import 'package:flutter_redux/flutter_redux.dart';
 import 'package:flutter/material.dart';
+import 'package:open_file/open_file.dart';
+import 'package:flutter_redux/flutter_redux.dart';
+
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 
 import './delete.dart';
@@ -8,6 +10,7 @@ import './fileRow.dart';
 import './newFolder.dart';
 import '../redux/redux.dart';
 import '../common/loading.dart';
+import '../common/cache.dart';
 
 List<FileNavView> _fileNavViews = [
   FileNavView(
@@ -49,6 +52,7 @@ Widget _buildRow(
   int index,
   Node parentNode,
   List actions,
+  Function download,
 ) {
   final entry = entries[index];
   switch (entry.type) {
@@ -60,7 +64,7 @@ Widget _buildRow(
       return FileRow(
         name: entry.name,
         type: 'file',
-        onPress: () => print(entry.name),
+        onPress: () => download(entry),
         mtime: entry.hmtime,
         size: entry.hsize,
         metadata: entry.metadata,
@@ -94,6 +98,54 @@ Widget _buildRow(
   return null;
 }
 
+Widget _buildGrid(
+  BuildContext context,
+  List<Entry> entries,
+  int index,
+  Node parentNode,
+  List actions,
+  Function download,
+) {
+  final entry = entries[index];
+  switch (entry.type) {
+    case 'file':
+      return FileGrid(
+        name: entry.name,
+        type: 'file',
+        onPress: () => download(entry),
+        mtime: entry.hmtime,
+        size: entry.hsize,
+        metadata: entry.metadata,
+        entry: entry,
+        actions: actions,
+      );
+    case 'directory':
+      return FileGrid(
+        name: entry.name,
+        type: 'directory',
+        onPress: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) {
+                  return Files(
+                    node: Node(
+                      name: entry.name,
+                      driveUUID: parentNode.driveUUID,
+                      dirUUID: entry.uuid,
+                      tag: 'dir',
+                    ),
+                  );
+                },
+              ),
+            ),
+        mtime: entry.hmtime,
+        entry: entry,
+        actions: actions,
+      );
+  }
+  return Container();
+}
+
 void showSnackBar(BuildContext ctx, String message) {
   final snackBar = SnackBar(
     content: Text(message),
@@ -120,6 +172,8 @@ class _FilesState extends State<Files> {
   bool loading = true;
   Error _error;
   List<Entry> entries = [];
+  List<Entry> dirs = [];
+  List<Entry> files = [];
   List<DirPath> paths = [];
   ScrollController myScrollController = ScrollController();
 
@@ -188,16 +242,25 @@ class _FilesState extends State<Files> {
 
     // insert FileNavView
     List<Entry> newEntries = [];
+    List<Entry> newDirs = [];
+    List<Entry> newFiles = [];
 
     // insert DirectoryTitle, or FileTitle
     if (rawEntries.length == 0) {
       print('empty entries or some error');
     } else if (rawEntries[0]?.type == 'directory') {
-      newEntries.add(dirTitleEntry);
+      // newEntries.add(dirTitleEntry);
       int index = rawEntries.indexWhere((entry) => entry.type == 'file');
-      if (index > -1) rawEntries.insert(index, fileTitleEntry);
+      if (index > -1) {
+        // rawEntries.insert(index, fileTitleEntry);
+        newDirs = List.from(rawEntries.take(index));
+        newFiles = List.from(rawEntries.skip(index));
+      } else {
+        newDirs = rawEntries;
+      }
     } else if (rawEntries[0]?.type == 'file') {
-      newEntries.add(fileTitleEntry);
+      // newEntries.add(fileTitleEntry);
+      newFiles = rawEntries;
     } else {
       print('other entries!!!!');
     }
@@ -207,6 +270,8 @@ class _FilesState extends State<Files> {
       // avoid calling setState after dispose()
       setState(() {
         entries = newEntries;
+        dirs = newDirs;
+        files = newFiles;
         paths = rawPath;
         loading = false;
         _error = null;
@@ -309,6 +374,139 @@ class _FilesState extends State<Files> {
                                 color: Colors.grey[200],
                                 child: DraggableScrollbar.semicircle(
                                   controller: myScrollController,
+                                  child: CustomScrollView(
+                                    controller: myScrollController,
+                                    physics: AlwaysScrollableScrollPhysics(),
+                                    slivers: <Widget>[
+                                      SliverGrid(
+                                        gridDelegate:
+                                            SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                          mainAxisSpacing: 10.0,
+                                          crossAxisSpacing: 10.0,
+                                          childAspectRatio: 4.0,
+                                        ),
+                                        delegate: SliverChildBuilderDelegate(
+                                          (BuildContext context, int index) {
+                                            return _buildGrid(
+                                              context,
+                                              dirs,
+                                              index,
+                                              currentNode,
+                                              actions(state),
+                                              (entry) => _download(
+                                                  context, entry, state),
+                                            );
+                                          },
+                                          childCount: dirs.length,
+                                        ),
+                                      ),
+                                      SliverGrid(
+                                        gridDelegate:
+                                            SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                          mainAxisSpacing: 10.0,
+                                          crossAxisSpacing: 10.0,
+                                          childAspectRatio: 1.0,
+                                        ),
+                                        delegate: SliverChildBuilderDelegate(
+                                          (BuildContext context, int index) {
+                                            return _buildGrid(
+                                              context,
+                                              files,
+                                              index,
+                                              currentNode,
+                                              actions(state),
+                                              (entry) => _download(
+                                                  context, entry, state),
+                                            );
+                                          },
+                                          childCount: files.length,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  // ListView.builder(
+                                  //   physics:
+                                  //       AlwaysScrollableScrollPhysics(), // important for performance
+                                  //   controller: myScrollController,
+                                  //   padding: EdgeInsets.zero,
+                                  //   itemExtent: 64, // important for performance
+                                  //   itemCount: entries.length,
+                                  //   itemBuilder: (BuildContext context,
+                                  //           int index) =>
+                                  //       _buildRow(
+                                  //         context,
+                                  //         entries,
+                                  //         index,
+                                  //         currentNode,
+                                  //         actions(state),
+                                  //         (entry) =>
+                                  //             _download(context, entry, state),
+                                  //       ),
+                                  // ),
+                                ),
+                              ),
+                  ),
+                ),
+        );
+      },
+    );
+  }
+
+  Widget directoryView2() {
+    return StoreConnector<AppState, AppState>(
+      onInit: (store) => refreshAsync(store.state),
+      onDispose: (store) => {},
+      converter: (store) => store.state,
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(node.name),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () => {},
+              ),
+              IconButton(
+                icon: Icon(Icons.create_new_folder),
+                onPressed: () => showDialog(
+                      context: context,
+                      builder: (BuildContext context) =>
+                          NewFolder(node: currentNode),
+                    ).then((success) => success ? refresh(state) : null),
+              ),
+              IconButton(
+                icon: Icon(Icons.view_list),
+                onPressed: () => {},
+              ),
+              IconButton(
+                icon: Icon(Icons.more_horiz),
+                onPressed: () => {},
+              ),
+            ],
+          ),
+          body: loading
+              ? Center(
+                  child: CircularProgressIndicator(),
+                )
+              : Theme(
+                  data: Theme.of(context).copyWith(primaryColor: Colors.teal),
+                  child: RefreshIndicator(
+                    onRefresh: () => refresh(state),
+                    child: _error != null
+                        ? Center(
+                            child: Text('出错啦！'),
+                          )
+                        : entries.length == 0
+                            ? Center(
+                                child: Text('空文件夹'),
+                              )
+                            : Container(
+                                color: Colors.grey[200],
+                                child: DraggableScrollbar.semicircle(
+                                  controller: myScrollController,
                                   child: ListView.builder(
                                     physics:
                                         AlwaysScrollableScrollPhysics(), // important for performance
@@ -316,15 +514,17 @@ class _FilesState extends State<Files> {
                                     padding: EdgeInsets.zero,
                                     itemExtent: 64, // important for performance
                                     itemCount: entries.length,
-                                    itemBuilder:
-                                        (BuildContext context, int index) =>
-                                            _buildRow(
-                                              context,
-                                              entries,
-                                              index,
-                                              currentNode,
-                                              actions(state),
-                                            ),
+                                    itemBuilder: (BuildContext context,
+                                            int index) =>
+                                        _buildRow(
+                                          context,
+                                          entries,
+                                          index,
+                                          currentNode,
+                                          actions(state),
+                                          (entry) =>
+                                              _download(context, entry, state),
+                                        ),
                                   ),
                                 ),
                               ),
@@ -403,6 +603,8 @@ class _FilesState extends State<Files> {
                                             index,
                                             currentNode,
                                             actions(state),
+                                            (entry) => _download(
+                                                context, entry, state),
                                           );
                                         }, childCount: entries.length),
                                       ),
@@ -465,6 +667,30 @@ class _FilesState extends State<Files> {
         );
       },
     );
+  }
+
+  void _download(BuildContext ctx, Entry entry, AppState state) async {
+    showLoading(
+      barrierDismissible: false,
+      builder: (ctx) {
+        return Container(
+          constraints: BoxConstraints.expand(),
+          child: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      },
+      context: ctx,
+    );
+    final cm = await CacheManager.getInstance();
+    String entryPath = await cm.getTmpFile(entry, state);
+    print(entryPath);
+    Navigator.pop(ctx);
+    if (entryPath == null) {
+      showSnackBar(ctx, '打开失败');
+    } else {
+      OpenFile.open(entryPath);
+    }
   }
 
   @override

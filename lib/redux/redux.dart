@@ -101,7 +101,7 @@ class Entry {
   String hsize;
   String hmtime;
   String pdir;
-  String pdrive;
+  String pdrv;
   Metadata metadata;
 
   Entry.fromMap(Map m) {
@@ -131,7 +131,7 @@ class Entry {
     this.metadata =
         m['metadata'] == null ? null : Metadata.fromMap(m['metadata']);
     this.pdir = n.dirUUID;
-    this.pdrive = n.driveUUID;
+    this.pdrv = n.driveUUID;
   }
 }
 
