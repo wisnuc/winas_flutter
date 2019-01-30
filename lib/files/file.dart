@@ -175,7 +175,9 @@ class _FilesState extends State<Files> {
   List<Entry> dirs = [];
   List<Entry> files = [];
   List<DirPath> paths = [];
+  bool gridView = false;
   ScrollController myScrollController = ScrollController();
+  Function actions;
 
   Future refresh(state) async {
     String driveUUID;
@@ -236,10 +238,6 @@ class _FilesState extends State<Files> {
     // sort by type
     rawEntries.sort((a, b) => a.type.compareTo(b.type));
 
-    // Entry navEntry = Entry.fromMap({'type': 'nav'});
-    Entry fileTitleEntry = Entry.fromMap({'type': 'fileTitle'});
-    Entry dirTitleEntry = Entry.fromMap({'type': 'dirTitle'});
-
     // insert FileNavView
     List<Entry> newEntries = [];
     List<Entry> newDirs = [];
@@ -287,386 +285,6 @@ class _FilesState extends State<Files> {
       print('refresh error');
       print(error); // TODO
     });
-  }
-
-  Function actions;
-
-  Widget searchBar(state) {
-    return Material(
-      elevation: 2.0,
-      child: Row(
-        children: <Widget>[
-          Container(width: 16),
-          Icon(Icons.search),
-          Container(width: 32),
-          Text('搜索文件', style: TextStyle(color: Colors.black54)),
-          Expanded(flex: 1, child: Container()),
-          IconButton(
-            icon: Icon(Icons.create_new_folder),
-            onPressed: () => showDialog(
-                  context: context,
-                  builder: (BuildContext context) =>
-                      NewFolder(node: currentNode),
-                ).then((success) => success == true ? refresh(state) : null),
-          ),
-          IconButton(
-            icon: Icon(Icons.view_list),
-            onPressed: () => {},
-          ),
-          IconButton(
-            icon: Icon(Icons.more_horiz),
-            onPressed: () => {},
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget directoryView() {
-    return StoreConnector<AppState, AppState>(
-      onInit: (store) => refreshAsync(store.state),
-      onDispose: (store) => {},
-      converter: (store) => store.state,
-      builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(node.name),
-            actions: [
-              IconButton(
-                icon: Icon(Icons.search),
-                onPressed: () => {},
-              ),
-              IconButton(
-                icon: Icon(Icons.create_new_folder),
-                onPressed: () => showDialog(
-                      context: context,
-                      builder: (BuildContext context) =>
-                          NewFolder(node: currentNode),
-                    ).then((success) => success ? refresh(state) : null),
-              ),
-              IconButton(
-                icon: Icon(Icons.view_list),
-                onPressed: () => {},
-              ),
-              IconButton(
-                icon: Icon(Icons.more_horiz),
-                onPressed: () => {},
-              ),
-            ],
-          ),
-          body: loading
-              ? Center(
-                  child: CircularProgressIndicator(),
-                )
-              : Theme(
-                  data: Theme.of(context).copyWith(primaryColor: Colors.teal),
-                  child: RefreshIndicator(
-                    onRefresh: () => refresh(state),
-                    child: _error != null
-                        ? Center(
-                            child: Text('出错啦！'),
-                          )
-                        : entries.length == 0
-                            ? Center(
-                                child: Text('空文件夹'),
-                              )
-                            : Container(
-                                color: Colors.grey[200],
-                                child: DraggableScrollbar.semicircle(
-                                  controller: myScrollController,
-                                  child: CustomScrollView(
-                                    controller: myScrollController,
-                                    physics: AlwaysScrollableScrollPhysics(),
-                                    slivers: <Widget>[
-                                      SliverGrid(
-                                        gridDelegate:
-                                            SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 2,
-                                          mainAxisSpacing: 10.0,
-                                          crossAxisSpacing: 10.0,
-                                          childAspectRatio: 4.0,
-                                        ),
-                                        delegate: SliverChildBuilderDelegate(
-                                          (BuildContext context, int index) {
-                                            return _buildGrid(
-                                              context,
-                                              dirs,
-                                              index,
-                                              currentNode,
-                                              actions(state),
-                                              (entry) => _download(
-                                                  context, entry, state),
-                                            );
-                                          },
-                                          childCount: dirs.length,
-                                        ),
-                                      ),
-                                      SliverGrid(
-                                        gridDelegate:
-                                            SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 2,
-                                          mainAxisSpacing: 10.0,
-                                          crossAxisSpacing: 10.0,
-                                          childAspectRatio: 1.0,
-                                        ),
-                                        delegate: SliverChildBuilderDelegate(
-                                          (BuildContext context, int index) {
-                                            return _buildGrid(
-                                              context,
-                                              files,
-                                              index,
-                                              currentNode,
-                                              actions(state),
-                                              (entry) => _download(
-                                                  context, entry, state),
-                                            );
-                                          },
-                                          childCount: files.length,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-
-                                  // ListView.builder(
-                                  //   physics:
-                                  //       AlwaysScrollableScrollPhysics(), // important for performance
-                                  //   controller: myScrollController,
-                                  //   padding: EdgeInsets.zero,
-                                  //   itemExtent: 64, // important for performance
-                                  //   itemCount: entries.length,
-                                  //   itemBuilder: (BuildContext context,
-                                  //           int index) =>
-                                  //       _buildRow(
-                                  //         context,
-                                  //         entries,
-                                  //         index,
-                                  //         currentNode,
-                                  //         actions(state),
-                                  //         (entry) =>
-                                  //             _download(context, entry, state),
-                                  //       ),
-                                  // ),
-                                ),
-                              ),
-                  ),
-                ),
-        );
-      },
-    );
-  }
-
-  Widget directoryView2() {
-    return StoreConnector<AppState, AppState>(
-      onInit: (store) => refreshAsync(store.state),
-      onDispose: (store) => {},
-      converter: (store) => store.state,
-      builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(node.name),
-            actions: [
-              IconButton(
-                icon: Icon(Icons.search),
-                onPressed: () => {},
-              ),
-              IconButton(
-                icon: Icon(Icons.create_new_folder),
-                onPressed: () => showDialog(
-                      context: context,
-                      builder: (BuildContext context) =>
-                          NewFolder(node: currentNode),
-                    ).then((success) => success ? refresh(state) : null),
-              ),
-              IconButton(
-                icon: Icon(Icons.view_list),
-                onPressed: () => {},
-              ),
-              IconButton(
-                icon: Icon(Icons.more_horiz),
-                onPressed: () => {},
-              ),
-            ],
-          ),
-          body: loading
-              ? Center(
-                  child: CircularProgressIndicator(),
-                )
-              : Theme(
-                  data: Theme.of(context).copyWith(primaryColor: Colors.teal),
-                  child: RefreshIndicator(
-                    onRefresh: () => refresh(state),
-                    child: _error != null
-                        ? Center(
-                            child: Text('出错啦！'),
-                          )
-                        : entries.length == 0
-                            ? Center(
-                                child: Text('空文件夹'),
-                              )
-                            : Container(
-                                color: Colors.grey[200],
-                                child: DraggableScrollbar.semicircle(
-                                  controller: myScrollController,
-                                  child: ListView.builder(
-                                    physics:
-                                        AlwaysScrollableScrollPhysics(), // important for performance
-                                    controller: myScrollController,
-                                    padding: EdgeInsets.zero,
-                                    itemExtent: 64, // important for performance
-                                    itemCount: entries.length,
-                                    itemBuilder: (BuildContext context,
-                                            int index) =>
-                                        _buildRow(
-                                          context,
-                                          entries,
-                                          index,
-                                          currentNode,
-                                          actions(state),
-                                          (entry) =>
-                                              _download(context, entry, state),
-                                        ),
-                                  ),
-                                ),
-                              ),
-                  ),
-                ),
-        );
-      },
-    );
-  }
-
-  Widget homeView() {
-    return StoreConnector<AppState, AppState>(
-      onInit: (store) => refreshAsync(store.state),
-      onDispose: (store) => {},
-      converter: (store) => store.state,
-      builder: (context, state) {
-        return Theme(
-          data: Theme.of(context).copyWith(primaryColor: Colors.teal),
-          child: SafeArea(
-            child: Stack(
-              alignment: Alignment.center,
-              children: <Widget>[
-                // File list
-                Positioned(
-                  top: 56,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: RefreshIndicator(
-                    onRefresh: () => refresh(state),
-                    child: _error != null
-                        ? Center(
-                            child: Text('出错啦！'),
-                          )
-                        : entries.length == 0 && !loading
-                            ? Center(
-                                child: Text('空文件夹'),
-                              )
-                            : Container(
-                                color: Colors.grey[200],
-                                child: DraggableScrollbar.semicircle(
-                                  controller: myScrollController,
-                                  child: CustomScrollView(
-                                    controller: myScrollController,
-                                    physics: AlwaysScrollableScrollPhysics(),
-                                    slivers: <Widget>[
-                                      SliverFixedExtentList(
-                                        itemExtent: 96.0,
-                                        delegate: SliverChildBuilderDelegate(
-                                          (BuildContext context, int index) {
-                                            return Container(
-                                              color: Colors.grey[200],
-                                              height: 96,
-                                              child: Row(
-                                                children: _fileNavViews
-                                                    .map<Widget>((FileNavView
-                                                            fileNavView) =>
-                                                        fileNavView
-                                                            .navButton(context))
-                                                    .toList(),
-                                              ),
-                                            );
-                                          },
-                                          childCount: 1,
-                                        ),
-                                      ),
-
-                                      // List
-                                      SliverFixedExtentList(
-                                        itemExtent: 64.0,
-                                        delegate: SliverChildBuilderDelegate(
-                                            (BuildContext context, int index) {
-                                          return _buildRow(
-                                            context,
-                                            entries,
-                                            index,
-                                            currentNode,
-                                            actions(state),
-                                            (entry) => _download(
-                                                context, entry, state),
-                                          );
-                                        }, childCount: entries.length),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                  ),
-                ),
-
-                // FileNav
-                loading
-                    ? Positioned(
-                        top: 56,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          color: Colors.grey[200],
-                          height: 96,
-                          child: Row(
-                            children: _fileNavViews
-                                .map<Widget>((FileNavView fileNavView) =>
-                                    fileNavView.navButton(context))
-                                .toList(),
-                          ),
-                        ),
-                      )
-                    : Container(),
-
-                // Search input
-                Positioned(
-                  top: 8,
-                  left: 0,
-                  right: 0,
-                  height: 48,
-                  child: Container(
-                    color: Colors.grey[200],
-                    child: Container(
-                      padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
-                      child: searchBar(state),
-                    ),
-                  ),
-                ),
-
-                // CircularProgressIndicator
-                loading
-                    ? Positioned(
-                        top: 56,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        child: Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                      )
-                    : Container(),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
   void _download(BuildContext ctx, Entry entry, AppState state) async {
@@ -808,6 +426,356 @@ class _FilesState extends State<Files> {
             },
           },
         ];
+  }
+
+  Widget searchBar(state) {
+    return Material(
+      elevation: 2.0,
+      child: Row(
+        children: <Widget>[
+          Container(width: 16),
+          Icon(Icons.search),
+          Container(width: 32),
+          Text('搜索文件', style: TextStyle(color: Colors.black54)),
+          Expanded(flex: 1, child: Container()),
+          IconButton(
+            icon: Icon(Icons.create_new_folder),
+            onPressed: () => showDialog(
+                  context: context,
+                  builder: (BuildContext context) =>
+                      NewFolder(node: currentNode),
+                ).then((success) => success == true ? refresh(state) : null),
+          ),
+          IconButton(
+            icon: Icon(gridView ? Icons.view_list : Icons.view_module),
+            onPressed: () => setState(() {
+                  gridView = !gridView;
+                }),
+          ),
+          IconButton(
+            icon: Icon(Icons.more_horiz),
+            onPressed: () => {},
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget dirTitle() {
+    return SliverFixedExtentList(
+      itemExtent: 48,
+      delegate: SliverChildBuilderDelegate(
+        (BuildContext context, int index) {
+          return TitleRow(isFirst: true, type: 'directory');
+        },
+        childCount: dirs.length > 0 ? 1 : 0,
+      ),
+    );
+  }
+
+  Widget fileTitle() {
+    return SliverFixedExtentList(
+      itemExtent: 48,
+      delegate: SliverChildBuilderDelegate(
+        (BuildContext context, int index) {
+          return TitleRow(isFirst: dirs.length == 0, type: 'file');
+        },
+        childCount: files.length > 0 ? 1 : 0,
+      ),
+    );
+  }
+
+  Widget dirGrid(state) {
+    return SliverGrid(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 8.0,
+        crossAxisSpacing: 8.0,
+        childAspectRatio: 4.0,
+      ),
+      delegate: SliverChildBuilderDelegate(
+        (BuildContext context, int index) {
+          return _buildGrid(
+            context,
+            dirs,
+            index,
+            currentNode,
+            actions(state),
+            (entry) => _download(context, entry, state),
+          );
+        },
+        childCount: dirs.length,
+      ),
+    );
+  }
+
+  Widget dirRow(state) {
+    return SliverFixedExtentList(
+      itemExtent: 64,
+      delegate: SliverChildBuilderDelegate(
+        (BuildContext context, int index) {
+          return _buildRow(
+            context,
+            dirs,
+            index,
+            currentNode,
+            actions(state),
+            (entry) => _download(context, entry, state),
+          );
+        },
+        childCount: dirs.length,
+      ),
+    );
+  }
+
+  Widget fileGrid(state) {
+    return SliverGrid(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 8.0,
+        crossAxisSpacing: 8.0,
+        childAspectRatio: 1.0,
+      ),
+      delegate: SliverChildBuilderDelegate(
+        (BuildContext context, int index) {
+          return _buildGrid(
+            context,
+            files,
+            index,
+            currentNode,
+            actions(state),
+            (entry) => _download(context, entry, state),
+          );
+        },
+        childCount: files.length,
+      ),
+    );
+  }
+
+  Widget fileRow(state) {
+    return SliverFixedExtentList(
+      itemExtent: 64,
+      delegate: SliverChildBuilderDelegate(
+        (BuildContext context, int index) {
+          return _buildRow(
+            context,
+            files,
+            index,
+            currentNode,
+            actions(state),
+            (entry) => _download(context, entry, state),
+          );
+        },
+        childCount: files.length,
+      ),
+    );
+  }
+
+  Widget directoryView() {
+    return StoreConnector<AppState, AppState>(
+      onInit: (store) => refreshAsync(store.state),
+      onDispose: (store) => {},
+      converter: (store) => store.state,
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(node.name),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () => {},
+              ),
+              IconButton(
+                icon: Icon(Icons.create_new_folder),
+                onPressed: () => showDialog(
+                      context: context,
+                      builder: (BuildContext context) =>
+                          NewFolder(node: currentNode),
+                    ).then((success) => success ? refresh(state) : null),
+              ),
+              IconButton(
+                icon: Icon(gridView ? Icons.view_list : Icons.view_module),
+                onPressed: () => setState(() {
+                      gridView = !gridView;
+                    }),
+              ),
+              IconButton(
+                icon: Icon(Icons.more_horiz),
+                onPressed: () => {},
+              ),
+            ],
+          ),
+          body: loading
+              ? Center(
+                  child: CircularProgressIndicator(),
+                )
+              : Theme(
+                  data: Theme.of(context).copyWith(primaryColor: Colors.teal),
+                  child: RefreshIndicator(
+                    onRefresh: () => refresh(state),
+                    child: _error != null
+                        ? Center(
+                            child: Text('出错啦！'),
+                          )
+                        : entries.length == 0
+                            ? Center(
+                                child: Text('空文件夹'),
+                              )
+                            : Container(
+                                color: Colors.grey[200],
+                                child: DraggableScrollbar.semicircle(
+                                  controller: myScrollController,
+                                  child: CustomScrollView(
+                                    controller: myScrollController,
+                                    physics: AlwaysScrollableScrollPhysics(),
+                                    slivers: <Widget>[
+                                      // dir title
+                                      dirTitle(),
+                                      // dir Grid or Row view
+                                      gridView ? dirGrid(state) : dirRow(state),
+                                      // file title
+                                      fileTitle(),
+                                      // file Grid or Row view
+                                      gridView
+                                          ? fileGrid(state)
+                                          : fileRow(state),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                  ),
+                ),
+        );
+      },
+    );
+  }
+
+  Widget homeView() {
+    return StoreConnector<AppState, AppState>(
+      onInit: (store) => refreshAsync(store.state),
+      onDispose: (store) => {},
+      converter: (store) => store.state,
+      builder: (context, state) {
+        return Theme(
+          data: Theme.of(context).copyWith(primaryColor: Colors.teal),
+          child: SafeArea(
+            child: Stack(
+              alignment: Alignment.center,
+              children: <Widget>[
+                // File list
+                Positioned(
+                  top: 56,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: RefreshIndicator(
+                    onRefresh: () => refresh(state),
+                    child: _error != null
+                        ? Center(
+                            child: Text('出错啦！'),
+                          )
+                        : entries.length == 0 && !loading
+                            ? Center(
+                                child: Text('空文件夹'),
+                              )
+                            : Container(
+                                color: Colors.grey[200],
+                                child: DraggableScrollbar.semicircle(
+                                  controller: myScrollController,
+                                  child: CustomScrollView(
+                                    controller: myScrollController,
+                                    physics: AlwaysScrollableScrollPhysics(),
+                                    slivers: <Widget>[
+                                      // file nav view
+                                      SliverFixedExtentList(
+                                        itemExtent: 96.0,
+                                        delegate: SliverChildBuilderDelegate(
+                                          (BuildContext context, int index) {
+                                            return Container(
+                                              color: Colors.grey[200],
+                                              height: 96,
+                                              child: Row(
+                                                children: _fileNavViews
+                                                    .map<Widget>((FileNavView
+                                                            fileNavView) =>
+                                                        fileNavView
+                                                            .navButton(context))
+                                                    .toList(),
+                                              ),
+                                            );
+                                          },
+                                          childCount: 1,
+                                        ),
+                                      ),
+                                      // dir title
+                                      dirTitle(),
+                                      // dir Grid or Row view
+                                      gridView ? dirGrid(state) : dirRow(state),
+                                      // file title
+                                      fileTitle(),
+                                      // file Grid or Row view
+                                      gridView
+                                          ? fileGrid(state)
+                                          : fileRow(state),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                  ),
+                ),
+
+                // FileNav
+                loading
+                    ? Positioned(
+                        top: 56,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          color: Colors.grey[200],
+                          height: 96,
+                          child: Row(
+                            children: _fileNavViews
+                                .map<Widget>((FileNavView fileNavView) =>
+                                    fileNavView.navButton(context))
+                                .toList(),
+                          ),
+                        ),
+                      )
+                    : Container(),
+
+                // Search input
+                Positioned(
+                  top: 8,
+                  left: 0,
+                  right: 0,
+                  height: 48,
+                  child: Container(
+                    color: Colors.grey[200],
+                    child: Container(
+                      padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
+                      child: searchBar(state),
+                    ),
+                  ),
+                ),
+
+                // CircularProgressIndicator
+                loading
+                    ? Positioned(
+                        top: 56,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    : Container(),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
