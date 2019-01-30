@@ -29,4 +29,8 @@ class Winas {
   static const IconData png = const IconData(0xe806, fontFamily: _kFontFam);
   static const IconData ppt = const IconData(0xe807, fontFamily: _kFontFam);
   static const IconData wechat = const IconData(0xe808, fontFamily: _kFontFam);
+  static const IconData pdf = const IconData(0xe809, fontFamily: _kFontFam);
+  static const IconData txt = const IconData(0xe80a, fontFamily: _kFontFam);
+  static const IconData video = const IconData(0xe80b, fontFamily: _kFontFam);
+  static const IconData audio = const IconData(0xe80c, fontFamily: _kFontFam);
 }

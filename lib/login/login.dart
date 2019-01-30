@@ -204,8 +204,9 @@ class _LoginState extends State<Login> {
     var stationsRes = await request.req('stations', null);
 
     var stationLists = stationsRes.data['ownStations'];
-    final currentDevice =
-        stationLists.firstWhere((s) => s['online'] == 1, orElse: () => null);
+    final currentDevice = stationLists.firstWhere(
+        (s) => s['online'] == 1 && s['name'] == 'Winass',
+        orElse: () => null);
     assert(currentDevice != null);
 
     var deviceSN = currentDevice['sn'];
@@ -294,10 +295,14 @@ class _LoginState extends State<Login> {
       };
       // login to account and device
       accoutLogin(context, store, args).then((res) {
+        // pop loading
         Navigator.pop(context);
+        // pop login account page
         Navigator.pop(context);
+        // replace first page
         Navigator.pushReplacementNamed(context, '/station');
       }).catchError((err) {
+        // pop loading
         Navigator.pop(context);
         print(err);
       });

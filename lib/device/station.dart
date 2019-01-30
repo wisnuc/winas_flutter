@@ -371,9 +371,12 @@ class _StationState extends State<Station> {
                           child: InkWell(
                             onTap: () => Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) {
-                                    return StorageDetail(usageData);
-                                  }),
+                                  MaterialPageRoute(
+                                    builder: (context) {
+                                      return StorageDetail(usageData);
+                                    },
+                                    fullscreenDialog: true,
+                                  ),
                                 ),
                             child: Row(
                               children: <Widget>[

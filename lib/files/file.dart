@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:open_file/open_file.dart';
 import 'package:flutter_redux/flutter_redux.dart';
-
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 
 import './delete.dart';
 import './rename.dart';
+import './search.dart';
 import './fileRow.dart';
 import './newFolder.dart';
 import '../redux/redux.dart';
@@ -307,7 +307,12 @@ class _FilesState extends State<Files> {
     if (entryPath == null) {
       showSnackBar(ctx, '打开失败');
     } else {
-      OpenFile.open(entryPath);
+      try {
+        await OpenFile.open(entryPath);
+      } catch (error) {
+        print(error);
+        showSnackBar(ctx, '没有打开该类型文件的应用');
+      }
     }
   }
 
@@ -428,20 +433,41 @@ class _FilesState extends State<Files> {
         ];
   }
 
+  openSearch(context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) {
+          return Search(node: currentNode);
+        },
+      ),
+    );
+  }
+
   Widget searchBar(state) {
     return Material(
       elevation: 2.0,
       child: Row(
         children: <Widget>[
-          Container(width: 16),
-          Icon(Icons.search),
-          Container(width: 32),
-          Text('搜索文件', style: TextStyle(color: Colors.black54)),
-          Expanded(flex: 1, child: Container()),
+          Expanded(
+            flex: 1,
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: () => openSearch(this.context),
+              child: Row(
+                children: <Widget>[
+                  Container(width: 16),
+                  Icon(Icons.search),
+                  Container(width: 32),
+                  Text('搜索文件', style: TextStyle(color: Colors.black54)),
+                ],
+              ),
+            ),
+          ),
           IconButton(
             icon: Icon(Icons.create_new_folder),
             onPressed: () => showDialog(
-                  context: context,
+                  context: this.context,
                   builder: (BuildContext context) =>
                       NewFolder(node: currentNode),
                 ).then((success) => success == true ? refresh(state) : null),
