@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primaryColor: Colors.teal,
           accentColor: Colors.redAccent,
-          iconTheme: IconThemeData(color: Colors.black54),
+          iconTheme: IconThemeData(color: Colors.black38),
         ),
         routes: <String, WidgetBuilder>{
           '/login': (BuildContext context) => LoginPage(),

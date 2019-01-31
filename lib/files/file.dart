@@ -604,6 +604,7 @@ class _FilesState extends State<Files> {
         return Scaffold(
           appBar: AppBar(
             title: Text(node.name),
+            brightness: Brightness.light,
             actions: [
               IconButton(
                 icon: Icon(Icons.search),
@@ -680,15 +681,27 @@ class _FilesState extends State<Files> {
       onDispose: (store) => {},
       converter: (store) => store.state,
       builder: (context, state) {
-        return Theme(
-          data: Theme.of(context).copyWith(primaryColor: Colors.teal),
-          child: SafeArea(
+        return Scaffold(
+          appBar: AppBar(
+            elevation: 2.0,
+            brightness: Brightness.light,
+            backgroundColor: Colors.white,
+            titleSpacing: 0.0,
+            iconTheme: IconThemeData(color: Colors.black38),
+            title: Container(
+              color: Colors.grey[200],
+              child: Container(
+                child: searchBar(state),
+              ),
+            ),
+          ),
+          body: SafeArea(
             child: Stack(
               alignment: Alignment.center,
               children: <Widget>[
                 // File list
                 Positioned(
-                  top: 56,
+                  top: 0,
                   left: 0,
                   right: 0,
                   bottom: 0,
@@ -751,7 +764,7 @@ class _FilesState extends State<Files> {
                 // FileNav
                 loading
                     ? Positioned(
-                        top: 56,
+                        top: 0,
                         left: 0,
                         right: 0,
                         child: Container(
@@ -767,25 +780,10 @@ class _FilesState extends State<Files> {
                       )
                     : Container(),
 
-                // Search input
-                Positioned(
-                  top: 8,
-                  left: 0,
-                  right: 0,
-                  height: 48,
-                  child: Container(
-                    color: Colors.grey[200],
-                    child: Container(
-                      padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
-                      child: searchBar(state),
-                    ),
-                  ),
-                ),
-
                 // CircularProgressIndicator
                 loading
                     ? Positioned(
-                        top: 56,
+                        top: 0,
                         left: 0,
                         right: 0,
                         bottom: 0,
