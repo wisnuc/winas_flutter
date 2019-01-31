@@ -20,9 +20,9 @@ class LoginPage extends StatelessWidget {
                 // Navigator to Login
                 Navigator.push(
                   context,
-                  new MaterialPageRoute(
+                  MaterialPageRoute(
                     builder: (context) {
-                      return new Login();
+                      return Login();
                     },
                   ),
                 );
@@ -105,7 +105,7 @@ class Login extends StatefulWidget {
   final String title;
 
   @override
-  _LoginState createState() => new _LoginState();
+  _LoginState createState() => _LoginState();
 }
 
 class _LoginState extends State<Login> {
@@ -114,9 +114,9 @@ class _LoginState extends State<Login> {
   // Focus action
   FocusNode myFocusNode;
 
-  var request = new Request();
+  var request = Request();
 
-  var persistent = new Persistent();
+  var persistent = Persistent();
 
   @override
   void initState() {
@@ -147,7 +147,7 @@ class _LoginState extends State<Login> {
           setState(() => _error = null);
           _phoneNumber = text;
         },
-        controller: new TextEditingController(text: _phoneNumber),
+        controller: TextEditingController(text: _phoneNumber),
         autofocus: true,
         decoration: InputDecoration(
             labelText: "手机号",
@@ -164,7 +164,7 @@ class _LoginState extends State<Login> {
         setState(() => _error = null);
         _password = text;
       },
-      controller: new TextEditingController(text: _password),
+      controller: TextEditingController(text: _password),
       focusNode: myFocusNode,
       decoration: InputDecoration(
           labelText: "密码", prefixIcon: Icon(Icons.lock), errorText: _error),
@@ -175,7 +175,7 @@ class _LoginState extends State<Login> {
 
   accoutLogin(context, store, args) async {
     // dismiss keyboard
-    FocusScope.of(context).requestFocus(new FocusNode());
+    FocusScope.of(context).requestFocus(FocusNode());
 
     // show loading, need `Navigator.pop(context)` to dismiss
     showLoading(
@@ -261,7 +261,7 @@ class _LoginState extends State<Login> {
     bool isCloud = false;
     String cookie = 'blabla';
     Apis apis =
-        new Apis(token, lanIp, lanToken, userUUID, isCloud, deviceSN, cookie);
+        Apis(token, lanIp, lanToken, userUUID, isCloud, deviceSN, cookie);
 
     store.dispatch(
       UpdateApisAction(apis),
@@ -280,7 +280,7 @@ class _LoginState extends State<Login> {
       setState(() {
         _status = 'password';
       });
-      var future = new Future.delayed(const Duration(milliseconds: 100),
+      var future = Future.delayed(const Duration(milliseconds: 100),
           () => FocusScope.of(context).requestFocus(myFocusNode));
       future.then((res) => print('100ms later'));
     } else {
@@ -324,19 +324,19 @@ class _LoginState extends State<Login> {
                 // Navigator to Login
                 Navigator.push(
                   context,
-                  new MaterialPageRoute(builder: (context) {
-                    return new ForgetPassword();
+                  MaterialPageRoute(builder: (context) {
+                    return ForgetPassword();
                   }),
                 );
               }),
         ],
       ),
-      floatingActionButton: new StoreConnector<AppState, VoidCallback>(
+      floatingActionButton: StoreConnector<AppState, VoidCallback>(
         converter: (store) {
           return () => _nextStep(context, store);
         },
         builder: (context, callback) {
-          return new FloatingActionButton(
+          return FloatingActionButton(
             // Attach the `callback` to the `onPressed` attribute
             onPressed: callback,
             tooltip: '下一步',

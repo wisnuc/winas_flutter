@@ -37,7 +37,7 @@ class CacheManager {
     return _rootDir + '/trans/';
   }
 
-  String _thumnailDir() {
+  String _thumbnailDir() {
     return _rootDir + '/thumnail/';
   }
 
@@ -50,7 +50,7 @@ class CacheManager {
     _rootDir = root.path;
     await Directory(_tmpDir()).create(recursive: true);
     await Directory(_transDir()).create(recursive: true);
-    await Directory(_thumnailDir()).create(recursive: true);
+    await Directory(_thumbnailDir()).create(recursive: true);
     await Directory(_imageDir()).create(recursive: true);
   }
 
@@ -72,6 +72,38 @@ class CacheManager {
     try {
       // mkdir
       await Directory(entryDir).create(recursive: true);
+      // download
+      await state.apis.download(ep, qs, transPath);
+      // rename
+      await File(transPath).rename(entryPath);
+    } catch (error) {
+      print(error);
+      return null;
+    }
+    return entryPath;
+  }
+
+  Future<String> getThumb(Entry entry, AppState state) async {
+    String entryPath = _thumbnailDir() + entry.hash + '&width=200&height=200';
+    String transPath = _transDir() + '/' + Uuid().v4();
+    File entryFile = File(entryPath);
+
+    FileStat res = await entryFile.stat();
+
+    // file already downloaded
+    if (res.type != FileSystemEntityType.notFound) {
+      return entryPath;
+    }
+
+    final ep = 'media/${entry.hash}';
+    final qs = {
+      'alt': 'thumbnail',
+      'autoOrient': true,
+      'modifier': 'caret',
+      'width': 200,
+      'height': 200,
+    };
+    try {
       // download
       await state.apis.download(ep, qs, transPath);
       // rename

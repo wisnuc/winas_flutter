@@ -50,7 +50,6 @@ Widget _buildRow(
   BuildContext context,
   List<Entry> entries,
   int index,
-  Node parentNode,
   List actions,
   Function download,
 ) {
@@ -82,7 +81,7 @@ Widget _buildRow(
                   return Files(
                     node: Node(
                       name: entry.name,
-                      driveUUID: parentNode.driveUUID,
+                      driveUUID: entry.pdrv,
                       dirUUID: entry.uuid,
                       tag: 'dir',
                     ),
@@ -302,7 +301,7 @@ class _FilesState extends State<Files> {
     );
     final cm = await CacheManager.getInstance();
     String entryPath = await cm.getTmpFile(entry, state);
-    print(entryPath);
+
     Navigator.pop(ctx);
     if (entryPath == null) {
       showSnackBar(ctx, '打开失败');
@@ -358,7 +357,7 @@ class _FilesState extends State<Files> {
           {
             'icon': Icons.share,
             'title': '分享到共享空间',
-            'types': node.tag == 'home' ? ['file', 'directory'] : [],
+            'types': node.tag == 'built-in' ? [] : ['file', 'directory'],
             'action': (BuildContext ctx, Entry entry) async {
               Navigator.pop(ctx);
               showLoading(
@@ -433,12 +432,13 @@ class _FilesState extends State<Files> {
         ];
   }
 
-  openSearch(context) {
+  openSearch(context, state) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) {
-          return Search(node: currentNode);
+          return Search(
+              node: currentNode, actions: actions(state), download: _download);
         },
       ),
     );
@@ -453,7 +453,7 @@ class _FilesState extends State<Files> {
             flex: 1,
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
-              onTap: () => openSearch(this.context),
+              onTap: () => openSearch(this.context, state),
               child: Row(
                 children: <Widget>[
                   Container(width: 16),
@@ -544,7 +544,6 @@ class _FilesState extends State<Files> {
             context,
             dirs,
             index,
-            currentNode,
             actions(state),
             (entry) => _download(context, entry, state),
           );
@@ -587,7 +586,6 @@ class _FilesState extends State<Files> {
             context,
             files,
             index,
-            currentNode,
             actions(state),
             (entry) => _download(context, entry, state),
           );

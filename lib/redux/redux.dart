@@ -102,6 +102,7 @@ class Entry {
   String hmtime;
   String pdir;
   String pdrv;
+  List namepath;
   Metadata metadata;
 
   Entry.fromMap(Map m) {
@@ -116,6 +117,23 @@ class Entry {
     this.hmtime = prettyDate(this.mtime);
     this.metadata =
         m['metadata'] == null ? null : Metadata.fromMap(m['metadata']);
+  }
+
+  Entry.fromSearch(Map m, List<String> d) {
+    this.size = m['size'];
+    this.ctime = m['ctime'];
+    this.mtime = m['mtime'];
+    this.name = m['name'];
+    this.uuid = m['uuid'];
+    this.type = m['type'];
+    this.hash = m['hash'];
+    this.hsize = prettySize(this.size);
+    this.hmtime = prettyDate(this.mtime);
+    this.metadata =
+        m['metadata'] == null ? null : Metadata.fromMap(m['metadata']);
+    this.pdir = m['pdir'];
+    this.pdrv = d[m['place']];
+    this.namepath = m['namepath'];
   }
 
   Entry.mixNode(Map m, Node n) {

@@ -1,5 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_redux/flutter_redux.dart';
+
 import '../redux/redux.dart';
+import '../common/cache.dart';
 import '../common/renderIcon.dart';
 
 class FileNavView {
@@ -404,10 +408,7 @@ class FileGrid extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               type == 'file'
-                  ? Expanded(
-                      flex: 1,
-                      child: renderIcon(name, metadata, size: 72.0),
-                    )
+                  ? Expanded(flex: 1, child: Thumb(entry: entry, size: 72.0))
                   : Container(),
               Row(
                 mainAxisSize: MainAxisSize.min,
@@ -440,6 +441,53 @@ class FileGrid extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class Thumb extends StatefulWidget {
+  Thumb({Key key, this.entry, this.size}) : super(key: key);
+  final Entry entry;
+  final double size;
+
+  @override
+  _ThumbState createState() => _ThumbState(entry, size);
+}
+
+class _ThumbState extends State<Thumb> {
+  _ThumbState(this.entry, this.size);
+  final Entry entry;
+  final double size;
+  String _imgSrc;
+
+  _getThumb(AppState state) async {
+    final cm = await CacheManager.getInstance();
+    String thumbPath = await cm.getThumb(entry, state);
+
+    if (thumbPath == null) {
+      return;
+    } else if (this.mounted) {
+      setState(() {
+        _imgSrc = thumbPath;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StoreConnector<AppState, AppState>(
+      onInit: (store) => _getThumb(store.state),
+      onDispose: (store) => {},
+      converter: (store) => store.state,
+      builder: (context, state) {
+        if (_imgSrc == null) {
+          return renderIcon(entry.name, entry.metadata, size: size);
+        }
+        return Image.file(
+          File(_imgSrc),
+          fit: BoxFit.cover,
+        );
+      },
     );
   }
 }

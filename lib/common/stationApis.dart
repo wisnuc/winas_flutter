@@ -94,6 +94,10 @@ class Apis {
       case 'xcopy':
         r = tpost('tasks', args);
         break;
+
+      case 'search':
+        r = tget('files', args);
+        break;
     }
     return r;
   }
@@ -101,12 +105,11 @@ class Apis {
   download(ep, qs, downloadPath) async {
     assert(token != null);
     dio.options.headers['Authorization'] = 'JWT $lanToken';
-    var response = await dio.download(
+    await dio.download(
       '$lanAdrress/$ep',
       downloadPath,
       data: qs,
       onProgress: (a, b) => a == b ? print('finished, size: $b') : null,
     );
-    print(response);
   }
 }
