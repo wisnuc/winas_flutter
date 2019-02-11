@@ -54,6 +54,40 @@ class CacheManager {
     await Directory(_imageDir()).create(recursive: true);
   }
 
+  Future<int> _getDirSize(String dirPath) async {
+    int size = 0;
+    Stream entries = Directory(dirPath).list(recursive: true);
+    await for (var entry in entries) {
+      if (entry is File) {
+        var stat = await entry.stat();
+        size += stat.size;
+      }
+    }
+    return size;
+  }
+
+  Future<int> getCacheSize() async {
+    var res = await Future.wait([
+      _getDirSize(_tmpDir()),
+      _getDirSize(_transDir()),
+      _getDirSize(_thumbnailDir()),
+      _getDirSize(_imageDir()),
+    ]);
+    int size = 0;
+    for (int s in res) {
+      size += s;
+    }
+    return size;
+  }
+
+  Future clearCache() async {
+    await Directory(_tmpDir()).delete(recursive: true);
+    await Directory(_transDir()).delete(recursive: true);
+    await Directory(_thumbnailDir()).delete(recursive: true);
+    await Directory(_imageDir()).delete(recursive: true);
+    await _instance._init();
+  }
+
   Future<String> getTmpFile(Entry entry, AppState state) async {
     String entryDir = _tmpDir() + entry.uuid.substring(24, 36) + '/';
     String entryPath = entryDir + entry.name;

@@ -604,7 +604,7 @@ class _FilesState extends State<Files> {
         return Scaffold(
           appBar: AppBar(
             title: Text(node.name),
-            brightness: Brightness.light,
+            brightness: Brightness.dark,
             actions: [
               IconButton(
                 icon: Icon(Icons.search),

@@ -117,6 +117,7 @@ class _SearchState extends State<Search> {
           appBar: AppBar(
             elevation: 2.0, // no shadow
             backgroundColor: Colors.white,
+            brightness: Brightness.light,
             iconTheme: IconThemeData(color: Colors.black38),
             title: TextField(
               // autofocus: true,

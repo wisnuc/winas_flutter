@@ -79,6 +79,7 @@ class StorageDetail extends StatelessWidget {
       appBar: AppBar(
         elevation: 0.0, // no shadow
         backgroundColor: Colors.white10,
+        brightness: Brightness.light,
         iconTheme: IconThemeData(color: Colors.black38),
         title: Text('存储详情', style: TextStyle(color: Colors.black87)),
       ),
@@ -277,6 +278,7 @@ class _StationState extends State<Station> {
         return Scaffold(
           appBar: AppBar(
             backgroundColor: Colors.white10,
+            brightness: Brightness.light,
             iconTheme: IconThemeData(color: Colors.black38),
             title: Text('设备', style: TextStyle(color: Colors.black87)),
             elevation: 0.0, // no shadow
@@ -288,7 +290,7 @@ class _StationState extends State<Station> {
                 )
               : Container(
                   constraints: BoxConstraints.expand(),
-                  padding: EdgeInsets.all(16),
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: Column(
                     children: <Widget>[
                       Container(

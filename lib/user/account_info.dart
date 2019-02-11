@@ -1,7 +1,9 @@
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:flutter/material.dart';
 
+import '../common/cache.dart';
 import '../redux/redux.dart';
+import '../common/format.dart';
 
 class AccountInfo extends StatefulWidget {
   AccountInfo({Key key}) : super(key: key);
@@ -11,6 +13,29 @@ class AccountInfo extends StatefulWidget {
 }
 
 class _AccountInfoState extends State<AccountInfo> {
+  int cacheSize;
+
+  Future getCacheSize() async {
+    final cm = await CacheManager.getInstance();
+    var size = await cm.getCacheSize();
+    setState(() {
+      cacheSize = size;
+    });
+  }
+
+  Future clearCache(BuildContext ctx) async {
+    final cm = await CacheManager.getInstance();
+    await cm.clearCache();
+    await getCacheSize();
+    Navigator.pop(ctx);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getCacheSize();
+  }
+
   Widget actionItem(String title, Function action, Widget rightItem) {
     return Container(
       height: 64,
@@ -49,12 +74,16 @@ class _AccountInfoState extends State<AccountInfo> {
       converter: (store) => store.state.account,
       builder: (context, account) {
         return Scaffold(
+          appBar: AppBar(
+            elevation: 0.0, // no shadow
+            backgroundColor: Colors.white10,
+            brightness: Brightness.light,
+          ),
           body: Container(
             constraints: BoxConstraints.expand(),
-            padding: EdgeInsets.all(16),
+            padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Column(
               children: <Widget>[
-                Container(height: 56),
                 GestureDetector(
                   onTap: () => Navigator.push(
                         context,
@@ -133,8 +162,29 @@ class _AccountInfoState extends State<AccountInfo> {
                 ),
                 actionItem(
                   '清除缓存',
-                  () => {},
-                  Text('1 MB'),
+                  () async {
+                    await showDialog(
+                      context: this.context,
+                      builder: (BuildContext context) => AlertDialog(
+                            title: Text('清除缓存'),
+                            content: Text('该操作将清除所有缓存的图片、文件'),
+                            actions: <Widget>[
+                              FlatButton(
+                                  textColor: Theme.of(context).primaryColor,
+                                  child: Text('取消'),
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  }),
+                              FlatButton(
+                                textColor: Theme.of(context).primaryColor,
+                                child: Text('确定'),
+                                onPressed: () => clearCache(context),
+                              )
+                            ],
+                          ),
+                    );
+                  },
+                  Text(cacheSize != null ? prettySize(cacheSize) : ''),
                 ),
                 actionItem(
                   '关于',
