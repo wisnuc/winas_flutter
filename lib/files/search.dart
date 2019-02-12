@@ -145,6 +145,7 @@ class _SearchState extends State<Search> {
                             controller: myScrollController,
                             physics: AlwaysScrollableScrollPhysics(),
                             slivers: <Widget>[
+                              // images, GridView
                               _types != fileTypes[4][2]
                                   ? SliverFixedExtentList(
                                       itemExtent: 64,

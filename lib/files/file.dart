@@ -3,7 +3,6 @@ import 'package:open_file/open_file.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 
-import './photo.dart';
 import './delete.dart';
 import './rename.dart';
 import './search.dart';
@@ -221,7 +220,7 @@ class _FilesState extends State<Files> {
     }
 
     // assert(listNav.data is Map<String, List>);
-
+    // mix currentNode's dirUUID, driveUUID
     List<Entry> rawEntries = List.from(listNav.data['entries']
         .map((entry) => Entry.mixNode(entry, currentNode)));
     List<DirPath> rawPath =
@@ -235,22 +234,22 @@ class _FilesState extends State<Files> {
     List<Entry> newDirs = [];
     List<Entry> newFiles = [];
 
-    // insert DirectoryTitle, or FileTitle
     if (rawEntries.length == 0) {
       print('empty entries or some error');
     } else if (rawEntries[0]?.type == 'directory') {
-      // newEntries.add(dirTitleEntry);
       int index = rawEntries.indexWhere((entry) => entry.type == 'file');
       if (index > -1) {
-        // rawEntries.insert(index, fileTitleEntry);
         newDirs = List.from(rawEntries.take(index));
-        newFiles = List.from(rawEntries.skip(index));
+
+        // filter entry.hash
+        newFiles = List.from(
+            rawEntries.skip(index).where((entry) => entry.hash != null));
       } else {
         newDirs = rawEntries;
       }
     } else if (rawEntries[0]?.type == 'file') {
-      // newEntries.add(fileTitleEntry);
-      newFiles = rawEntries;
+      // filter entry.hash
+      newFiles = List.from(rawEntries.where((entry) => entry.hash != null));
     } else {
       print('other entries!!!!');
     }
@@ -281,12 +280,10 @@ class _FilesState extends State<Files> {
 
   void _download(BuildContext ctx, Entry entry, AppState state) async {
     // preview photos
-    if (photoMagic.indexOf(entry?.metadata?.type) > -1) {
-      if (!gridView) {
-        showPhoto(ctx, entry, null);
-      }
-      return;
-    }
+    // if (photoMagic.indexOf(entry?.metadata?.type) > -1) {
+    //   showPhoto(ctx, entry, null);
+    //   return;
+    // }
     showLoading(
       barrierDismissible: false,
       builder: (ctx) {

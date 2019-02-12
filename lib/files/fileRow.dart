@@ -1,8 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_redux/flutter_redux.dart';
 
 import './photo.dart';
 import '../redux/redux.dart';
 import '../common/renderIcon.dart';
+import '../common/cache.dart';
 
 class FileNavView {
   final Widget _icon;
@@ -109,8 +112,28 @@ class TitleRow extends StatelessWidget {
   }
 }
 
-class FileRow extends StatelessWidget {
+class FileRow extends StatefulWidget {
   FileRow(
+      {Key key, this.entry, this.type, this.actions, this.onPress, this.isGrid})
+      : super(key: key);
+  final Entry entry;
+  final String type;
+  final List actions;
+  final Function onPress;
+  final bool isGrid;
+
+  @override
+  _FileRowState createState() => _FileRowState(
+        entry: entry,
+        type: type,
+        actions: actions,
+        onPress: onPress,
+        isGrid: isGrid,
+      );
+}
+
+class _FileRowState extends State<FileRow> {
+  _FileRowState(
       {Entry entry, String type, List actions, Function onPress, bool isGrid})
       : name = entry.name,
         type = type,
@@ -131,6 +154,86 @@ class FileRow extends StatelessWidget {
   final Metadata metadata;
   final List actions;
   final bool isGrid;
+
+  String _thumbSrc;
+
+  _getThumb(AppState state) async {
+    if (!isGrid ||
+        thumbMagic.indexOf(entry?.metadata?.type) == -1 ||
+        entry.hash == null) return;
+
+    final cm = await CacheManager.getInstance();
+    _thumbSrc = await cm.getThumb(entry, state);
+
+    if (this.mounted && _thumbSrc != null) {
+      setState(() {});
+    }
+  }
+
+  _onPressMore(ctx) {
+    showModalBottomSheet(
+      context: ctx,
+      builder: modalBottomSheet,
+    );
+  }
+
+  _onTap(BuildContext ctx) {
+    if (photoMagic.indexOf(entry?.metadata?.type) > -1) {
+      showPhoto(ctx, entry, _thumbSrc);
+    } else {
+      onPress();
+    }
+  }
+
+  Widget modalBottomSheet(BuildContext ctx) {
+    return Container(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(width: 24),
+              type == 'file'
+                  ? renderIcon(name, metadata)
+                  : Icon(Icons.folder, color: Colors.orange),
+              Container(width: 32),
+              Text(
+                name,
+                textAlign: TextAlign.start,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+              Expanded(
+                child: Container(),
+                flex: 1,
+              ),
+              IconButton(
+                icon: Icon(Icons.info),
+                onPressed: () => print('press info'),
+              ),
+            ],
+          ),
+          Container(
+            width: double.infinity,
+            height: 1,
+            color: Colors.grey[300],
+          ),
+          Container(height: 8),
+          Column(
+            children: actions
+                .where((action) => action['types'].contains(type))
+                .map<Widget>((value) => actionItem(
+                      ctx,
+                      value['icon'],
+                      value['title'],
+                      value['action'],
+                    ))
+                .toList(),
+          )
+        ],
+      ),
+    );
+  }
 
   Widget actionItem(
       BuildContext ctx, IconData icon, String title, Function action) {
@@ -158,68 +261,24 @@ class FileRow extends StatelessWidget {
     );
   }
 
-  _onPress(ctx) {
-    print('context in FileRow._onPress: $ctx');
-    showModalBottomSheet(
-      context: ctx,
-      builder: (BuildContext context) {
-        return Container(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Container(width: 24),
-                  type == 'file'
-                      ? renderIcon(name, metadata)
-                      : Icon(Icons.folder, color: Colors.orange),
-                  Container(width: 32),
-                  Text(
-                    name,
-                    textAlign: TextAlign.start,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                  Expanded(
-                    child: Container(),
-                    flex: 1,
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.info),
-                    onPressed: () => print('press info'),
-                  ),
-                ],
-              ),
-              Container(
-                width: double.infinity,
-                height: 1,
-                color: Colors.grey[300],
-              ),
-              Container(height: 8),
-              Column(
-                children: actions
-                    .where((action) => action['types'].contains(type))
-                    .map<Widget>((value) => actionItem(
-                          ctx,
-                          value['icon'],
-                          value['title'],
-                          value['action'],
-                        ))
-                    .toList(),
-              )
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget renderGrid(BuildContext ctx) {
+  Widget renderGrid(BuildContext ctx, String thumbSrc) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         type == 'file'
-            ? Expanded(flex: 1, child: Thumb(entry: entry, size: 72.0))
+            ? Expanded(
+                flex: 1,
+                child: thumbSrc == null
+                    ? renderIcon(entry.name, entry.metadata, size: 72.0)
+                    // show thumb
+                    : Hero(
+                        tag: entry.uuid,
+                        child: Image.file(
+                          File(thumbSrc),
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+              )
             : Container(),
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -244,7 +303,7 @@ class FileRow extends StatelessWidget {
             ),
             IconButton(
               icon: Icon(Icons.more_horiz),
-              onPressed: () => _onPress(ctx),
+              onPressed: () => _onPressMore(ctx),
             ),
           ],
         ),
@@ -309,7 +368,7 @@ class FileRow extends StatelessWidget {
                 ),
                 IconButton(
                   icon: Icon(Icons.more_horiz),
-                  onPressed: () => _onPress(ctx),
+                  onPressed: () => _onPressMore(ctx),
                 )
               ],
             ),
@@ -321,15 +380,23 @@ class FileRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 64,
-      child: Material(
-        child: InkWell(
-          onTap: onPress,
-          onLongPress: () => print('long press: $name'),
-          child: isGrid ? renderGrid(context) : renderRow(context),
-        ),
-      ),
+    return StoreConnector<AppState, AppState>(
+      onInit: (store) => _getThumb(store.state),
+      onDispose: (store) => {},
+      converter: (store) => store.state,
+      builder: (context, state) {
+        return Container(
+          height: 64,
+          child: Material(
+            child: InkWell(
+              onTap: () => _onTap(context),
+              onLongPress: () => print('long press: $name'),
+              child:
+                  isGrid ? renderGrid(context, _thumbSrc) : renderRow(context),
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -4,11 +4,12 @@ import 'package:flutter_redux/flutter_redux.dart';
 
 import '../redux/redux.dart';
 import '../common/cache.dart';
-import '../common/renderIcon.dart';
 
 const double _kMinFlingVelocity = 800.0;
 
 List<String> photoMagic = ['JPEG', 'GIF', 'PNG', 'BMP'];
+
+List<String> thumbMagic = ['JPEG', 'GIF', 'PNG', 'BMP', 'PDF'];
 
 showPhoto(BuildContext ctx, Entry entry, String thumbSrc) {
   Navigator.push(
@@ -39,66 +40,6 @@ showPhoto(BuildContext ctx, Entry entry, String thumbSrc) {
       },
     ),
   );
-}
-
-class Thumb extends StatefulWidget {
-  Thumb({Key key, this.entry, this.size}) : super(key: key);
-  final Entry entry;
-  final double size;
-
-  @override
-  _ThumbState createState() => _ThumbState(entry, size);
-}
-
-class _ThumbState extends State<Thumb> {
-  _ThumbState(this.entry, this.size);
-  final Entry entry;
-  final double size;
-  String _imgSrc;
-
-  _getThumb(AppState state) async {
-    final cm = await CacheManager.getInstance();
-    String thumbPath = await cm.getThumb(entry, state);
-
-    if (thumbPath == null) {
-      return;
-    } else if (this.mounted) {
-      setState(() {
-        _imgSrc = thumbPath;
-      });
-    }
-  }
-
-  _onPress(BuildContext ctx) async {
-    if (photoMagic.indexOf(entry?.metadata?.type) > -1) {
-      print(entry.name);
-      showPhoto(ctx, entry, _imgSrc);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return StoreConnector<AppState, AppState>(
-      onInit: (store) => _getThumb(store.state),
-      onDispose: (store) => {},
-      converter: (store) => store.state,
-      builder: (context, state) {
-        if (_imgSrc == null) {
-          return renderIcon(entry.name, entry.metadata, size: size);
-        }
-        return Hero(
-          tag: entry.uuid,
-          child: GestureDetector(
-            onTap: () => _onPress(context),
-            child: Image.file(
-              File(_imgSrc),
-              fit: BoxFit.contain,
-            ),
-          ),
-        );
-      },
-    );
-  }
 }
 
 class GridPhotoViewer extends StatefulWidget {
