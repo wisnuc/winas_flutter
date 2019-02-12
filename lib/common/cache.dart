@@ -148,4 +148,32 @@ class CacheManager {
     }
     return entryPath;
   }
+
+  Future<String> getPhoto(Entry entry, AppState state) async {
+    String entryPath = _imageDir() + entry.hash;
+    String transPath = _transDir() + '/' + Uuid().v4();
+    File entryFile = File(entryPath);
+
+    FileStat res = await entryFile.stat();
+
+    // file already downloaded
+    if (res.type != FileSystemEntityType.notFound) {
+      return entryPath;
+    }
+
+    final ep = 'media/${entry.hash}';
+    final qs = {
+      'alt': 'data',
+    };
+    try {
+      // download
+      await state.apis.download(ep, qs, transPath);
+      // rename
+      await File(transPath).rename(entryPath);
+    } catch (error) {
+      print(error);
+      return null;
+    }
+    return entryPath;
+  }
 }

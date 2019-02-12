@@ -152,15 +152,12 @@ class _SearchState extends State<Search> {
                                         (BuildContext context, int index) {
                                           final entry = _entries[index];
                                           return FileRow(
-                                            name: entry.name,
+                                            entry: entry,
                                             type: 'file',
+                                            actions: actions,
                                             onPress: () =>
                                                 download(context, entry, state),
-                                            mtime: entry.hmtime,
-                                            size: entry.hsize,
-                                            metadata: entry.metadata,
-                                            entry: entry,
-                                            actions: actions,
+                                            isGrid: false,
                                           );
                                         },
                                         childCount: _entries.length,
@@ -177,16 +174,13 @@ class _SearchState extends State<Search> {
                                       delegate: SliverChildBuilderDelegate(
                                         (BuildContext context, int index) {
                                           final entry = _entries[index];
-                                          return FileGrid(
-                                            name: entry.name,
+                                          return FileRow(
+                                            entry: entry,
                                             type: 'file',
+                                            actions: actions,
                                             onPress: () =>
                                                 download(context, entry, state),
-                                            mtime: entry.hmtime,
-                                            size: entry.hsize,
-                                            metadata: entry.metadata,
-                                            entry: entry,
-                                            actions: actions,
+                                            isGrid: true,
                                           );
                                         },
                                         childCount: _entries.length,

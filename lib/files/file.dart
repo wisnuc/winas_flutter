@@ -3,6 +3,7 @@ import 'package:open_file/open_file.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 
+import './photo.dart';
 import './delete.dart';
 import './rename.dart';
 import './search.dart';
@@ -61,18 +62,14 @@ Widget _buildRow(
       return TitleRow(isFirst: index == 0, type: 'file');
     case 'file':
       return FileRow(
-        name: entry.name,
         type: 'file',
         onPress: () => download(entry),
-        mtime: entry.hmtime,
-        size: entry.hsize,
-        metadata: entry.metadata,
         entry: entry,
         actions: actions,
+        isGrid: false,
       );
     case 'directory':
       return FileRow(
-        name: entry.name,
         type: 'directory',
         onPress: () => Navigator.push(
               context,
@@ -89,9 +86,9 @@ Widget _buildRow(
                 },
               ),
             ),
-        mtime: entry.hmtime,
         entry: entry,
         actions: actions,
+        isGrid: false,
       );
   }
   return null;
@@ -108,19 +105,15 @@ Widget _buildGrid(
   final entry = entries[index];
   switch (entry.type) {
     case 'file':
-      return FileGrid(
-        name: entry.name,
+      return FileRow(
         type: 'file',
         onPress: () => download(entry),
-        mtime: entry.hmtime,
-        size: entry.hsize,
-        metadata: entry.metadata,
         entry: entry,
         actions: actions,
+        isGrid: true,
       );
     case 'directory':
-      return FileGrid(
-        name: entry.name,
+      return FileRow(
         type: 'directory',
         onPress: () => Navigator.push(
               context,
@@ -137,9 +130,9 @@ Widget _buildGrid(
                 },
               ),
             ),
-        mtime: entry.hmtime,
         entry: entry,
         actions: actions,
+        isGrid: true,
       );
   }
   return Container();
@@ -287,6 +280,13 @@ class _FilesState extends State<Files> {
   }
 
   void _download(BuildContext ctx, Entry entry, AppState state) async {
+    // preview photos
+    if (photoMagic.indexOf(entry?.metadata?.type) > -1) {
+      if (!gridView) {
+        showPhoto(ctx, entry, null);
+      }
+      return;
+    }
     showLoading(
       barrierDismissible: false,
       builder: (ctx) {
@@ -603,8 +603,17 @@ class _FilesState extends State<Files> {
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(
-            title: Text(node.name),
-            brightness: Brightness.dark,
+            title: Text(
+              node.name,
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+            brightness: Brightness.light,
+            backgroundColor: Colors.white,
+            elevation: 2.0,
+            iconTheme: IconThemeData(color: Colors.black38),
             actions: [
               IconButton(
                 icon: Icon(Icons.search),
