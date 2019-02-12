@@ -30,6 +30,7 @@ dependencies:
   dio: ^1.0.13
   shared_preferences: ^0.4.3
   outline_material_icons: ^0.1.0
+  async: ^2.0.8
   # draggable_scrollbar: ^0.0.4
   # to use draggable-scrollbar with sliver list
   draggable_scrollbar:

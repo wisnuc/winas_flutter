@@ -1,10 +1,17 @@
 import 'dart:io';
 import 'dart:async';
 import 'package:uuid/uuid.dart';
+import 'package:async/async.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../redux/redux.dart';
+
+class Task {
+  final AsyncMemoizer lock = AsyncMemoizer();
+  final String name;
+  Task(this.name);
+}
 
 class CacheManager {
   static CacheManager _instance;
@@ -149,7 +156,20 @@ class CacheManager {
     return entryPath;
   }
 
-  Future<String> getPhoto(Entry entry, AppState state) async {
+  List<Task> tasks = [];
+  // Memoizer result
+  Future getPhoto(Entry entry, AppState state) {
+    int index = tasks.indexWhere((task) => task.name == entry.hash);
+    if (index > -1) {
+      return tasks[index].lock.runOnce(() => _getPhoto(entry, state));
+    } else {
+      Task task = Task(entry.hash);
+      tasks.add(task);
+      return task.lock.runOnce(() => _getPhoto(entry, state));
+    }
+  }
+
+  Future<String> _getPhoto(Entry entry, AppState state) async {
     String entryPath = _imageDir() + entry.hash;
     String transPath = _transDir() + '/' + Uuid().v4();
     File entryFile = File(entryPath);
