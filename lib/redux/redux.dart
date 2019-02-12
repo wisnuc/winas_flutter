@@ -173,6 +173,11 @@ class Node {
   Node({this.name, this.driveUUID, this.dirUUID, this.tag});
 }
 
+class Config {
+  bool gridView;
+  Config({this.gridView});
+}
+
 // actions
 class LoginAction {
   final Account data;
@@ -199,6 +204,11 @@ class UpdateApisAction {
   UpdateApisAction(this.data);
 }
 
+class UpdateConfigAction {
+  final Config data;
+  UpdateConfigAction(this.data);
+}
+
 final deviceLoginReducer = combineReducers<Device>([
   TypedReducer<Device, DeviceLoginAction>((data, action) => action.data),
 ]);
@@ -219,6 +229,10 @@ final updateApisReducer = combineReducers<Apis>([
   TypedReducer<Apis, UpdateApisAction>((data, action) => action.data),
 ]);
 
+final updateConfigReducer = combineReducers<Config>([
+  TypedReducer<Config, UpdateConfigAction>((data, action) => action.data),
+]);
+
 AppState appReducer(AppState state, action) {
   return AppState(
     account: accountLoginReducer(state.account, action),
@@ -226,6 +240,7 @@ AppState appReducer(AppState state, action) {
     localUser: updateUserReducer(state.localUser, action),
     drives: updateDriveReducer(state.drives, action),
     apis: updateApisReducer(state.apis, action),
+    config: updateConfigReducer(state.config, action),
   );
 }
 
@@ -254,6 +269,7 @@ AppState fakeState = AppState(
       false,
       "test_b44-a529-4dcf-aa30-240a151d8e03",
       'cookie'),
+  config: Config(gridView: true),
 );
 
 class AppState {
@@ -262,16 +278,23 @@ class AppState {
   final User localUser;
   final List<Drive> drives;
   final Apis apis;
+  final Config config;
   AppState({
     this.account,
     this.device,
     this.localUser,
     this.drives,
     this.apis,
+    this.config,
   });
 
   factory AppState.initial() => new AppState(
-      account: null, device: null, localUser: null, drives: [], apis: null);
+      account: null,
+      device: null,
+      localUser: null,
+      drives: [],
+      apis: null,
+      config: null);
 
   factory AppState.autologin() => fakeState;
 }

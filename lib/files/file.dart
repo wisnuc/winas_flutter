@@ -166,7 +166,6 @@ class _FilesState extends State<Files> {
   List<Entry> dirs = [];
   List<Entry> files = [];
   List<DirPath> paths = [];
-  bool gridView = false;
   ScrollController myScrollController = ScrollController();
   Function actions;
 
@@ -441,7 +440,7 @@ class _FilesState extends State<Files> {
     );
   }
 
-  Widget searchBar(state) {
+  Widget searchBar(AppState state) {
     return Material(
       elevation: 2.0,
       child: Row(
@@ -469,11 +468,19 @@ class _FilesState extends State<Files> {
                       NewFolder(node: currentNode),
                 ).then((success) => success == true ? refresh(state) : null),
           ),
-          IconButton(
-            icon: Icon(gridView ? Icons.view_list : Icons.view_module),
-            onPressed: () => setState(() {
-                  gridView = !gridView;
-                }),
+          StoreConnector<AppState, VoidCallback>(
+            converter: (store) {
+              return () => store.dispatch(UpdateConfigAction(
+                  Config(gridView: !store.state.config.gridView)));
+            },
+            builder: (context, callback) {
+              return IconButton(
+                icon: Icon(state.config.gridView
+                    ? Icons.view_list
+                    : Icons.view_module),
+                onPressed: callback,
+              );
+            },
           ),
           IconButton(
             icon: Icon(Icons.more_horiz),
@@ -624,11 +631,19 @@ class _FilesState extends State<Files> {
                           NewFolder(node: currentNode),
                     ).then((success) => success ? refresh(state) : null),
               ),
-              IconButton(
-                icon: Icon(gridView ? Icons.view_list : Icons.view_module),
-                onPressed: () => setState(() {
-                      gridView = !gridView;
-                    }),
+              StoreConnector<AppState, VoidCallback>(
+                converter: (store) {
+                  return () => store.dispatch(UpdateConfigAction(
+                      Config(gridView: !store.state.config.gridView)));
+                },
+                builder: (context, callback) {
+                  return IconButton(
+                    icon: Icon(state.config.gridView
+                        ? Icons.view_list
+                        : Icons.view_module),
+                    onPressed: callback,
+                  );
+                },
               ),
               IconButton(
                 icon: Icon(Icons.more_horiz),
@@ -663,11 +678,13 @@ class _FilesState extends State<Files> {
                                       // dir title
                                       dirTitle(),
                                       // dir Grid or Row view
-                                      gridView ? dirGrid(state) : dirRow(state),
+                                      state.config.gridView
+                                          ? dirGrid(state)
+                                          : dirRow(state),
                                       // file title
                                       fileTitle(),
                                       // file Grid or Row view
-                                      gridView
+                                      state.config.gridView
                                           ? fileGrid(state)
                                           : fileRow(state),
                                     ],
@@ -753,11 +770,13 @@ class _FilesState extends State<Files> {
                                       // dir title
                                       dirTitle(),
                                       // dir Grid or Row view
-                                      gridView ? dirGrid(state) : dirRow(state),
+                                      state.config.gridView
+                                          ? dirGrid(state)
+                                          : dirRow(state),
                                       // file title
                                       fileTitle(),
                                       // file Grid or Row view
-                                      gridView
+                                      state.config.gridView
                                           ? fileGrid(state)
                                           : fileRow(state),
                                     ],
