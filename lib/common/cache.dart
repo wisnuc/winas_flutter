@@ -124,7 +124,28 @@ class CacheManager {
     return entryPath;
   }
 
-  Future<String> getThumb(Entry entry, AppState state) async {
+  ///  convert callback to Future, TODO: add queue to limit concurrent
+  Future getThumb(Entry entry, AppState state) async {
+    Completer c = new Completer();
+    _getThumbCallback(entry, state, (error, value) {
+      if (error != null) {
+        c.completeError(error);
+      } else {
+        c.complete(value);
+      }
+    });
+    return c.future;
+  }
+
+  ///  convert Future to  callback
+  void _getThumbCallback(Entry entry, AppState state, Function callback) {
+    _getThumb(entry, state)
+        .then((value) => callback(null, value))
+        .catchError((onError) => callback(onError));
+  }
+
+  ///  download thumb
+  Future<String> _getThumb(Entry entry, AppState state) async {
     String entryPath = _thumbnailDir() + entry.hash + '&width=200&height=200';
     String transPath = _transDir() + '/' + Uuid().v4();
     File entryFile = File(entryPath);
@@ -157,7 +178,8 @@ class CacheManager {
   }
 
   List<Task> tasks = [];
-  // Memoizer result
+
+  /// download raw photo, use AsyncMemoizer to memoizer result to fix bug of hero
   Future getPhoto(Entry entry, AppState state) {
     int index = tasks.indexWhere((task) => task.name == entry.hash);
     if (index > -1) {
@@ -176,7 +198,7 @@ class CacheManager {
 
     FileStat res = await entryFile.stat();
 
-    // file already downloaded
+    /// file already downloaded
     if (res.type != FileSystemEntityType.notFound) {
       return entryPath;
     }
@@ -186,9 +208,10 @@ class CacheManager {
       'alt': 'data',
     };
     try {
-      // download
+      /// download
       await state.apis.download(ep, qs, transPath);
-      // rename
+
+      /// rename
       await File(transPath).rename(entryPath);
     } catch (error) {
       print(error);
