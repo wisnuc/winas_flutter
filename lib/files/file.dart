@@ -11,6 +11,7 @@ import './newFolder.dart';
 import '../redux/redux.dart';
 import '../common/loading.dart';
 import '../common/cache.dart';
+import './backupView.dart';
 
 List<FileNavView> _fileNavViews = [
   FileNavView(
@@ -37,6 +38,12 @@ List<FileNavView> _fileNavViews = [
     title: '备份空间',
     nav: 'backup',
     color: Colors.blue,
+    onTap: (context) => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BackupView(),
+          ),
+        ),
   ),
   FileNavView(
     icon: Icon(Icons.swap_vert, color: Colors.white),
@@ -141,16 +148,6 @@ Widget _buildGrid(
       );
   }
   return Container();
-}
-
-void showSnackBar(BuildContext ctx, String message) {
-  final snackBar = SnackBar(
-    content: Text(message),
-    duration: Duration(seconds: 1),
-  );
-
-  // Find the Scaffold in the Widget tree and use it to show a SnackBar!
-  Scaffold.of(ctx, nullOk: true)?.showSnackBar(snackBar);
 }
 
 class Files extends StatefulWidget {
@@ -439,7 +436,10 @@ class _FilesState extends State<Files> {
       MaterialPageRoute(
         builder: (context) {
           return Search(
-              node: currentNode, actions: actions(state), download: _download);
+            node: currentNode,
+            actions: actions(state),
+            download: _download,
+          );
         },
       ),
     );
@@ -688,15 +688,20 @@ class _FilesState extends State<Files> {
       brightness: Brightness.light,
       elevation: 2.0,
       iconTheme: IconThemeData(color: Colors.white),
-      actions: [
+      actions: <Widget>[
         IconButton(
           icon: Icon(Icons.forward),
           onPressed: () => {},
         ),
-        IconButton(
-          icon: Icon(Icons.file_download),
-          onPressed: () => {},
-        ),
+        Builder(builder: (ctx) {
+          return IconButton(
+            icon: Icon(Icons.file_download),
+            onPressed: () {
+              showSnackBar(ctx, '${select.selectedEntry.length}个项目加入下载列表');
+              select.clearSelect();
+            },
+          );
+        }),
         IconButton(
           icon: Icon(Icons.more_horiz),
           onPressed: () => {},

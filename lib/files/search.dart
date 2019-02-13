@@ -23,6 +23,7 @@ class _SearchState extends State<Search> {
   bool loading = false;
   List<Entry> _entries;
   ScrollController myScrollController = ScrollController();
+  Select select;
   _SearchState(this.node, this.actions, this.download);
 
   _onSearch(BuildContext context, AppState state) async {
@@ -67,7 +68,7 @@ class _SearchState extends State<Search> {
     }
   }
 
-  // [title, icon, types]
+  /// [title, icon, types]
   List<List> fileTypes = [
     [
       'PDFs',
@@ -105,6 +106,74 @@ class _SearchState extends State<Search> {
       'WAV.MP3.APE.WMA.FLAC',
     ],
   ];
+  @override
+  void initState() {
+    super.initState();
+
+    /// init Select
+    select = Select(() => this.setState(() {}));
+  }
+
+  AppBar selectAppBar(AppState state) {
+    return AppBar(
+      title: Text(
+        '选择了${select.selectedEntry.length}项',
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.normal,
+        ),
+      ),
+      leading: IconButton(
+        icon: Icon(Icons.close, color: Colors.white),
+        onPressed: () => select.clearSelect(),
+      ),
+      brightness: Brightness.light,
+      elevation: 2.0,
+      iconTheme: IconThemeData(color: Colors.white),
+      actions: <Widget>[
+        Builder(builder: (ctx) {
+          return IconButton(
+            icon: Icon(Icons.file_download),
+            onPressed: () {
+              showSnackBar(ctx, '${select.selectedEntry.length}个项目加入下载列表');
+              select.clearSelect();
+            },
+          );
+        }),
+        Builder(builder: (ctx) {
+          return IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: () {
+              showSnackBar(ctx, 'TODO');
+              select.clearSelect();
+            },
+          );
+        }),
+      ],
+    );
+  }
+
+  AppBar searchAppBar(AppState state) {
+    return AppBar(
+      elevation: 2.0, // no shadow
+      backgroundColor: Colors.white,
+      brightness: Brightness.light,
+      iconTheme: IconThemeData(color: Colors.black38),
+      title: TextField(
+        // autofocus: true,
+        onChanged: (text) {
+          _searchText = text;
+        },
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          hintText: '搜索文件',
+        ),
+        style: TextStyle(color: Colors.black87),
+        textInputAction: TextInputAction.search,
+        onEditingComplete: () => _onSearch(this.context, state),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -112,27 +181,10 @@ class _SearchState extends State<Search> {
       onInit: (store) => {},
       onDispose: (store) => {},
       converter: (store) => store.state,
-      builder: (context, state) {
+      builder: (ctx, state) {
         return Scaffold(
-          appBar: AppBar(
-            elevation: 2.0, // no shadow
-            backgroundColor: Colors.white,
-            brightness: Brightness.light,
-            iconTheme: IconThemeData(color: Colors.black38),
-            title: TextField(
-              // autofocus: true,
-              onChanged: (text) {
-                _searchText = text;
-              },
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                hintText: '搜索文件',
-              ),
-              style: TextStyle(color: Colors.black87),
-              textInputAction: TextInputAction.search,
-              onEditingComplete: () => _onSearch(context, state),
-            ),
-          ),
+          appBar:
+              select.selectMode() ? selectAppBar(state) : searchAppBar(state),
           body: Container(
             child: loading
                 ? Center(child: CircularProgressIndicator())
@@ -150,15 +202,16 @@ class _SearchState extends State<Search> {
                                   ? SliverFixedExtentList(
                                       itemExtent: 64,
                                       delegate: SliverChildBuilderDelegate(
-                                        (BuildContext context, int index) {
+                                        (BuildContext ctx, int index) {
                                           final entry = _entries[index];
                                           return FileRow(
                                             entry: entry,
                                             type: 'file',
                                             actions: actions,
                                             onPress: () =>
-                                                download(context, entry, state),
+                                                download(ctx, entry, state),
                                             isGrid: false,
+                                            select: select,
                                           );
                                         },
                                         childCount: _entries.length,
@@ -173,15 +226,16 @@ class _SearchState extends State<Search> {
                                         childAspectRatio: 1.0,
                                       ),
                                       delegate: SliverChildBuilderDelegate(
-                                        (BuildContext context, int index) {
+                                        (BuildContext ctx, int index) {
                                           final entry = _entries[index];
                                           return FileRow(
                                             entry: entry,
                                             type: 'file',
                                             actions: actions,
                                             onPress: () =>
-                                                download(context, entry, state),
+                                                download(ctx, entry, state),
                                             isGrid: true,
+                                            select: select,
                                           );
                                         },
                                         childCount: _entries.length,

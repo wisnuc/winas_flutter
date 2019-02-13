@@ -126,7 +126,7 @@ class Entry {
     this.mtime = m['mtime'];
     this.name = m['name'];
     this.uuid = m['uuid'];
-    this.type = m['type'];
+    this.type = 'file';
     this.hash = m['hash'];
     this.hsize = prettySize(this.size);
     this.hmtime = prettyDate(this.mtime);
@@ -210,7 +210,7 @@ class Select {
     this.update();
   }
 
-  selectMode() => selectedEntry.length != 0;
+  bool selectMode() => selectedEntry.length != 0;
 }
 
 class Config {
