@@ -104,6 +104,7 @@ class Entry {
   String pdrv;
   List namepath;
   Metadata metadata;
+  bool selected = false;
 
   Entry.fromMap(Map m) {
     this.size = m['size'];
@@ -151,6 +152,18 @@ class Entry {
     this.pdir = n.dirUUID;
     this.pdrv = n.driveUUID;
   }
+
+  void select() {
+    this.selected = true;
+  }
+
+  void unSelect() {
+    this.selected = false;
+  }
+
+  void toggleSelect() {
+    this.selected = !this.selected;
+  }
 }
 
 class DirPath {
@@ -173,9 +186,42 @@ class Node {
   Node({this.name, this.driveUUID, this.dirUUID, this.tag});
 }
 
+class Select {
+  Function update;
+  Select(this.update);
+  List<Entry> selectedEntry = [];
+
+  toggleSelect(Entry entry) {
+    if (entry.selected) {
+      entry.unSelect();
+      selectedEntry.remove(entry);
+    } else {
+      entry.select();
+      selectedEntry.add(entry);
+    }
+    this.update();
+  }
+
+  clearSelect() {
+    for (Entry entry in selectedEntry) {
+      entry.unSelect();
+    }
+    selectedEntry.clear();
+    this.update();
+  }
+
+  selectMode() => selectedEntry.length != 0;
+}
+
 class Config {
-  bool gridView;
-  Config({this.gridView});
+  bool gridView = false;
+  bool selectMode = false;
+
+  Config({this.gridView, this.selectMode});
+  Config.combine(Config oldConfig, Config newConfig) {
+    this.gridView = newConfig.gridView ?? oldConfig.gridView;
+    this.selectMode = newConfig.selectMode ?? oldConfig.selectMode;
+  }
 }
 
 // actions
@@ -229,8 +275,11 @@ final updateApisReducer = combineReducers<Apis>([
   TypedReducer<Apis, UpdateApisAction>((data, action) => action.data),
 ]);
 
+/// combine config
 final updateConfigReducer = combineReducers<Config>([
-  TypedReducer<Config, UpdateConfigAction>((data, action) => action.data),
+  TypedReducer<Config, UpdateConfigAction>(
+    (oldConfig, action) => Config.combine(oldConfig, action.data),
+  ),
 ]);
 
 AppState appReducer(AppState state, action) {
@@ -269,7 +318,7 @@ AppState fakeState = AppState(
       false,
       "test_b44-a529-4dcf-aa30-240a151d8e03",
       'cookie'),
-  config: Config(gridView: true),
+  config: Config(gridView: true, selectMode: false),
 );
 
 class AppState {

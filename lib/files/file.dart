@@ -52,6 +52,7 @@ Widget _buildRow(
   int index,
   List actions,
   Function download,
+  Select select,
 ) {
   final entry = entries[index];
   switch (entry.type) {
@@ -66,6 +67,7 @@ Widget _buildRow(
         entry: entry,
         actions: actions,
         isGrid: false,
+        select: select,
       );
     case 'directory':
       return FileRow(
@@ -88,6 +90,7 @@ Widget _buildRow(
         entry: entry,
         actions: actions,
         isGrid: false,
+        select: select,
       );
   }
   return null;
@@ -100,6 +103,7 @@ Widget _buildGrid(
   Node parentNode,
   List actions,
   Function download,
+  Select select,
 ) {
   final entry = entries[index];
   switch (entry.type) {
@@ -110,6 +114,7 @@ Widget _buildGrid(
         entry: entry,
         actions: actions,
         isGrid: true,
+        select: select,
       );
     case 'directory':
       return FileRow(
@@ -132,6 +137,7 @@ Widget _buildGrid(
         entry: entry,
         actions: actions,
         isGrid: true,
+        select: select,
       );
   }
   return Container();
@@ -168,6 +174,7 @@ class _FilesState extends State<Files> {
   List<DirPath> paths = [];
   ScrollController myScrollController = ScrollController();
   Function actions;
+  Select select;
 
   Future refresh(state) async {
     String driveUUID;
@@ -278,11 +285,6 @@ class _FilesState extends State<Files> {
   }
 
   void _download(BuildContext ctx, Entry entry, AppState state) async {
-    // preview photos
-    // if (photoMagic.indexOf(entry?.metadata?.type) > -1) {
-    //   showPhoto(ctx, entry, null);
-    //   return;
-    // }
     showLoading(
       barrierDismissible: false,
       builder: (ctx) {
@@ -315,7 +317,10 @@ class _FilesState extends State<Files> {
   void initState() {
     super.initState();
 
-    // actions in menu
+    /// init Select
+    select = Select(() => this.setState(() {}));
+
+    /// actions in menu
     actions = (state) => [
           {
             'icon': Icons.edit,
@@ -346,7 +351,7 @@ class _FilesState extends State<Files> {
           },
           {
             'icon': Icons.file_download,
-            'title': '离线可用',
+            'title': '下载到本地',
             'types': ['file'],
             'action': () => print('move to'),
           },
@@ -471,7 +476,8 @@ class _FilesState extends State<Files> {
           StoreConnector<AppState, VoidCallback>(
             converter: (store) {
               return () => store.dispatch(UpdateConfigAction(
-                  Config(gridView: !store.state.config.gridView)));
+                    Config(gridView: !store.state.config.gridView),
+                  ));
             },
             builder: (context, callback) {
               return IconButton(
@@ -532,6 +538,7 @@ class _FilesState extends State<Files> {
             currentNode,
             actions(state),
             (entry) => _download(context, entry, state),
+            select,
           );
         },
         childCount: dirs.length,
@@ -550,6 +557,7 @@ class _FilesState extends State<Files> {
             index,
             actions(state),
             (entry) => _download(context, entry, state),
+            select,
           );
         },
         childCount: dirs.length,
@@ -574,6 +582,7 @@ class _FilesState extends State<Files> {
             currentNode,
             actions(state),
             (entry) => _download(context, entry, state),
+            select,
           );
         },
         childCount: files.length,
@@ -592,6 +601,7 @@ class _FilesState extends State<Files> {
             index,
             actions(state),
             (entry) => _download(context, entry, state),
+            select,
           );
         },
         childCount: files.length,
@@ -599,102 +609,99 @@ class _FilesState extends State<Files> {
     );
   }
 
-  Widget directoryView() {
-    return StoreConnector<AppState, AppState>(
-      onInit: (store) => refreshAsync(store.state),
-      onDispose: (store) => {},
-      converter: (store) => store.state,
-      builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              node.name,
-              style: TextStyle(
-                color: Colors.black87,
-                fontWeight: FontWeight.normal,
-              ),
-            ),
-            brightness: Brightness.light,
-            backgroundColor: Colors.white,
-            elevation: 2.0,
-            iconTheme: IconThemeData(color: Colors.black38),
-            actions: [
-              IconButton(
-                icon: Icon(Icons.search),
-                onPressed: () => {},
-              ),
-              IconButton(
-                icon: Icon(Icons.create_new_folder),
-                onPressed: () => showDialog(
-                      context: context,
-                      builder: (BuildContext context) =>
-                          NewFolder(node: currentNode),
-                    ).then((success) => success ? refresh(state) : null),
-              ),
-              StoreConnector<AppState, VoidCallback>(
-                converter: (store) {
-                  return () => store.dispatch(UpdateConfigAction(
-                      Config(gridView: !store.state.config.gridView)));
-                },
-                builder: (context, callback) {
-                  return IconButton(
-                    icon: Icon(state.config.gridView
-                        ? Icons.view_list
-                        : Icons.view_module),
-                    onPressed: callback,
-                  );
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.more_horiz),
-                onPressed: () => {},
-              ),
-            ],
-          ),
-          body: loading
-              ? Center(
-                  child: CircularProgressIndicator(),
-                )
-              : Theme(
-                  data: Theme.of(context).copyWith(primaryColor: Colors.teal),
-                  child: RefreshIndicator(
-                    onRefresh: () => refresh(state),
-                    child: _error != null
-                        ? Center(
-                            child: Text('出错啦！'),
-                          )
-                        : entries.length == 0
-                            ? Center(
-                                child: Text('空文件夹'),
-                              )
-                            : Container(
-                                color: Colors.grey[200],
-                                child: DraggableScrollbar.semicircle(
-                                  controller: myScrollController,
-                                  child: CustomScrollView(
-                                    controller: myScrollController,
-                                    physics: AlwaysScrollableScrollPhysics(),
-                                    slivers: <Widget>[
-                                      // dir title
-                                      dirTitle(),
-                                      // dir Grid or Row view
-                                      state.config.gridView
-                                          ? dirGrid(state)
-                                          : dirRow(state),
-                                      // file title
-                                      fileTitle(),
-                                      // file Grid or Row view
-                                      state.config.gridView
-                                          ? fileGrid(state)
-                                          : fileRow(state),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                  ),
-                ),
-        );
-      },
+  AppBar directoryViewAppBar(AppState state) {
+    return AppBar(
+      title: Text(
+        node.name,
+        style: TextStyle(
+          color: Colors.black87,
+          fontWeight: FontWeight.normal,
+        ),
+      ),
+      brightness: Brightness.light,
+      backgroundColor: Colors.white,
+      elevation: 2.0,
+      iconTheme: IconThemeData(color: Colors.black38),
+      actions: [
+        IconButton(
+          icon: Icon(Icons.search),
+          onPressed: () => {},
+        ),
+        IconButton(
+          icon: Icon(Icons.create_new_folder),
+          onPressed: () => showDialog(
+                context: context,
+                builder: (BuildContext context) => NewFolder(node: currentNode),
+              ).then((success) => success ? refresh(state) : null),
+        ),
+        StoreConnector<AppState, VoidCallback>(
+          converter: (store) {
+            return () => store.dispatch(UpdateConfigAction(
+                  Config(gridView: !store.state.config.gridView),
+                ));
+          },
+          builder: (context, callback) {
+            return IconButton(
+              icon: Icon(
+                  state.config.gridView ? Icons.view_list : Icons.view_module),
+              onPressed: callback,
+            );
+          },
+        ),
+        IconButton(
+          icon: Icon(Icons.more_horiz),
+          onPressed: () => {},
+        ),
+      ],
+    );
+  }
+
+  AppBar homeViewAppBar(AppState state) {
+    return AppBar(
+      elevation: 2.0,
+      brightness: Brightness.light,
+      backgroundColor: Colors.white,
+      titleSpacing: 0.0,
+      iconTheme: IconThemeData(color: Colors.black38),
+      title: Container(
+        color: Colors.grey[200],
+        child: Container(
+          child: searchBar(state),
+        ),
+      ),
+    );
+  }
+
+  AppBar selectAppBar(AppState state) {
+    return AppBar(
+      title: Text(
+        '选择了${select.selectedEntry.length}项',
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.normal,
+        ),
+      ),
+      leading: IconButton(
+        icon: Icon(Icons.close, color: Colors.white),
+        onPressed: () => select.clearSelect(),
+      ),
+      brightness: Brightness.light,
+      elevation: 2.0,
+      iconTheme: IconThemeData(color: Colors.white),
+      actions: [
+        IconButton(
+          icon: Icon(Icons.forward),
+          onPressed: () => {},
+        ),
+        IconButton(
+          icon: Icon(Icons.file_download),
+          onPressed: () => {},
+        ),
+        IconButton(
+          icon: Icon(Icons.more_horiz),
+          onPressed: () => {},
+        ),
+      ],
     );
   }
 
@@ -705,19 +712,8 @@ class _FilesState extends State<Files> {
       converter: (store) => store.state,
       builder: (context, state) {
         return Scaffold(
-          appBar: AppBar(
-            elevation: 2.0,
-            brightness: Brightness.light,
-            backgroundColor: Colors.white,
-            titleSpacing: 0.0,
-            iconTheme: IconThemeData(color: Colors.black38),
-            title: Container(
-              color: Colors.grey[200],
-              child: Container(
-                child: searchBar(state),
-              ),
-            ),
-          ),
+          appBar:
+              select.selectMode() ? selectAppBar(state) : homeViewAppBar(state),
           body: SafeArea(
             child: Stack(
               alignment: Alignment.center,
@@ -820,6 +816,63 @@ class _FilesState extends State<Files> {
               ],
             ),
           ),
+        );
+      },
+    );
+  }
+
+  Widget directoryView() {
+    return StoreConnector<AppState, AppState>(
+      onInit: (store) => refreshAsync(store.state),
+      onDispose: (store) => {},
+      converter: (store) => store.state,
+      builder: (context, state) {
+        return Scaffold(
+          appBar: select.selectMode()
+              ? selectAppBar(state)
+              : directoryViewAppBar(state),
+          body: loading
+              ? Center(
+                  child: CircularProgressIndicator(),
+                )
+              : Theme(
+                  data: Theme.of(context).copyWith(primaryColor: Colors.teal),
+                  child: RefreshIndicator(
+                    onRefresh: () => refresh(state),
+                    child: _error != null
+                        ? Center(
+                            child: Text('出错啦！'),
+                          )
+                        : entries.length == 0
+                            ? Center(
+                                child: Text('空文件夹'),
+                              )
+                            : Container(
+                                color: Colors.grey[200],
+                                child: DraggableScrollbar.semicircle(
+                                  controller: myScrollController,
+                                  child: CustomScrollView(
+                                    controller: myScrollController,
+                                    physics: AlwaysScrollableScrollPhysics(),
+                                    slivers: <Widget>[
+                                      // dir title
+                                      dirTitle(),
+                                      // dir Grid or Row view
+                                      state.config.gridView
+                                          ? dirGrid(state)
+                                          : dirRow(state),
+                                      // file title
+                                      fileTitle(),
+                                      // file Grid or Row view
+                                      state.config.gridView
+                                          ? fileGrid(state)
+                                          : fileRow(state),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                  ),
+                ),
         );
       },
     );

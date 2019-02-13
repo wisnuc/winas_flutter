@@ -114,12 +114,21 @@ class TitleRow extends StatelessWidget {
 
 class FileRow extends StatefulWidget {
   FileRow(
-      {Key key, this.entry, this.type, this.actions, this.onPress, this.isGrid})
+      {Key key,
+      this.entry,
+      this.type,
+      this.actions,
+      this.onPress,
+      this.onLongPress,
+      this.select,
+      this.isGrid})
       : super(key: key);
   final Entry entry;
   final String type;
   final List actions;
   final Function onPress;
+  final Function onLongPress;
+  final Select select;
   final bool isGrid;
 
   @override
@@ -128,22 +137,32 @@ class FileRow extends StatefulWidget {
         type: type,
         actions: actions,
         onPress: onPress,
+        onLongPress: onLongPress,
         isGrid: isGrid,
+        select: select,
       );
 }
 
 class _FileRowState extends State<FileRow> {
   _FileRowState(
-      {Entry entry, String type, List actions, Function onPress, bool isGrid})
+      {Entry entry,
+      String type,
+      List actions,
+      Function onPress,
+      Function onLongPress,
+      bool isGrid,
+      Select select})
       : name = entry.name,
         type = type,
         onPress = onPress,
+        onLongPress = onLongPress,
         isGrid = isGrid,
         mtime = entry.hmtime,
         size = entry.hsize,
         entry = entry,
         metadata = entry.metadata,
-        actions = actions;
+        actions = actions,
+        select = select;
 
   final String name;
   final String type;
@@ -151,9 +170,11 @@ class _FileRowState extends State<FileRow> {
   final String mtime;
   final Entry entry;
   final Function onPress;
+  final Function onLongPress;
   final Metadata metadata;
   final List actions;
   final bool isGrid;
+  final Select select;
 
   String _thumbSrc;
 
@@ -171,14 +192,18 @@ class _FileRowState extends State<FileRow> {
   }
 
   _onPressMore(ctx) {
-    showModalBottomSheet(
-      context: ctx,
-      builder: modalBottomSheet,
-    );
+    if (!select.selectMode()) {
+      showModalBottomSheet(
+        context: ctx,
+        builder: modalBottomSheet,
+      );
+    }
   }
 
   _onTap(BuildContext ctx) {
-    if (photoMagic.indexOf(entry?.metadata?.type) > -1) {
+    if (select.selectMode()) {
+      select.toggleSelect(entry);
+    } else if (photoMagic.indexOf(entry?.metadata?.type) > -1) {
       showPhoto(ctx, entry, _thumbSrc);
     } else {
       onPress();
@@ -283,11 +308,25 @@ class _FileRowState extends State<FileRow> {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Container(width: 16),
-            type == 'file'
-                ? renderIcon(name, metadata)
-                : Icon(Icons.folder, color: Colors.orange),
-            Container(width: 16),
+            Container(width: 4),
+            Container(
+              height: 48,
+              width: 48,
+              child: (entry.selected && type != 'file')
+                  ? Icon(Icons.check, color: Colors.white)
+                  : type == 'file'
+                      ? renderIcon(name, metadata)
+                      : Icon(Icons.folder, color: Colors.orange),
+              decoration: BoxDecoration(
+                color: (select.selectMode() && type != 'file')
+                    ? entry.selected ? Colors.teal : Colors.black12
+                    : Colors.transparent,
+                borderRadius: BorderRadius.all(
+                  const Radius.circular(24),
+                ),
+              ),
+            ),
+            Container(width: 4),
             Expanded(
               child: Text(
                 name,
@@ -314,11 +353,25 @@ class _FileRowState extends State<FileRow> {
   Widget renderRow(BuildContext ctx) {
     return Row(
       children: <Widget>[
-        Container(width: 24),
-        type == 'file'
-            ? renderIcon(name, metadata)
-            : Icon(Icons.folder, color: Colors.orange),
-        Container(width: 32),
+        Container(width: 12),
+        Container(
+          height: 48,
+          width: 48,
+          child: entry.selected
+              ? Icon(Icons.check, color: Colors.white)
+              : type == 'file'
+                  ? renderIcon(name, metadata)
+                  : Icon(Icons.folder, color: Colors.orange),
+          decoration: BoxDecoration(
+            color: select.selectMode()
+                ? entry.selected ? Colors.teal : Colors.black12
+                : Colors.transparent,
+            borderRadius: BorderRadius.all(
+              const Radius.circular(24),
+            ),
+          ),
+        ),
+        Container(width: 20),
         Expanded(
           flex: 1,
           child: Container(
@@ -390,9 +443,52 @@ class _FileRowState extends State<FileRow> {
           child: Material(
             child: InkWell(
               onTap: () => _onTap(context),
-              onLongPress: () => print('long press: $name'),
-              child:
-                  isGrid ? renderGrid(context, _thumbSrc) : renderRow(context),
+              onLongPress: () {
+                if (!select.selectMode()) {
+                  select.toggleSelect(entry);
+                }
+              },
+              child: isGrid
+                  ? (select.selectMode() && entry.type == 'file')
+                      ? Stack(
+                          children: <Widget>[
+                            Positioned(
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              child: renderGrid(context, _thumbSrc),
+                            ),
+                            Positioned(
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              child: Container(
+                                color: Colors.black12,
+                                child: Center(
+                                  child: Container(
+                                    height: 48,
+                                    width: 48,
+                                    child: entry.selected
+                                        ? Icon(Icons.check, color: Colors.white)
+                                        : Container(),
+                                    decoration: BoxDecoration(
+                                      color: entry.selected
+                                          ? Colors.teal
+                                          : Colors.black12,
+                                      borderRadius: BorderRadius.all(
+                                        const Radius.circular(24),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                          ],
+                        )
+                      : renderGrid(context, _thumbSrc)
+                  : renderRow(context),
             ),
           ),
         );
