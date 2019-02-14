@@ -18,9 +18,11 @@ class _AccountInfoState extends State<AccountInfo> {
   Future getCacheSize() async {
     final cm = await CacheManager.getInstance();
     var size = await cm.getCacheSize();
-    setState(() {
-      cacheSize = size;
-    });
+    if (this.mounted) {
+      setState(() {
+        cacheSize = size;
+      });
+    }
   }
 
   Future clearCache(BuildContext ctx) async {

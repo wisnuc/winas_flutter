@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:outline_material_icons/outline_material_icons.dart';
 import '../files/file.dart';
+import '../files/fileRow.dart';
+import '../files/backupView.dart';
 import '../device/station.dart';
 import '../redux/redux.dart';
 import '../user/account_info.dart';
@@ -24,6 +26,46 @@ class NavigationIconView {
   final Function view;
   final BottomNavigationBarItem item;
 }
+
+List<FileNavView> fileNavViews = [
+  FileNavView(
+    icon: Icon(Icons.people, color: Colors.white),
+    title: '共享空间',
+    nav: 'public',
+    color: Colors.orange,
+    onTap: (context) => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) {
+              return Files(
+                node: Node(
+                  name: '共享空间',
+                  tag: 'built-in',
+                ),
+              );
+            },
+          ),
+        ),
+  ),
+  FileNavView(
+    icon: Icon(Icons.refresh, color: Colors.white),
+    title: '备份空间',
+    nav: 'backup',
+    color: Colors.blue,
+    onTap: (context) => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BackupView(),
+          ),
+        ),
+  ),
+  FileNavView(
+    icon: Icon(Icons.swap_vert, color: Colors.white),
+    title: '传输任务',
+    nav: 'transfer',
+    color: Colors.purple,
+  ),
+];
 
 class BottomNavigation extends StatefulWidget {
   @override
@@ -49,7 +91,7 @@ class _BottomNavigationState extends State<BottomNavigation>
         activeIcon: Icon(Icons.folder),
         title: '云盘',
         nav: 'files',
-        view: () => Files(node: Node(tag: 'home')),
+        view: () => Files(node: Node(tag: 'home'), fileNavViews: fileNavViews),
         color: Colors.teal,
       ),
       NavigationIconView(

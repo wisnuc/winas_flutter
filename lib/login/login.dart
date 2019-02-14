@@ -205,7 +205,9 @@ class _LoginState extends State<Login> {
 
     var stationLists = stationsRes.data['ownStations'];
     final currentDevice = stationLists.firstWhere(
-        (s) => s['online'] == 1 && s['name'] == 'Winass',
+        (s) =>
+            s['online'] == 1 &&
+            s['sn'] == 'test_b44-a529-4dcf-aa30-240a151d8e03',
         orElse: () => null);
     assert(currentDevice != null);
 

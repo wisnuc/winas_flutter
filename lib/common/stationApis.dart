@@ -55,7 +55,7 @@ class Apis {
   // case 'localBoot':
   //       r = command(args['deviceSN'], {'verb': 'GET', 'urlPath': '/boot'});
 
-  req(String name, Map<String, dynamic> args) {
+  Future req(String name, Map<String, dynamic> args) {
     Future r;
     interceptDio();
     switch (name) {
@@ -71,7 +71,10 @@ class Apis {
       case 'stats':
         r = tget('fruitmix/stats', null);
         break;
-
+      case 'dirStat':
+        r = tget(
+            'drives/${args['driveUUID']}/dirs/${args['dirUUID']}/stats', null);
+        break;
       case 'mkdir':
         r = tpost(
             'drives/${args['driveUUID']}/dirs/${args['dirUUID']}/entries',

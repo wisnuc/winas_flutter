@@ -12,7 +12,7 @@ class NetWork extends StatelessWidget {
           controller: myScrollController,
           physics: AlwaysScrollableScrollPhysics(),
           slivers: <Widget>[
-            //AppBar，包含一个导航栏
+            // AppBar，包含一个导航栏
             SliverAppBar(
               pinned: true,
               expandedHeight: 250.0,
@@ -28,9 +28,9 @@ class NetWork extends StatelessWidget {
             SliverPadding(
               padding: EdgeInsets.all(8.0),
               sliver: SliverGrid(
-                //Grid
+                // Grid
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2, //Grid按两列显示
+                  crossAxisCount: 2, // Grid按两列显示
                   mainAxisSpacing: 10.0,
                   crossAxisSpacing: 10.0,
                   childAspectRatio: 4.0,
@@ -51,16 +51,16 @@ class NetWork extends StatelessWidget {
             // List
             SliverFixedExtentList(
               itemExtent: 50.0,
-              delegate:
-                  SliverChildBuilderDelegate((BuildContext context, int index) {
-                //创建列表项
-                return Container(
-                  alignment: Alignment.center,
-                  color: Colors.lightBlue[100 * (index % 9)],
-                  child: Text('list item $index'),
-                );
-              }, childCount: 50 //50个列表项
-                      ),
+              delegate: SliverChildBuilderDelegate(
+                (BuildContext context, int index) {
+                  return Container(
+                    alignment: Alignment.center,
+                    color: Colors.lightBlue[100 * (index % 9)],
+                    child: Text('list item $index'),
+                  );
+                },
+                childCount: 50,
+              ),
             ),
           ],
         ),

@@ -8,58 +8,19 @@ import './rename.dart';
 import './search.dart';
 import './fileRow.dart';
 import './newFolder.dart';
+
 import '../redux/redux.dart';
 import '../common/loading.dart';
 import '../common/cache.dart';
-import './backupView.dart';
 
-List<FileNavView> _fileNavViews = [
-  FileNavView(
-    icon: Icon(Icons.people, color: Colors.white),
-    title: '共享空间',
-    nav: 'public',
-    color: Colors.orange,
-    onTap: (context) => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) {
-              return Files(
-                node: Node(
-                  name: '共享空间',
-                  tag: 'built-in',
-                ),
-              );
-            },
-          ),
-        ),
-  ),
-  FileNavView(
-    icon: Icon(Icons.refresh, color: Colors.white),
-    title: '备份空间',
-    nav: 'backup',
-    color: Colors.blue,
-    onTap: (context) => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BackupView(),
-          ),
-        ),
-  ),
-  FileNavView(
-    icon: Icon(Icons.swap_vert, color: Colors.white),
-    title: '传输任务',
-    nav: 'transfer',
-    color: Colors.purple,
-  ),
-];
-
-Widget _buildRow(
+Widget _buildItem(
   BuildContext context,
   List<Entry> entries,
   int index,
   List actions,
   Function download,
   Select select,
+  bool isGrid,
 ) {
   final entry = entries[index];
   switch (entry.type) {
@@ -74,7 +35,7 @@ Widget _buildRow(
         onPress: () => download(entry),
         entry: entry,
         actions: actions,
-        isGrid: false,
+        isGrid: isGrid,
         select: select,
       );
     case 'directory':
@@ -98,66 +59,18 @@ Widget _buildRow(
             ),
         entry: entry,
         actions: actions,
-        isGrid: false,
+        isGrid: isGrid,
         select: select,
       );
   }
   return null;
 }
 
-Widget _buildGrid(
-  BuildContext context,
-  List<Entry> entries,
-  int index,
-  Node parentNode,
-  List actions,
-  Function download,
-  Select select,
-) {
-  final entry = entries[index];
-  switch (entry.type) {
-    case 'file':
-      return FileRow(
-        key: Key(entry.name + entry.uuid),
-        type: 'file',
-        onPress: () => download(entry),
-        entry: entry,
-        actions: actions,
-        isGrid: true,
-        select: select,
-      );
-    case 'directory':
-      return FileRow(
-        key: Key(entry.name + entry.uuid),
-        type: 'directory',
-        onPress: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) {
-                  return Files(
-                    node: Node(
-                      name: entry.name,
-                      driveUUID: parentNode.driveUUID,
-                      dirUUID: entry.uuid,
-                      tag: 'dir',
-                    ),
-                  );
-                },
-              ),
-            ),
-        entry: entry,
-        actions: actions,
-        isGrid: true,
-        select: select,
-      );
-  }
-  return Container();
-}
-
 class Files extends StatefulWidget {
-  Files({Key key, this.node}) : super(key: key);
+  Files({Key key, this.node, this.fileNavViews}) : super(key: key);
 
   final Node node;
+  final List<FileNavView> fileNavViews;
   @override
   _FilesState createState() => _FilesState(node);
 }
@@ -537,14 +450,14 @@ class _FilesState extends State<Files> {
       ),
       delegate: SliverChildBuilderDelegate(
         (BuildContext context, int index) {
-          return _buildGrid(
+          return _buildItem(
             context,
             dirs,
             index,
-            currentNode,
             actions(state),
             (entry) => _download(context, entry, state),
             select,
+            true,
           );
         },
         childCount: dirs.length,
@@ -557,13 +470,14 @@ class _FilesState extends State<Files> {
       itemExtent: 64,
       delegate: SliverChildBuilderDelegate(
         (BuildContext context, int index) {
-          return _buildRow(
+          return _buildItem(
             context,
             dirs,
             index,
             actions(state),
             (entry) => _download(context, entry, state),
             select,
+            false,
           );
         },
         childCount: dirs.length,
@@ -581,15 +495,8 @@ class _FilesState extends State<Files> {
       ),
       delegate: SliverChildBuilderDelegate(
         (BuildContext context, int index) {
-          return _buildGrid(
-            context,
-            files,
-            index,
-            currentNode,
-            actions(state),
-            (entry) => _download(context, entry, state),
-            select,
-          );
+          return _buildItem(context, files, index, actions(state),
+              (entry) => _download(context, entry, state), select, true);
         },
         childCount: files.length,
       ),
@@ -601,14 +508,8 @@ class _FilesState extends State<Files> {
       itemExtent: 64,
       delegate: SliverChildBuilderDelegate(
         (BuildContext context, int index) {
-          return _buildRow(
-            context,
-            files,
-            index,
-            actions(state),
-            (entry) => _download(context, entry, state),
-            select,
-          );
+          return _buildItem(context, files, index, actions(state),
+              (entry) => _download(context, entry, state), select, false);
         },
         childCount: files.length,
       ),
@@ -763,7 +664,7 @@ class _FilesState extends State<Files> {
                                               color: Colors.grey[200],
                                               height: 96,
                                               child: Row(
-                                                children: _fileNavViews
+                                                children: widget.fileNavViews
                                                     .map<Widget>((FileNavView
                                                             fileNavView) =>
                                                         fileNavView
@@ -811,7 +712,7 @@ class _FilesState extends State<Files> {
                           color: Colors.grey[200],
                           height: 96,
                           child: Row(
-                            children: _fileNavViews
+                            children: widget.fileNavViews
                                 .map<Widget>((FileNavView fileNavView) =>
                                     fileNavView.navButton(context))
                                 .toList(),

@@ -55,6 +55,29 @@ class User {
   }
 }
 
+class DriveClient {
+  String id;
+
+  bool disabled;
+  int lastBackupTime;
+
+  /// Idle, Working, Failed
+  String status;
+
+  /// Win-PC, Linux-PC, Mac-PC, iOS, Android
+  String type;
+
+  DriveClient({this.type});
+
+  DriveClient.fromMap(Map m) {
+    this.id = m['id'];
+    this.status = m['status'];
+    this.disabled = m['disabled'];
+    this.lastBackupTime = m['lastBackupTime'];
+    this.type = m['type'];
+  }
+}
+
 class Drive {
   String uuid;
   String type;
@@ -66,8 +89,11 @@ class Drive {
   bool smb;
   int ctime;
   int mtime;
-  Map<String, dynamic> client;
-  Drive({this.uuid, this.tag});
+  int dirCount = 0;
+  int fileCount = 0;
+  String fileTotalSize = '';
+  DriveClient client;
+  Drive({this.uuid, this.tag, this.type, this.label, this.client});
   Drive.fromMap(Map m) {
     this.uuid = m['uuid'];
     this.type = m['type'];
@@ -79,7 +105,12 @@ class Drive {
     this.smb = m['smb'];
     this.ctime = m['ctime'];
     this.mtime = m['mtime'];
-    this.client = m['client'];
+    this.client = m['client'] == null ? null : DriveClient.fromMap(m['client']);
+  }
+  void updateStats(Map s) {
+    this.dirCount = s['dirCount'];
+    this.fileCount = s['fileCount'];
+    this.fileTotalSize = prettySize(s['fileTotalSize']);
   }
 }
 
@@ -110,7 +141,7 @@ class Entry {
     this.size = m['size'];
     this.ctime = m['ctime'];
     this.mtime = m['mtime'];
-    this.name = m['name'];
+    this.name = m['bname'] ?? m['name'];
     this.uuid = m['uuid'];
     this.type = m['type'];
     this.hash = m['hash'];
@@ -141,7 +172,7 @@ class Entry {
     this.size = m['size'];
     this.ctime = m['ctime'];
     this.mtime = m['mtime'];
-    this.name = m['name'];
+    this.name = m['bname'] ?? m['name'];
     this.uuid = m['uuid'];
     this.type = m['type'];
     this.hash = m['hash'];
@@ -309,6 +340,18 @@ AppState fakeState = AppState(
   drives: [
     Drive(tag: 'home', uuid: "15a5b6d7-74da-4a0f-bdd7-64ecad6498aa"),
     Drive(tag: 'built-in', uuid: "6afcf55e-8482-4542-a33d-4791a7277f96"),
+    Drive(
+      type: 'backup',
+      uuid: "9e85bff6-1cf4-429f-a2c2-6c11e0913ab4",
+      client: DriveClient(type: 'iOS'),
+      label: "iPhone 8",
+    ),
+    Drive(
+      type: 'backup',
+      uuid: "860688ed-7a83-45b3-9d67-aee517e2b7e2",
+      client: DriveClient(type: 'Android'),
+      label: "lxw-PC",
+    ),
   ],
   apis: new Apis(
       '0@eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6IjY5NDc2NjdhLWY4ZmYtNDk4Yy1iMGNiLWViYzRkOTc3MTVkNyIsInBhc3N3b3JkIjoiKjg0QUFDMTJGNTRBQjY2NkVDRkMyQTgzQzY3NjkwOEM4QkJDMzgxQjEiLCJjbGllbnRJZCI6ImZsdXR0ZXJfVGVzdCIsInR5cGUiOiJBbmRyb2lkIn0.9cwn6OHlNfwQAQR7DciV9E2DPIcl-yWGBfvpdWUluaM',
