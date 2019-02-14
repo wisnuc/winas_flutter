@@ -136,7 +136,7 @@ class Entry {
   List namepath;
   Metadata metadata;
   bool selected = false;
-
+  Entry({this.name, this.uuid, this.type, this.pdir, this.pdrv});
   Entry.fromMap(Map m) {
     this.size = m['size'];
     this.ctime = m['ctime'];
@@ -217,6 +217,7 @@ class Node {
   Node({this.name, this.driveUUID, this.dirUUID, this.tag});
 }
 
+/// update Selection, and refresh(setState)
 class Select {
   Function update;
   Select(this.update);
@@ -306,7 +307,7 @@ final updateApisReducer = combineReducers<Apis>([
   TypedReducer<Apis, UpdateApisAction>((data, action) => action.data),
 ]);
 
-/// combine config
+// combine config
 final updateConfigReducer = combineReducers<Config>([
   TypedReducer<Config, UpdateConfigAction>(
     (oldConfig, action) => Config.combine(oldConfig, action.data),

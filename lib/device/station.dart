@@ -204,23 +204,11 @@ class _StationState extends State<Station> {
 
     if (this.mounted) {
       // avoid calling setState after dispose()
-      setState(() {});
+      setState(() {
+        loading = false;
+      });
     }
     return null;
-  }
-
-  void refreshAsync(state) {
-    refresh(state).then((data) {
-      setState(() {
-        loading = false;
-      });
-      print('refresh success');
-    }).catchError((error) {
-      setState(() {
-        loading = false;
-      });
-      print(error); // TODO
-    });
   }
 
   List<Widget> _actions = [
@@ -271,7 +259,8 @@ class _StationState extends State<Station> {
   @override
   Widget build(BuildContext context) {
     return StoreConnector<AppState, AppState>(
-      onInit: (store) => refreshAsync(store.state),
+      onInit: (store) =>
+          refresh(store.state).catchError((error) => print(error)),
       onDispose: (store) => {},
       converter: (store) => store.state,
       builder: (context, state) {

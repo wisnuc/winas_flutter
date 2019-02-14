@@ -8,6 +8,7 @@ import './rename.dart';
 import './search.dart';
 import './fileRow.dart';
 import './newFolder.dart';
+import './xcopyDialog.dart';
 
 import '../redux/redux.dart';
 import '../common/loading.dart';
@@ -88,10 +89,8 @@ class _FilesState extends State<Files> {
   List<DirPath> paths = [];
   ScrollController myScrollController = ScrollController();
 
-  /// get actions in menu
   Function actions;
 
-  /// update Selection, and setState
   Select select;
 
   Future refresh(state) async {
@@ -193,15 +192,6 @@ class _FilesState extends State<Files> {
     return null;
   }
 
-  void refreshAsync(state) {
-    refresh(state).then((data) {
-      print('refresh success');
-    }).catchError((error) {
-      print('refresh error');
-      print(error); // TODO
-    });
-  }
-
   void _download(BuildContext ctx, Entry entry, AppState state) async {
     showLoading(
       barrierDismissible: false,
@@ -257,7 +247,22 @@ class _FilesState extends State<Files> {
             'icon': Icons.content_copy,
             'title': '复制到...',
             'types': ['file', 'directory'],
-            'action': () => print('copy to'),
+            'action': (BuildContext ctx, Entry entry) async {
+              Navigator.pop(ctx);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) {
+                    return XCopyView(
+                      node: Node(
+                        name: '全部文件',
+                        tag: 'root',
+                      ),
+                    );
+                  },
+                ),
+              );
+            }
           },
           {
             'icon': Icons.forward,
@@ -274,7 +279,9 @@ class _FilesState extends State<Files> {
           {
             'icon': Icons.share,
             'title': '分享到共享空间',
-            'types': node.tag == 'built-in' ? [] : ['file', 'directory'],
+            'types': node.tag == 'built-in'
+                ? []
+                : ['file', 'directory'], // TODO: filter actions
             'action': (BuildContext ctx, Entry entry) async {
               Navigator.pop(ctx);
               showLoading(
@@ -619,7 +626,8 @@ class _FilesState extends State<Files> {
 
   Widget homeView() {
     return StoreConnector<AppState, AppState>(
-      onInit: (store) => refreshAsync(store.state),
+      onInit: (store) =>
+          refresh(store.state).catchError((error) => print(error)),
       onDispose: (store) => {},
       converter: (store) => store.state,
       builder: (context, state) {
@@ -743,7 +751,8 @@ class _FilesState extends State<Files> {
 
   Widget directoryView() {
     return StoreConnector<AppState, AppState>(
-      onInit: (store) => refreshAsync(store.state),
+      onInit: (store) =>
+          refresh(store.state).catchError((error) => print(error)),
       onDispose: (store) => {},
       converter: (store) => store.state,
       builder: (context, state) {

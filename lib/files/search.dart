@@ -110,7 +110,7 @@ class _SearchState extends State<Search> {
   void initState() {
     super.initState();
 
-    /// init Select
+    // init Select
     select = Select(() => this.setState(() {}));
   }
 
