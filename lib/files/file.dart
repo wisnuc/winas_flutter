@@ -69,6 +69,7 @@ Widget _buildRow(
       return TitleRow(isFirst: index == 0, type: 'file');
     case 'file':
       return FileRow(
+        key: Key(entry.name + entry.uuid),
         type: 'file',
         onPress: () => download(entry),
         entry: entry,
@@ -78,6 +79,7 @@ Widget _buildRow(
       );
     case 'directory':
       return FileRow(
+        key: Key(entry.name + entry.uuid),
         type: 'directory',
         onPress: () => Navigator.push(
               context,
@@ -116,6 +118,7 @@ Widget _buildGrid(
   switch (entry.type) {
     case 'file':
       return FileRow(
+        key: Key(entry.name + entry.uuid),
         type: 'file',
         onPress: () => download(entry),
         entry: entry,
@@ -125,6 +128,7 @@ Widget _buildGrid(
       );
     case 'directory':
       return FileRow(
+        key: Key(entry.name + entry.uuid),
         type: 'directory',
         onPress: () => Navigator.push(
               context,
@@ -170,7 +174,11 @@ class _FilesState extends State<Files> {
   List<Entry> files = [];
   List<DirPath> paths = [];
   ScrollController myScrollController = ScrollController();
+
+  /// get actions in menu
   Function actions;
+
+  /// update Selection, and setState
   Select select;
 
   Future refresh(state) async {
@@ -314,10 +322,8 @@ class _FilesState extends State<Files> {
   void initState() {
     super.initState();
 
-    /// init Select
     select = Select(() => this.setState(() {}));
 
-    /// actions in menu
     actions = (state) => [
           {
             'icon': Icons.edit,
@@ -744,6 +750,7 @@ class _FilesState extends State<Files> {
                                 child: DraggableScrollbar.semicircle(
                                   controller: myScrollController,
                                   child: CustomScrollView(
+                                    key: Key(entries.length.toString()),
                                     controller: myScrollController,
                                     physics: AlwaysScrollableScrollPhysics(),
                                     slivers: <Widget>[
@@ -780,6 +787,13 @@ class _FilesState extends State<Files> {
                                       state.config.gridView
                                           ? fileGrid(state)
                                           : fileRow(state),
+                                      SliverFixedExtentList(
+                                        itemExtent: 24,
+                                        delegate: SliverChildBuilderDelegate(
+                                          (context, index) => Container(),
+                                          childCount: 1,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -857,6 +871,7 @@ class _FilesState extends State<Files> {
                                 child: DraggableScrollbar.semicircle(
                                   controller: myScrollController,
                                   child: CustomScrollView(
+                                    key: Key(entries.length.toString()),
                                     controller: myScrollController,
                                     physics: AlwaysScrollableScrollPhysics(),
                                     slivers: <Widget>[
@@ -872,6 +887,13 @@ class _FilesState extends State<Files> {
                                       state.config.gridView
                                           ? fileGrid(state)
                                           : fileRow(state),
+                                      SliverFixedExtentList(
+                                        itemExtent: 24,
+                                        delegate: SliverChildBuilderDelegate(
+                                          (context, index) => Container(),
+                                          childCount: 1,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),

@@ -206,7 +206,55 @@ class _FileRowState extends State<FileRow> {
     if (!select.selectMode()) {
       showModalBottomSheet(
         context: ctx,
-        builder: modalBottomSheet,
+        builder: (BuildContext c) {
+          return Container(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Container(width: 24),
+                    type == 'file'
+                        ? renderIcon(name, metadata)
+                        : Icon(Icons.folder, color: Colors.orange),
+                    Container(width: 32),
+                    Text(
+                      name,
+                      textAlign: TextAlign.start,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                    Expanded(
+                      child: Container(),
+                      flex: 1,
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.info),
+                      onPressed: () => print('press info'),
+                    ),
+                  ],
+                ),
+                Container(
+                  width: double.infinity,
+                  height: 1,
+                  color: Colors.grey[300],
+                ),
+                Container(height: 8),
+                Column(
+                  children: actions
+                      .where((action) => action['types'].contains(type))
+                      .map<Widget>((value) => actionItem(
+                            ctx,
+                            value['icon'],
+                            value['title'],
+                            value['action'],
+                          ))
+                      .toList(),
+                )
+              ],
+            ),
+          );
+        },
       );
     }
   }
@@ -219,56 +267,6 @@ class _FileRowState extends State<FileRow> {
     } else {
       onPress();
     }
-  }
-
-  Widget modalBottomSheet(BuildContext ctx) {
-    return Container(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Container(width: 24),
-              type == 'file'
-                  ? renderIcon(name, metadata)
-                  : Icon(Icons.folder, color: Colors.orange),
-              Container(width: 32),
-              Text(
-                name,
-                textAlign: TextAlign.start,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-              Expanded(
-                child: Container(),
-                flex: 1,
-              ),
-              IconButton(
-                icon: Icon(Icons.info),
-                onPressed: () => print('press info'),
-              ),
-            ],
-          ),
-          Container(
-            width: double.infinity,
-            height: 1,
-            color: Colors.grey[300],
-          ),
-          Container(height: 8),
-          Column(
-            children: actions
-                .where((action) => action['types'].contains(type))
-                .map<Widget>((value) => actionItem(
-                      ctx,
-                      value['icon'],
-                      value['title'],
-                      value['action'],
-                    ))
-                .toList(),
-          )
-        ],
-      ),
-    );
   }
 
   Widget actionItem(
