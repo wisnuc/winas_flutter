@@ -68,7 +68,7 @@ class _BackupViewState extends State<BackupView> {
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: <Widget>[
                                     Text(
-                                      '来自PC的备份',
+                                      '备份设备',
                                       style: TextStyle(color: Colors.black54),
                                     ),
                                     Text(

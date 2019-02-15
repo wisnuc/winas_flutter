@@ -202,7 +202,7 @@ class _FileRowState extends State<FileRow> {
     }
   }
 
-  _onPressMore(ctx) {
+  _onPressMore(BuildContext ctx) {
     if (!select.selectMode()) {
       showModalBottomSheet(
         context: ctx,
@@ -218,11 +218,14 @@ class _FileRowState extends State<FileRow> {
                         ? renderIcon(name, metadata)
                         : Icon(Icons.folder, color: Colors.orange),
                     Container(width: 32),
-                    Text(
-                      name,
-                      textAlign: TextAlign.start,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
+                    Expanded(
+                      child: Text(
+                        name,
+                        textAlign: TextAlign.start,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                      flex: 10,
                     ),
                     Expanded(
                       child: Container(),
@@ -446,7 +449,7 @@ class _FileRowState extends State<FileRow> {
       onInit: (store) => _getThumb(store.state),
       onDispose: (store) => {},
       converter: (store) => store.state,
-      builder: (context, state) {
+      builder: (ctx, state) {
         return Container(
           height: 64,
           child: Material(

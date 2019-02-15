@@ -2,28 +2,48 @@ import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import './fileRow.dart';
+import './newFolder.dart';
 import '../redux/redux.dart';
+import '../common/loading.dart';
 import '../common/renderIcon.dart';
 
 class XCopyView extends StatefulWidget {
-  XCopyView({Key key, this.node, this.callback}) : super(key: key);
+  XCopyView(
+      {Key key,
+      this.node,
+      this.src,
+      this.actionType,
+      this.preCtx,
+      this.callback})
+      : super(key: key);
   final Node node;
-
+  final List<Entry> src;
   final Function callback;
+
+  /// [ctx for snackbar, ctx for navigation]
+  final List<BuildContext> preCtx;
+  final String actionType;
   @override
-  _XCopyViewState createState() => _XCopyViewState(node, callback);
+  _XCopyViewState createState() =>
+      _XCopyViewState(node, src, actionType, preCtx, callback);
 }
 
 class _XCopyViewState extends State<XCopyView> {
   final Node node;
+  final List<Entry> src;
   final Function callback;
+
+  /// [ctx for snackbar, ctx for navigation]
+  final List<BuildContext> preCtx;
+  final String actionType;
   Error _error;
   bool loading = true;
   List<Entry> entries = [];
   List<Entry> dirs = [];
   List<Entry> files = [];
   ScrollController myScrollController = ScrollController();
-  _XCopyViewState(this.node, this.callback);
+  _XCopyViewState(
+      this.node, this.src, this.actionType, this.preCtx, this.callback);
 
   Future _refresh(AppState state) async {
     if (node.tag == 'root') {
@@ -116,8 +136,21 @@ class _XCopyViewState extends State<XCopyView> {
     }
   }
 
-  openDir(Entry entry) {
-    if (entry.type != 'file') {
+  bool shouldFire() {
+    // root dir
+    if (node.tag == 'root') return false;
+
+    // same dir
+    for (Entry entry in src) {
+      if (entry.pdir == node.dirUUID) return false;
+    }
+    return true;
+  }
+
+  openDir(BuildContext ctx, Entry entry) {
+    if (src.any((e) => e.uuid == entry.uuid)) {
+      showSnackBar(ctx, '不能选择被操作的文件夹');
+    } else if (entry.type != 'file') {
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -129,11 +162,60 @@ class _XCopyViewState extends State<XCopyView> {
                 dirUUID: entry.uuid,
                 tag: 'dir',
               ),
+              src: src,
+              preCtx: preCtx,
+              actionType: actionType,
+              callback: callback,
             );
           },
         ),
       );
     }
+  }
+
+  close(BuildContext ctx) {
+    // pop deep xcopy page
+    Navigator.popUntil(ctx, ModalRoute.withName('xcopy'));
+    // pop root page
+    Navigator.pop(preCtx[1]);
+  }
+
+  Future fire(BuildContext ctx, AppState state) async {
+    var args = {
+      'type': actionType,
+      'entries': src.map((e) => e.name).toList(),
+      'policies': {
+        'dir': ['rename', 'rename'],
+        'file': ['rename', 'rename'],
+      },
+      'dst': {'drive': node.driveUUID, 'dir': node.dirUUID},
+      'src': {
+        'dir': src[0].pdir,
+        'drive': src[0].pdrv,
+      },
+    };
+    showLoading(
+      barrierDismissible: false,
+      builder: (ctx) {
+        return Container(
+          constraints: BoxConstraints.expand(),
+          child: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      },
+      context: ctx,
+    );
+    try {
+      await state.apis.req('xcopy', args);
+      showSnackBar(preCtx[0], actionType == 'copy' ? '复制成功' : '移动成功');
+    } catch (error) {
+      showSnackBar(preCtx[0], actionType == 'copy' ? '复制失败' : '移动失败');
+    }
+    // pop deep xcopy page
+    Navigator.popUntil(ctx, ModalRoute.withName('xcopy'));
+    // pop root page
+    Navigator.pop(preCtx[1]);
   }
 
   Widget renderRows(List<Entry> list) {
@@ -144,26 +226,39 @@ class _XCopyViewState extends State<XCopyView> {
           Entry entry = list[index];
           return Material(
             child: InkWell(
-              onTap: () => openDir(entry), // TODO
-              child: Row(
-                children: <Widget>[
-                  Container(width: 12),
-                  Container(
-                    height: 56,
-                    width: 56,
-                    child: entry.type == 'file'
-                        ? renderIcon(entry.name, entry.metadata)
-                        : Icon(Icons.folder, color: Colors.orange),
-                  ),
-                  Container(width: 20),
-                  Text(
-                    entry.name,
-                    textAlign: TextAlign.start,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                  Container(height: 4),
-                ],
+              onTap: () => openDir(context, entry), // TODO
+              child: Opacity(
+                opacity: entry.type == 'file' ? 0.3 : 1,
+                child: Row(
+                  children: <Widget>[
+                    Container(width: 12),
+                    Container(
+                      height: 56,
+                      width: 56,
+                      child: entry.type == 'file'
+                          ? renderIcon(entry.name, entry.metadata)
+                          : Icon(Icons.folder, color: Colors.orange),
+                    ),
+                    Container(width: 20),
+                    Expanded(
+                      flex: 1,
+                      child: Container(
+                        height: 56,
+                        padding: EdgeInsets.only(top: 20, right: 8),
+                        child: Text(
+                          entry.name,
+                          textAlign: TextAlign.start,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        decoration: BoxDecoration(
+                          border:
+                              Border(bottom: BorderSide(color: Colors.black12)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -197,7 +292,17 @@ class _XCopyViewState extends State<XCopyView> {
               Builder(builder: (ctx) {
                 return IconButton(
                   icon: Icon(Icons.create_new_folder),
-                  onPressed: () {},
+                  disabledColor: Colors.black12,
+                  onPressed: node.tag == 'root'
+                      ? null
+                      : () {
+                          showDialog(
+                            context: this.context,
+                            builder: (BuildContext context) =>
+                                NewFolder(node: node),
+                          ).then((success) =>
+                              success == true ? _refresh(state) : null);
+                        },
                 );
               }),
             ],
@@ -237,7 +342,8 @@ class _XCopyViewState extends State<XCopyView> {
                                           Entry entry = entries[index];
                                           return Material(
                                             child: InkWell(
-                                              onTap: () => openDir(entry),
+                                              onTap: () =>
+                                                  openDir(context, entry),
                                               child: Column(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
@@ -318,6 +424,33 @@ class _XCopyViewState extends State<XCopyView> {
                               ),
                             ),
                 ),
+          bottomNavigationBar: Container(
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(top: BorderSide(color: Colors.black12)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                FlatButton(
+                    textColor: Colors.teal,
+                    child: Text('取消'),
+                    onPressed: () => close(ctx)),
+                Builder(builder: (scaffoldCtx) {
+                  return FlatButton(
+                    disabledTextColor: Colors.black12,
+                    textColor: Colors.teal,
+                    child: actionType == 'copy'
+                        ? Text('复制到此文件夹')
+                        : Text('移动到此文件夹'),
+                    onPressed:
+                        shouldFire() ? () => fire(scaffoldCtx, state) : null,
+                  );
+                }),
+              ],
+            ),
+          ),
         );
       },
     );

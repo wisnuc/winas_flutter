@@ -131,24 +131,26 @@ class _SearchState extends State<Search> {
       elevation: 2.0,
       iconTheme: IconThemeData(color: Colors.white),
       actions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.content_copy),
+          onPressed: () {
+            select.clearSelect();
+          },
+        ),
         Builder(builder: (ctx) {
           return IconButton(
-            icon: Icon(Icons.file_download),
+            icon: Icon(Icons.forward),
             onPressed: () {
-              showSnackBar(ctx, '${select.selectedEntry.length}个项目加入下载列表');
               select.clearSelect();
             },
           );
         }),
-        Builder(builder: (ctx) {
-          return IconButton(
-            icon: Icon(Icons.delete),
-            onPressed: () {
-              showSnackBar(ctx, 'TODO');
-              select.clearSelect();
-            },
-          );
-        }),
+        IconButton(
+          icon: Icon(Icons.delete),
+          onPressed: () {
+            select.clearSelect();
+          },
+        ),
       ],
     );
   }

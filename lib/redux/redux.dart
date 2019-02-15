@@ -242,6 +242,14 @@ class Select {
     this.update();
   }
 
+  selectAll(List<Entry> entries) {
+    for (Entry entry in entries) {
+      entry.select();
+      selectedEntry.add(entry);
+    }
+    this.update();
+  }
+
   bool selectMode() => selectedEntry.length != 0;
 }
 

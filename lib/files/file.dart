@@ -93,7 +93,7 @@ class _FilesState extends State<Files> {
 
   Select select;
 
-  Future refresh(state) async {
+  Future refresh(AppState state) async {
     String driveUUID;
     String dirUUID;
     if (node.tag == 'home') {
@@ -192,7 +192,9 @@ class _FilesState extends State<Files> {
     return null;
   }
 
-  void _download(BuildContext ctx, Entry entry, AppState state) async {
+  // download and openFile via system or share to other app
+  void _download(BuildContext ctx, Entry entry, AppState state,
+      {bool share: false}) async {
     showLoading(
       barrierDismissible: false,
       builder: (ctx) {
@@ -210,10 +212,15 @@ class _FilesState extends State<Files> {
 
     Navigator.pop(ctx);
     if (entryPath == null) {
-      showSnackBar(ctx, '打开失败');
+      showSnackBar(ctx, '下载失败');
     } else {
       try {
-        await OpenFile.open(entryPath);
+        if (share) {
+          // TODO: share
+          await OpenFile.open(entryPath);
+        } else {
+          await OpenFile.open(entryPath);
+        }
       } catch (error) {
         print(error);
         showSnackBar(ctx, '没有打开该类型文件的应用');
@@ -250,14 +257,20 @@ class _FilesState extends State<Files> {
             'action': (BuildContext ctx, Entry entry) async {
               Navigator.pop(ctx);
               Navigator.push(
-                context,
+                this.context,
                 MaterialPageRoute(
-                  builder: (context) {
+                  settings: RouteSettings(name: 'xcopy'),
+                  fullscreenDialog: true,
+                  builder: (xcopyCtx) {
                     return XCopyView(
                       node: Node(
                         name: '全部文件',
                         tag: 'root',
                       ),
+                      src: [entry],
+                      preCtx: [ctx, xcopyCtx], // for snackbar and navigation
+                      actionType: 'copy',
+                      callback: () => refresh(state),
                     );
                   },
                 ),
@@ -268,7 +281,27 @@ class _FilesState extends State<Files> {
             'icon': Icons.forward,
             'title': '移动到...',
             'types': ['file', 'directory'],
-            'action': () => print('move to'),
+            'action': (BuildContext ctx, Entry entry) async {
+              Navigator.pop(ctx);
+              Navigator.push(
+                this.context,
+                MaterialPageRoute(
+                  settings: RouteSettings(name: 'xcopy'),
+                  fullscreenDialog: true,
+                  builder: (xcopyCtx) {
+                    return XCopyView(
+                        node: Node(
+                          name: '全部文件',
+                          tag: 'root',
+                        ),
+                        src: [entry],
+                        preCtx: [ctx, xcopyCtx], // for snackbar and navigation
+                        actionType: 'move',
+                        callback: () => refresh(state));
+                  },
+                ),
+              );
+            }
           },
           {
             'icon': Icons.file_download,
@@ -286,7 +319,7 @@ class _FilesState extends State<Files> {
               Navigator.pop(ctx);
               showLoading(
                 barrierDismissible: false,
-                builder: (ctx) {
+                builder: (c) {
                   return Container(
                     constraints: BoxConstraints.expand(),
                     child: Center(
@@ -331,7 +364,10 @@ class _FilesState extends State<Files> {
             'icon': Icons.open_in_new,
             'title': '使用其它应用打开',
             'types': ['file'],
-            'action': () => print('rename'),
+            'action': (BuildContext ctx, Entry entry) {
+              Navigator.pop(ctx);
+              _download(ctx, entry, state, share: true);
+            },
           },
           {
             'icon': Icons.delete,
@@ -415,8 +451,8 @@ class _FilesState extends State<Files> {
             },
           ),
           IconButton(
-            icon: Icon(Icons.more_horiz),
-            onPressed: () => {},
+            icon: Icon(Icons.select_all),
+            onPressed: () => select.selectAll(entries),
           ),
         ],
       ),
@@ -538,10 +574,6 @@ class _FilesState extends State<Files> {
       iconTheme: IconThemeData(color: Colors.black38),
       actions: [
         IconButton(
-          icon: Icon(Icons.search),
-          onPressed: () => {},
-        ),
-        IconButton(
           icon: Icon(Icons.create_new_folder),
           onPressed: () => showDialog(
                 context: context,
@@ -563,8 +595,8 @@ class _FilesState extends State<Files> {
           },
         ),
         IconButton(
-          icon: Icon(Icons.more_horiz),
-          onPressed: () => {},
+          icon: Icon(Icons.select_all),
+          onPressed: () => select.selectAll(entries),
         ),
       ],
     );
@@ -604,21 +636,24 @@ class _FilesState extends State<Files> {
       iconTheme: IconThemeData(color: Colors.white),
       actions: <Widget>[
         IconButton(
-          icon: Icon(Icons.forward),
-          onPressed: () => {},
+          icon: Icon(Icons.content_copy),
+          onPressed: () {
+            select.clearSelect();
+          },
         ),
         Builder(builder: (ctx) {
           return IconButton(
-            icon: Icon(Icons.file_download),
+            icon: Icon(Icons.forward),
             onPressed: () {
-              showSnackBar(ctx, '${select.selectedEntry.length}个项目加入下载列表');
               select.clearSelect();
             },
           );
         }),
         IconButton(
-          icon: Icon(Icons.more_horiz),
-          onPressed: () => {},
+          icon: Icon(Icons.delete),
+          onPressed: () {
+            select.clearSelect();
+          },
         ),
       ],
     );
