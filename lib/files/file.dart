@@ -745,9 +745,9 @@ class _FilesState extends State<Files> {
               );
               select.clearSelect();
 
-              if (success) {
+              if (success == true) {
                 showSnackBar(ctx, '删除成功');
-              } else {
+              } else if (success == false) {
                 showSnackBar(ctx, '删除失败');
               }
               await refresh(state);

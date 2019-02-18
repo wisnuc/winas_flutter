@@ -27,16 +27,31 @@ class _DeleteDialogState extends State<DeleteDialog> {
 
     try {
       Map<String, dynamic> formdata = Map();
-      entries.forEach((e) {
-        formdata[e.name] =
-            jsonEncode({'op': 'remove', 'uuid': e.uuid, 'hash': e.hash});
-      });
+      List<Entry> sortedEntries = entries.toList();
+      List<List<Entry>> newEntries = [];
+      sortedEntries.sort((a, b) => a.pdir.compareTo(b.pdir));
 
-      await state.apis.req('deleteDirOrFile', {
-        'formdata': FormData.from(formdata),
-        'dirUUID': entries[0].pdir,
-        'driveUUID': entries[0].pdrv,
-      });
+      for (Entry entry in sortedEntries) {
+        if (newEntries.length == 0) {
+          newEntries.add([entry]);
+        } else if (newEntries[newEntries.length - 1][0].pdir == entry.pdir) {
+          newEntries[newEntries.length - 1].add(entry);
+        } else {
+          newEntries.add([entry]);
+        }
+      }
+      for (List<Entry> entries in newEntries) {
+        entries.forEach((e) {
+          formdata[e.name] =
+              jsonEncode({'op': 'remove', 'uuid': e.uuid, 'hash': e.hash});
+        });
+
+        await state.apis.req('deleteDirOrFile', {
+          'formdata': FormData.from(formdata),
+          'dirUUID': entries[0].pdir,
+          'driveUUID': entries[0].pdrv,
+        });
+      }
     } catch (error) {
       print(error);
       setState(() {

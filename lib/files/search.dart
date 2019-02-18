@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import './fileRow.dart';
+import './delete.dart';
+import './xcopyDialog.dart';
 import '../redux/redux.dart';
 import '../common/renderIcon.dart';
 
@@ -26,8 +28,8 @@ class _SearchState extends State<Search> {
   Select select;
   _SearchState(this.node, this.actions, this.download);
 
-  _onSearch(BuildContext context, AppState state) async {
-    FocusScope.of(context).requestFocus(FocusNode());
+  _onSearch(AppState state) async {
+    FocusScope.of(this.context).requestFocus(FocusNode());
     print('onSearch $_types $_searchText');
     if (_types == null && _searchText == null) return;
     setState(() {
@@ -114,47 +116,6 @@ class _SearchState extends State<Search> {
     select = Select(() => this.setState(() {}));
   }
 
-  AppBar selectAppBar(AppState state) {
-    return AppBar(
-      title: Text(
-        '选择了${select.selectedEntry.length}项',
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.normal,
-        ),
-      ),
-      leading: IconButton(
-        icon: Icon(Icons.close, color: Colors.white),
-        onPressed: () => select.clearSelect(),
-      ),
-      brightness: Brightness.light,
-      elevation: 2.0,
-      iconTheme: IconThemeData(color: Colors.white),
-      actions: <Widget>[
-        IconButton(
-          icon: Icon(Icons.content_copy),
-          onPressed: () {
-            select.clearSelect();
-          },
-        ),
-        Builder(builder: (ctx) {
-          return IconButton(
-            icon: Icon(Icons.forward),
-            onPressed: () {
-              select.clearSelect();
-            },
-          );
-        }),
-        IconButton(
-          icon: Icon(Icons.delete),
-          onPressed: () {
-            select.clearSelect();
-          },
-        ),
-      ],
-    );
-  }
-
   AppBar searchAppBar(AppState state) {
     return AppBar(
       elevation: 2.0, // no shadow
@@ -172,8 +133,108 @@ class _SearchState extends State<Search> {
         ),
         style: TextStyle(color: Colors.black87),
         textInputAction: TextInputAction.search,
-        onEditingComplete: () => _onSearch(this.context, state),
+        onEditingComplete: () => _onSearch(state),
       ),
+    );
+  }
+
+  AppBar selectAppBar(AppState state) {
+    return AppBar(
+      title: Text(
+        '选择了${select.selectedEntry.length}项',
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.normal,
+        ),
+      ),
+      leading: IconButton(
+        icon: Icon(Icons.close, color: Colors.white),
+        onPressed: () => select.clearSelect(),
+      ),
+      brightness: Brightness.light,
+      elevation: 2.0,
+      iconTheme: IconThemeData(color: Colors.white),
+      actions: <Widget>[
+        // copy selected entry
+        Builder(builder: (ctx) {
+          return IconButton(
+            icon: Icon(Icons.content_copy),
+            onPressed: () {
+              Navigator.push(
+                this.context,
+                MaterialPageRoute(
+                  settings: RouteSettings(name: 'xcopy'),
+                  fullscreenDialog: true,
+                  builder: (xcopyCtx) {
+                    return XCopyView(
+                        node: Node(
+                          name: '全部文件',
+                          tag: 'root',
+                        ),
+                        src: select.selectedEntry,
+                        preCtx: [ctx, xcopyCtx], // for snackbar and navigation
+                        actionType: 'copy',
+                        callback: () {
+                          select.clearSelect();
+                          _onSearch(state);
+                        });
+                  },
+                ),
+              );
+            },
+          );
+        }),
+        // move selected entry
+        Builder(builder: (ctx) {
+          return IconButton(
+            icon: Icon(Icons.forward),
+            onPressed: () {
+              Navigator.push(
+                this.context,
+                MaterialPageRoute(
+                  settings: RouteSettings(name: 'xcopy'),
+                  fullscreenDialog: true,
+                  builder: (xcopyCtx) {
+                    return XCopyView(
+                        node: Node(
+                          name: '全部文件',
+                          tag: 'root',
+                        ),
+                        src: select.selectedEntry,
+                        preCtx: [ctx, xcopyCtx], // for snackbar and navigation
+                        actionType: 'move',
+                        callback: () {
+                          select.clearSelect();
+                          _onSearch(state);
+                        });
+                  },
+                ),
+              );
+            },
+          );
+        }),
+        // delete selected entry
+        Builder(builder: (ctx) {
+          return IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: () async {
+              bool success = await showDialog(
+                context: this.context,
+                builder: (BuildContext context) =>
+                    DeleteDialog(entries: select.selectedEntry),
+              );
+              select.clearSelect();
+
+              if (success == true) {
+                showSnackBar(ctx, '删除成功');
+              } else if (success == false) {
+                showSnackBar(ctx, '删除失败');
+              }
+              await _onSearch(state);
+            },
+          );
+        }),
+      ],
     );
   }
 
@@ -262,7 +323,7 @@ class _SearchState extends State<Search> {
                               .map((a) => InkWell(
                                     onTap: () {
                                       _types = a[2];
-                                      _onSearch(context, state);
+                                      _onSearch(state);
                                     },
                                     child: Container(
                                       height: 56,

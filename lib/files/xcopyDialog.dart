@@ -182,17 +182,16 @@ class _XCopyViewState extends State<XCopyView> {
 
   Future fire(BuildContext ctx, AppState state) async {
     var args = {
+      'batch': true,
       'type': actionType,
-      'entries': src.map((e) => e.name).toList(),
+      'entries': src
+          .map((e) => ({'name': e.name, 'drive': e.pdrv, 'dir': e.pdir}))
+          .toList(),
       'policies': {
         'dir': ['rename', 'rename'],
         'file': ['rename', 'rename'],
       },
       'dst': {'drive': node.driveUUID, 'dir': node.dirUUID},
-      'src': {
-        'dir': src[0].pdir,
-        'drive': src[0].pdrv,
-      },
     };
     showLoading(
       barrierDismissible: false,
