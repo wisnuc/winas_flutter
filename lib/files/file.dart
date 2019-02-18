@@ -744,12 +744,13 @@ class _FilesState extends State<Files> {
                     DeleteDialog(entries: select.selectedEntry),
               );
               select.clearSelect();
-              await refresh(state);
+
               if (success) {
                 showSnackBar(ctx, '删除成功');
               } else {
                 showSnackBar(ctx, '删除失败');
               }
+              await refresh(state);
             },
           );
         }),

@@ -227,7 +227,7 @@ class _XCopyViewState extends State<XCopyView> {
           Entry entry = list[index];
           return Material(
             child: InkWell(
-              onTap: () => openDir(context, entry), // TODO
+              onTap: () => openDir(context, entry),
               child: Opacity(
                 opacity: entry.type == 'file' ? 0.3 : 1,
                 child: Row(

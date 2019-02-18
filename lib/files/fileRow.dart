@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 
 import './photo.dart';
+import './detail.dart';
 import '../redux/redux.dart';
 import '../common/renderIcon.dart';
 import '../common/cache.dart';
@@ -233,7 +234,18 @@ class _FileRowState extends State<FileRow> {
                     ),
                     IconButton(
                       icon: Icon(Icons.info),
-                      onPressed: () => print('press info'),
+                      onPressed: () {
+                        Navigator.pop(c);
+                        Navigator.push(
+                          ctx,
+                          MaterialPageRoute(
+                            fullscreenDialog: true,
+                            builder: (xcopyCtx) {
+                              return Detail(entry);
+                            },
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
