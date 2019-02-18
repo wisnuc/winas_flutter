@@ -298,12 +298,57 @@ class _FileRowState extends State<FileRow> {
     );
   }
 
+  Widget renderRowInGrid(BuildContext ctx) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        Container(
+          width: 4,
+        ),
+        Container(
+          height: 40,
+          width: 40,
+          child: (entry.selected && type != 'file')
+              ? Icon(Icons.check, color: Colors.white)
+              : type == 'file'
+                  ? renderIcon(name, metadata)
+                  : Icon(Icons.folder, color: Colors.orange),
+          decoration: BoxDecoration(
+            color: (select.selectMode() && type != 'file')
+                ? entry.selected ? Colors.teal : Colors.black12
+                : Colors.transparent,
+            borderRadius: BorderRadius.all(
+              const Radius.circular(20),
+            ),
+          ),
+        ),
+        Container(width: 4),
+        Expanded(
+          child: Text(
+            name,
+            textAlign: TextAlign.start,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+          flex: 10,
+        ),
+        Expanded(
+          child: Container(),
+          flex: 1,
+        ),
+        IconButton(
+          icon: Icon(Icons.more_horiz),
+          onPressed: () => _onPressMore(ctx),
+        ),
+      ],
+    );
+  }
+
   Widget renderGrid(BuildContext ctx, String thumbSrc) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        type == 'file'
-            ? Expanded(
+    return type == 'file'
+        ? Column(
+            children: [
+              Expanded(
                 flex: 1,
                 child: thumbSrc == null
                     ? renderIcon(entry.name, entry.metadata, size: 72.0)
@@ -315,51 +360,11 @@ class _FileRowState extends State<FileRow> {
                           fit: BoxFit.contain,
                         ),
                       ),
-              )
-            : Container(),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Container(width: 4),
-            Container(
-              height: 48,
-              width: 48,
-              child: (entry.selected && type != 'file')
-                  ? Icon(Icons.check, color: Colors.white)
-                  : type == 'file'
-                      ? renderIcon(name, metadata)
-                      : Icon(Icons.folder, color: Colors.orange),
-              decoration: BoxDecoration(
-                color: (select.selectMode() && type != 'file')
-                    ? entry.selected ? Colors.teal : Colors.black12
-                    : Colors.transparent,
-                borderRadius: BorderRadius.all(
-                  const Radius.circular(24),
-                ),
               ),
-            ),
-            Container(width: 4),
-            Expanded(
-              child: Text(
-                name,
-                textAlign: TextAlign.start,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-              flex: 10,
-            ),
-            Expanded(
-              child: Container(),
-              flex: 1,
-            ),
-            IconButton(
-              icon: Icon(Icons.more_horiz),
-              onPressed: () => _onPressMore(ctx),
-            ),
-          ],
-        ),
-      ],
-    );
+              renderRowInGrid(ctx),
+            ],
+          )
+        : renderRowInGrid(ctx);
   }
 
   Widget renderRow(BuildContext ctx) {
@@ -451,7 +456,6 @@ class _FileRowState extends State<FileRow> {
       converter: (store) => store.state,
       builder: (ctx, state) {
         return Container(
-          height: 64,
           child: Material(
             child: InkWell(
               onTap: () => _onTap(context),
@@ -461,45 +465,46 @@ class _FileRowState extends State<FileRow> {
                 }
               },
               child: isGrid
-                  ? (select.selectMode() && entry.type == 'file')
-                      ? Stack(
-                          children: <Widget>[
-                            Positioned(
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              child: renderGrid(context, _thumbSrc),
-                            ),
-                            Positioned(
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              child: Container(
-                                color: Colors.black12,
-                                child: Center(
-                                  child: Container(
-                                    height: 48,
-                                    width: 48,
-                                    child: entry.selected
-                                        ? Icon(Icons.check, color: Colors.white)
-                                        : Container(),
-                                    decoration: BoxDecoration(
-                                      color: entry.selected
-                                          ? Colors.teal
-                                          : Colors.black12,
-                                      borderRadius: BorderRadius.all(
-                                        const Radius.circular(24),
+                  ? Stack(
+                      children: <Widget>[
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: renderGrid(context, _thumbSrc),
+                        ),
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: (select.selectMode() && entry.type == 'file')
+                              ? Container(
+                                  color: Colors.black12,
+                                  child: Center(
+                                    child: Container(
+                                      height: 48,
+                                      width: 48,
+                                      child: entry.selected
+                                          ? Icon(Icons.check,
+                                              color: Colors.white)
+                                          : Container(),
+                                      decoration: BoxDecoration(
+                                        color: entry.selected
+                                            ? Colors.teal
+                                            : Colors.black12,
+                                        borderRadius: BorderRadius.all(
+                                          const Radius.circular(24),
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            )
-                          ],
+                                )
+                              : Container(),
                         )
-                      : renderGrid(context, _thumbSrc)
+                      ],
+                    )
                   : renderRow(context),
             ),
           ),

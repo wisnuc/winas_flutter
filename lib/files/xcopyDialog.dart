@@ -216,6 +216,7 @@ class _XCopyViewState extends State<XCopyView> {
     Navigator.popUntil(ctx, ModalRoute.withName('xcopy'));
     // pop root page
     Navigator.pop(preCtx[1]);
+    callback();
   }
 
   Widget renderRows(List<Entry> list) {

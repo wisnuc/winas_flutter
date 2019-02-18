@@ -223,7 +223,7 @@ class Select {
   Select(this.update);
   List<Entry> selectedEntry = [];
 
-  toggleSelect(Entry entry) {
+  void toggleSelect(Entry entry) {
     if (entry.selected) {
       entry.unSelect();
       selectedEntry.remove(entry);
@@ -234,7 +234,7 @@ class Select {
     this.update();
   }
 
-  clearSelect() {
+  void clearSelect() {
     for (Entry entry in selectedEntry) {
       entry.unSelect();
     }
@@ -242,7 +242,7 @@ class Select {
     this.update();
   }
 
-  selectAll(List<Entry> entries) {
+  void selectAll(List<Entry> entries) {
     for (Entry entry in entries) {
       entry.select();
       selectedEntry.add(entry);

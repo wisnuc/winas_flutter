@@ -451,8 +451,28 @@ class _FilesState extends State<Files> {
             },
           ),
           IconButton(
-            icon: Icon(Icons.select_all),
-            onPressed: () => select.selectAll(entries),
+            icon: Icon(Icons.more_horiz),
+            onPressed: () {
+              showModalBottomSheet(
+                context: this.context,
+                builder: (BuildContext c) {
+                  return Container(
+                    child: Material(
+                      child: InkWell(
+                        onTap: () {
+                          select.selectAll(entries);
+                          Navigator.pop(c);
+                        },
+                        child: Container(
+                          padding: EdgeInsets.all(16),
+                          child: Text('选择全部'),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
           ),
         ],
       ),
@@ -595,8 +615,28 @@ class _FilesState extends State<Files> {
           },
         ),
         IconButton(
-          icon: Icon(Icons.select_all),
-          onPressed: () => select.selectAll(entries),
+          icon: Icon(Icons.more_horiz),
+          onPressed: () {
+            showModalBottomSheet(
+              context: this.context,
+              builder: (BuildContext c) {
+                return Container(
+                  child: Material(
+                    child: InkWell(
+                      onTap: () {
+                        select.selectAll(entries);
+                        Navigator.pop(c);
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(16),
+                        child: Text('选择全部'),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
         ),
       ],
     );
@@ -635,26 +675,84 @@ class _FilesState extends State<Files> {
       elevation: 2.0,
       iconTheme: IconThemeData(color: Colors.white),
       actions: <Widget>[
-        IconButton(
-          icon: Icon(Icons.content_copy),
-          onPressed: () {
-            select.clearSelect();
-          },
-        ),
+        // copy selected entry
+        Builder(builder: (ctx) {
+          return IconButton(
+            icon: Icon(Icons.content_copy),
+            onPressed: () {
+              Navigator.push(
+                this.context,
+                MaterialPageRoute(
+                  settings: RouteSettings(name: 'xcopy'),
+                  fullscreenDialog: true,
+                  builder: (xcopyCtx) {
+                    return XCopyView(
+                        node: Node(
+                          name: '全部文件',
+                          tag: 'root',
+                        ),
+                        src: select.selectedEntry,
+                        preCtx: [ctx, xcopyCtx], // for snackbar and navigation
+                        actionType: 'copy',
+                        callback: () {
+                          select.clearSelect();
+                          refresh(state);
+                        });
+                  },
+                ),
+              );
+            },
+          );
+        }),
+        // move selected entry
         Builder(builder: (ctx) {
           return IconButton(
             icon: Icon(Icons.forward),
             onPressed: () {
-              select.clearSelect();
+              Navigator.push(
+                this.context,
+                MaterialPageRoute(
+                  settings: RouteSettings(name: 'xcopy'),
+                  fullscreenDialog: true,
+                  builder: (xcopyCtx) {
+                    return XCopyView(
+                        node: Node(
+                          name: '全部文件',
+                          tag: 'root',
+                        ),
+                        src: select.selectedEntry,
+                        preCtx: [ctx, xcopyCtx], // for snackbar and navigation
+                        actionType: 'move',
+                        callback: () {
+                          select.clearSelect();
+                          refresh(state);
+                        });
+                  },
+                ),
+              );
             },
           );
         }),
-        IconButton(
-          icon: Icon(Icons.delete),
-          onPressed: () {
-            select.clearSelect();
-          },
-        ),
+        // delete selected entry
+        Builder(builder: (ctx) {
+          return IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: () async {
+              bool success = await showDialog(
+                context: this.context,
+                builder: (BuildContext context) =>
+                    DeleteDialog(entries: select.selectedEntry),
+              );
+              select.clearSelect();
+              await refresh(state);
+              if (success) {
+                showSnackBar(ctx, '删除成功');
+              } else {
+                showSnackBar(ctx, '删除失败');
+              }
+            },
+          );
+        }),
       ],
     );
   }
