@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
-import './fileRow.dart';
 import './delete.dart';
+import './rename.dart';
+import './fileRow.dart';
 import './xcopyDialog.dart';
 import '../redux/redux.dart';
 import '../common/renderIcon.dart';
@@ -13,20 +14,20 @@ class Search extends StatefulWidget {
   final actions;
   final download;
   @override
-  _SearchState createState() => _SearchState(node, actions, download);
+  _SearchState createState() => _SearchState(node, download);
 }
 
 class _SearchState extends State<Search> {
   String _types;
   final Node node;
-  final actions;
+  Function actions;
   final download;
   String _searchText;
   bool loading = false;
   List<Entry> _entries;
   ScrollController myScrollController = ScrollController();
   Select select;
-  _SearchState(this.node, this.actions, this.download);
+  _SearchState(this.node, this.download);
 
   _onSearch(AppState state) async {
     FocusScope.of(this.context).requestFocus(FocusNode());
@@ -64,9 +65,11 @@ class _SearchState extends State<Search> {
     } catch (error) {
       print(error);
     } finally {
-      setState(() {
-        loading = false;
-      });
+      if (this.mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
     }
   }
 
@@ -111,9 +114,115 @@ class _SearchState extends State<Search> {
   @override
   void initState() {
     super.initState();
-
     // init Select
     select = Select(() => this.setState(() {}));
+    actions = (state) => [
+          {
+            'icon': Icons.edit,
+            'title': '重命名',
+            'types': ['file', 'directory'],
+            'action': (BuildContext ctx, Entry entry) {
+              Navigator.pop(ctx);
+              showDialog(
+                context: ctx,
+                builder: (BuildContext context) => RenameDialog(
+                      entry: entry,
+                    ),
+              ).then((success) => _onSearch(state));
+            },
+          },
+          {
+            'icon': Icons.content_copy,
+            'title': '复制到...',
+            'types': ['file', 'directory'],
+            'action': (BuildContext ctx, Entry entry) async {
+              Navigator.pop(ctx);
+              Navigator.push(
+                this.context,
+                MaterialPageRoute(
+                  settings: RouteSettings(name: 'xcopy'),
+                  fullscreenDialog: true,
+                  builder: (xcopyCtx) {
+                    return XCopyView(
+                      node: Node(
+                        name: '全部文件',
+                        tag: 'root',
+                      ),
+                      src: [entry],
+                      preCtx: [ctx, xcopyCtx], // for snackbar and navigation
+                      actionType: 'copy',
+                      callback: () => _onSearch(state),
+                    );
+                  },
+                ),
+              );
+            }
+          },
+          {
+            'icon': Icons.forward,
+            'title': '移动到...',
+            'types': ['file', 'directory'],
+            'action': (BuildContext ctx, Entry entry) async {
+              Navigator.pop(ctx);
+              Navigator.push(
+                this.context,
+                MaterialPageRoute(
+                  settings: RouteSettings(name: 'xcopy'),
+                  fullscreenDialog: true,
+                  builder: (xcopyCtx) {
+                    return XCopyView(
+                        node: Node(
+                          name: '全部文件',
+                          tag: 'root',
+                        ),
+                        src: [entry],
+                        preCtx: [ctx, xcopyCtx], // for snackbar and navigation
+                        actionType: 'move',
+                        callback: () => _onSearch(state));
+                  },
+                ),
+              );
+            }
+          },
+          {
+            'icon': Icons.file_download,
+            'title': '下载到本地',
+            'types': ['file'],
+            'action': (BuildContext ctx, Entry entry) {
+              Navigator.pop(ctx);
+              download(ctx, entry, state, share: true);
+            },
+          },
+          {
+            'icon': Icons.open_in_new,
+            'title': '使用其它应用打开',
+            'types': ['file'],
+            'action': (BuildContext ctx, Entry entry) {
+              Navigator.pop(ctx);
+              download(ctx, entry, state, share: true);
+            },
+          },
+          {
+            'icon': Icons.delete,
+            'title': '删除',
+            'types': ['file', 'directory'],
+            'action': (BuildContext ctx, Entry entry) async {
+              Navigator.pop(ctx);
+              bool success = await showDialog(
+                context: this.context,
+                builder: (BuildContext context) =>
+                    DeleteDialog(entries: [entry]),
+              );
+
+              if (success) {
+                await _onSearch(state);
+                showSnackBar(ctx, '删除成功');
+              } else {
+                showSnackBar(ctx, '删除失败');
+              }
+            },
+          },
+        ];
   }
 
   AppBar searchAppBar(AppState state) {
@@ -270,7 +379,7 @@ class _SearchState extends State<Search> {
                                           return FileRow(
                                             entry: entry,
                                             type: 'file',
-                                            actions: actions,
+                                            actions: actions(state),
                                             onPress: () =>
                                                 download(ctx, entry, state),
                                             isGrid: false,
@@ -294,7 +403,7 @@ class _SearchState extends State<Search> {
                                           return FileRow(
                                             entry: entry,
                                             type: 'file',
-                                            actions: actions,
+                                            actions: actions(state),
                                             onPress: () =>
                                                 download(ctx, entry, state),
                                             isGrid: true,

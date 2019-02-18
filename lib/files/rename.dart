@@ -3,19 +3,19 @@ import 'package:flutter/material.dart';
 import '../redux/redux.dart';
 
 class RenameDialog extends StatefulWidget {
-  RenameDialog({Key key, this.node, this.entry}) : super(key: key);
-  final Node node;
+  RenameDialog({Key key, this.entry}) : super(key: key);
+
   final Entry entry;
   @override
-  _RenameDialogState createState() => _RenameDialogState(node, entry);
+  _RenameDialogState createState() => _RenameDialogState(entry);
 }
 
 class _RenameDialogState extends State<RenameDialog> {
-  _RenameDialogState(this.node, this.entry) : _fileName = entry.name;
+  _RenameDialogState(this.entry) : _fileName = entry.name;
   String _fileName;
   String _error;
   bool loading = false;
-  final Node node;
+
   final Entry entry;
 
   _onPressed(context, state) async {
@@ -27,8 +27,8 @@ class _RenameDialogState extends State<RenameDialog> {
       await state.apis.req('rename', {
         'oldName': entry.name,
         'newName': _fileName,
-        'dirUUID': node.dirUUID,
-        'driveUUID': node.driveUUID,
+        'dirUUID': entry.pdir,
+        'driveUUID': entry.pdrv,
       });
     } catch (error) {
       print(error);

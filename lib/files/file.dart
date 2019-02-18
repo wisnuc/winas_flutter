@@ -176,7 +176,8 @@ class _FilesState extends State<Files> {
     } else {
       print('other entries!!!!');
     }
-    newEntries.addAll(rawEntries);
+    newEntries.addAll(newDirs);
+    newEntries.addAll(newFiles);
 
     if (this.mounted) {
       // avoid calling setState after dispose()
@@ -245,7 +246,6 @@ class _FilesState extends State<Files> {
                 context: ctx,
                 builder: (BuildContext context) => RenameDialog(
                       entry: entry,
-                      node: currentNode,
                     ),
               ).then((success) => refresh(state));
             },
@@ -312,9 +312,7 @@ class _FilesState extends State<Files> {
           {
             'icon': Icons.share,
             'title': '分享到共享空间',
-            'types': node.tag == 'built-in'
-                ? []
-                : ['file', 'directory'], // TODO: filter actions
+            'types': node.tag == 'built-in' ? [] : ['file', 'directory'],
             'action': (BuildContext ctx, Entry entry) async {
               Navigator.pop(ctx);
               showLoading(
