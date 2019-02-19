@@ -9,10 +9,9 @@ import './search.dart';
 import './fileRow.dart';
 import './newFolder.dart';
 import './xcopyDialog.dart';
-
 import '../redux/redux.dart';
-import '../common/loading.dart';
 import '../common/cache.dart';
+import '../common/loading.dart';
 
 Widget _buildItem(
   BuildContext context,
@@ -235,7 +234,7 @@ class _FilesState extends State<Files> {
 
     select = Select(() => this.setState(() {}));
 
-    actions = (state) => [
+    actions = (AppState state) => [
           {
             'icon': Icons.edit,
             'title': '重命名',
@@ -307,7 +306,12 @@ class _FilesState extends State<Files> {
             'icon': Icons.file_download,
             'title': '下载到本地',
             'types': ['file'],
-            'action': () => print('move to'),
+            'action': (BuildContext ctx, Entry entry) async {
+              Navigator.pop(ctx);
+              final cm = await CacheManager.getInstance();
+              cm.newDownload(entry, state);
+              showSnackBar(ctx, '该文件已加入下载任务');
+            },
           },
           {
             'icon': Icons.share,
@@ -379,10 +383,10 @@ class _FilesState extends State<Files> {
                     DeleteDialog(entries: [entry]),
               );
 
-              if (success) {
+              if (success == true) {
                 await refresh(state);
                 showSnackBar(ctx, '删除成功');
-              } else {
+              } else if (success == false) {
                 showSnackBar(ctx, '删除失败');
               }
             },

@@ -6,6 +6,7 @@ import '../files/backupView.dart';
 import '../device/station.dart';
 import '../redux/redux.dart';
 import '../user/account_info.dart';
+import '../transfer/transfer.dart';
 
 class NavigationIconView {
   NavigationIconView({
@@ -64,6 +65,12 @@ List<FileNavView> fileNavViews = [
     title: '传输任务',
     nav: 'transfer',
     color: Colors.purple,
+    onTap: (context) => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Transfer(),
+          ),
+        ),
   ),
 ];
 

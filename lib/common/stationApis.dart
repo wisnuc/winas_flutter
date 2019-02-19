@@ -82,6 +82,7 @@ class Apis {
               args['dirname']: jsonEncode({'op': 'mkdir'}),
             }));
         break;
+
       case 'rename':
         r = tpost(
             'drives/${args['driveUUID']}/dirs/${args['dirUUID']}/entries',
@@ -90,10 +91,12 @@ class Apis {
                   jsonEncode({'op': 'rename'}),
             }));
         break;
+
       case 'deleteDirOrFile':
         r = tpost('drives/${args['driveUUID']}/dirs/${args['dirUUID']}/entries',
             args['formdata']);
         break;
+
       case 'xcopy':
         r = tpost('tasks', args);
         break;
@@ -105,14 +108,16 @@ class Apis {
     return r;
   }
 
-  download(ep, qs, downloadPath) async {
+  download(String ep, Map<String, dynamic> qs, String downloadPath,
+      {Function onProgress, CancelToken cancelToken}) async {
     assert(token != null);
     dio.options.headers['Authorization'] = 'JWT $lanToken';
     await dio.download(
       '$lanAdrress/$ep',
       downloadPath,
       data: qs,
-      onProgress: (a, b) => a == b ? print('finished, size: $b') : null,
+      cancelToken: cancelToken,
+      onProgress: (a, b) => onProgress != null ? onProgress(a, b) : null,
     );
   }
 }

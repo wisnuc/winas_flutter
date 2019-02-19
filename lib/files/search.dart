@@ -417,38 +417,40 @@ class _SearchState extends State<Search> {
                           ),
                         ),
                       )
-                    : Column(children: [
-                        Container(
-                          height: 56,
-                          child: Row(
-                            children: <Widget>[
-                              Container(width: 16),
-                              Text('文件类型'),
-                            ],
+                    : Column(
+                        children: [
+                          Container(
+                            height: 56,
+                            child: Row(
+                              children: <Widget>[
+                                Container(width: 16),
+                                Text('文件类型'),
+                              ],
+                            ),
                           ),
-                        ),
-                        Column(
-                          children: fileTypes
-                              .map((a) => InkWell(
-                                    onTap: () {
-                                      _types = a[2];
-                                      _onSearch(state);
-                                    },
-                                    child: Container(
-                                      height: 56,
-                                      child: Row(
-                                        children: <Widget>[
-                                          Container(width: 16),
-                                          a[1],
-                                          Container(width: 32),
-                                          Text(a[0]),
-                                        ],
+                          Column(
+                            children: fileTypes
+                                .map((a) => InkWell(
+                                      onTap: () {
+                                        _types = a[2];
+                                        _onSearch(state);
+                                      },
+                                      child: Container(
+                                        height: 56,
+                                        child: Row(
+                                          children: <Widget>[
+                                            Container(width: 16),
+                                            a[1],
+                                            Container(width: 32),
+                                            Text(a[0]),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  ))
-                              .toList(),
-                        )
-                      ]),
+                                    ))
+                                .toList(),
+                          )
+                        ],
+                      ),
           ),
         );
       },

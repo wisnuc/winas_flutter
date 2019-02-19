@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 import 'package:async/async.dart';
 import 'package:synchronized/synchronized.dart';
@@ -21,7 +22,7 @@ class CacheManager {
       await _lock.synchronized(() async {
         if (_instance == null) {
           // keep local instance till it is fully initialized
-          var newInstance = new CacheManager._();
+          var newInstance = CacheManager._();
           await newInstance._init();
           _instance = newInstance;
         }
@@ -32,7 +33,7 @@ class CacheManager {
 
   CacheManager._();
 
-  static Lock _lock = new Lock();
+  static Lock _lock = Lock();
 
   String _rootDir;
 
@@ -52,6 +53,10 @@ class CacheManager {
     return _rootDir + '/image/';
   }
 
+  String _downloadDir() {
+    return _rootDir + '/download/';
+  }
+
   Future _init() async {
     Directory root = await getApplicationDocumentsDirectory();
     _rootDir = root.path;
@@ -59,6 +64,7 @@ class CacheManager {
     await Directory(_transDir()).create(recursive: true);
     await Directory(_thumbnailDir()).create(recursive: true);
     await Directory(_imageDir()).create(recursive: true);
+    await Directory(_downloadDir()).create(recursive: true);
   }
 
   Future<int> _getDirSize(String dirPath) async {
@@ -79,6 +85,7 @@ class CacheManager {
       _getDirSize(_transDir()),
       _getDirSize(_thumbnailDir()),
       _getDirSize(_imageDir()),
+      _getDirSize(_downloadDir()),
     ]);
     int size = 0;
     for (int s in res) {
@@ -92,6 +99,7 @@ class CacheManager {
     await Directory(_transDir()).delete(recursive: true);
     await Directory(_thumbnailDir()).delete(recursive: true);
     await Directory(_imageDir()).delete(recursive: true);
+    await Directory(_downloadDir()).delete(recursive: true);
     await _instance._init();
   }
 
@@ -99,7 +107,7 @@ class CacheManager {
     String entryDir = _tmpDir() + entry.uuid.substring(24, 36) + '/';
     String entryPath = entryDir + entry.name;
     String transPath = _transDir() + '/' + Uuid().v4();
-    File entryFile = new File(entryPath);
+    File entryFile = File(entryPath);
 
     FileStat res = await entryFile.stat();
 
@@ -126,7 +134,7 @@ class CacheManager {
 
   ///  convert callback to Future, TODO: add queue to limit concurrent
   Future getThumb(Entry entry, AppState state) async {
-    Completer c = new Completer();
+    Completer c = Completer();
     _getThumbCallback(entry, state, (error, value) {
       if (error != null) {
         c.completeError(error);
@@ -218,5 +226,52 @@ class CacheManager {
       return null;
     }
     return entryPath;
+  }
+
+  _deleteDir(String path) {
+    File file = File(path);
+    file
+        .delete(recursive: true)
+        .catchError((onError) => print('delete file failed: $onError'));
+  }
+
+  Future<void> _downloadFile(TransferItem item, AppState state) async {
+    Entry entry = item.entry;
+
+    // use unique transferItem uuid
+    String entryDir = _downloadDir() + item.uuid + '/';
+    String entryPath = entryDir + entry.name;
+    String transPath = _transDir() + '/' + Uuid().v4();
+    item.setFilePath(entryPath);
+    CancelToken cancelToken = CancelToken();
+    item.start(cancelToken, () => _deleteDir(entryDir));
+
+    final ep = 'drives/${entry.pdrv}/dirs/${entry.pdir}/entries/${entry.uuid}';
+    final qs = {'name': entry.name, 'hash': entry.hash};
+    try {
+      // mkdir
+      await Directory(entryDir).create(recursive: true);
+      // download
+      await state.apis.download(ep, qs, transPath, cancelToken: cancelToken,
+          onProgress: (int a, int b) {
+        item.update(a);
+      });
+      // rename
+      await File(transPath).rename(entryPath);
+      item.finish();
+    } catch (error) {
+      print(error);
+      // DioErrorType.CANCEL is not error
+      if (error?.type != DioErrorType.CANCEL) {
+        item.fail();
+      }
+    }
+  }
+
+  /// creat a new download task
+  newDownload(Entry entry, AppState state) {
+    TransferItem item = TransferItem(entry: entry);
+    state.transferList.add(item);
+    _downloadFile(item, state).catchError((onError) => item.fail());
   }
 }
