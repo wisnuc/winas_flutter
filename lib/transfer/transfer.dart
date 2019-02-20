@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:open_file/open_file.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
-
-import '../files/fileRow.dart';
+import './manager.dart';
 import '../redux/redux.dart';
 import '../common/format.dart';
 import '../common/renderIcon.dart';
-import '../common/cache.dart';
+import '../files/fileRow.dart';
 
 class Transfer extends StatefulWidget {
   Transfer({Key key}) : super(key: key);
@@ -18,6 +17,7 @@ class Transfer extends StatefulWidget {
 
 class _TransferState extends State<Transfer> {
   bool loading = false;
+  List<TransferItem> list = [];
   ScrollController myScrollController = ScrollController();
   _TransferState();
 
@@ -27,8 +27,16 @@ class _TransferState extends State<Transfer> {
   }
 
   /// refresh per second
-  _autoRefresh() async {
-    await Future.delayed(Duration(seconds: 1));
+  _autoRefresh({bool isFirst = false}) async {
+    list = TransferManager.getList();
+    list.sort((a, b) {
+      if (a.order == b.order) {
+        return b.startTime - a.startTime;
+      }
+      return b.order - a.order;
+    });
+    await Future.delayed(
+        isFirst ? Duration(milliseconds: 100) : Duration(seconds: 1));
     if (this.mounted) {
       setState(() {});
       _autoRefresh();
@@ -147,12 +155,12 @@ class _TransferState extends State<Transfer> {
               // resume task
               item.clean();
               items.removeAt(index);
-              final cm = await CacheManager.getInstance();
+              final cm = TransferManager.getInstance();
               cm.newDownload(entry, state);
             } else if (item.status == 'failed') {
               // retry
               items.removeAt(index);
-              final cm = await CacheManager.getInstance();
+              final cm = TransferManager.getInstance();
               cm.newDownload(entry, state);
             }
           },
@@ -228,18 +236,10 @@ class _TransferState extends State<Transfer> {
   @override
   Widget build(BuildContext context) {
     return StoreConnector<AppState, AppState>(
-      onInit: (store) => _autoRefresh(),
+      onInit: (store) => _autoRefresh(isFirst: true),
       onDispose: (store) => {},
       converter: (store) => store.state,
       builder: (ctx, state) {
-        List<TransferItem> list = state.transferList;
-        list.sort((a, b) {
-          if (a.order == b.order) {
-            return b.startTime - a.startTime;
-          }
-          return b.order - a.order;
-        });
-
         return Scaffold(
           appBar: AppBar(
             elevation: 2.0, // no shadow
@@ -272,7 +272,7 @@ class _TransferState extends State<Transfer> {
                                     resumeList.add(item.entry);
                                   }
                                 }
-                                final cm = await CacheManager.getInstance();
+                                final cm = TransferManager.getInstance();
                                 for (Entry entry in resumeList) {
                                   cm.newDownload(entry, state);
                                 }

@@ -11,6 +11,7 @@ import './newFolder.dart';
 import './xcopyDialog.dart';
 import '../redux/redux.dart';
 import '../common/cache.dart';
+import '../transfer/manager.dart';
 import '../common/loading.dart';
 
 Widget _buildItem(
@@ -135,6 +136,7 @@ class _FilesState extends State<Files> {
           .req('listNavDir', {'driveUUID': driveUUID, 'dirUUID': dirUUID});
       _error = null;
     } catch (error) {
+      print(error);
       setState(() {
         loading = false;
         _error = error;
@@ -314,7 +316,7 @@ class _FilesState extends State<Files> {
             'types': ['file'],
             'action': (BuildContext ctx, Entry entry) async {
               Navigator.pop(ctx);
-              final cm = await CacheManager.getInstance();
+              final cm = TransferManager.getInstance();
               cm.newDownload(entry, state);
               showSnackBar(ctx, '该文件已加入下载任务');
             },

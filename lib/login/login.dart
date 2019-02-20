@@ -5,6 +5,7 @@ import '../common/request.dart';
 import '../common/persistent.dart';
 import '../common/loading.dart';
 import '../common/stationApis.dart';
+import '../transfer/manager.dart';
 
 class LoginPage extends StatelessWidget {
   @override
@@ -249,6 +250,11 @@ class _LoginState extends State<Login> {
         User.fromMap(user),
       ),
     );
+
+    if (user['uuid'] != null) {
+      // init TransferManager, load TransferItem
+      TransferManager.init(user['uuid']).catchError(print);
+    }
 
     // get current drives data
     List<Drive> drives = List.from(

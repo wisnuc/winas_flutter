@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:async';
-import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 import 'package:async/async.dart';
 import 'package:synchronized/synchronized.dart';
@@ -226,52 +225,5 @@ class CacheManager {
       return null;
     }
     return entryPath;
-  }
-
-  _deleteDir(String path) {
-    File file = File(path);
-    file
-        .delete(recursive: true)
-        .catchError((onError) => print('delete file failed: $onError'));
-  }
-
-  Future<void> _downloadFile(TransferItem item, AppState state) async {
-    Entry entry = item.entry;
-
-    // use unique transferItem uuid
-    String entryDir = _downloadDir() + item.uuid + '/';
-    String entryPath = entryDir + entry.name;
-    String transPath = _transDir() + '/' + Uuid().v4();
-    item.setFilePath(entryPath);
-    CancelToken cancelToken = CancelToken();
-    item.start(cancelToken, () => _deleteDir(entryDir));
-
-    final ep = 'drives/${entry.pdrv}/dirs/${entry.pdir}/entries/${entry.uuid}';
-    final qs = {'name': entry.name, 'hash': entry.hash};
-    try {
-      // mkdir
-      await Directory(entryDir).create(recursive: true);
-      // download
-      await state.apis.download(ep, qs, transPath, cancelToken: cancelToken,
-          onProgress: (int a, int b) {
-        item.update(a);
-      });
-      // rename
-      await File(transPath).rename(entryPath);
-      item.finish();
-    } catch (error) {
-      print(error);
-      // DioErrorType.CANCEL is not error
-      if (error?.type != DioErrorType.CANCEL) {
-        item.fail();
-      }
-    }
-  }
-
-  /// creat a new download task
-  newDownload(Entry entry, AppState state) {
-    TransferItem item = TransferItem(entry: entry);
-    state.transferList.add(item);
-    _downloadFile(item, state).catchError((onError) => item.fail());
   }
 }

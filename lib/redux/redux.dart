@@ -253,6 +253,27 @@ class Entry {
             : m['metadata']);
   }
 
+  @override
+  String toString() {
+    Map<String, dynamic> m = {
+      'size': size,
+      'ctime': ctime,
+      'mtime': mtime,
+      'name': name,
+      'uuid': uuid,
+      'type': type,
+      'hash': hash,
+      'pdir': pdir,
+      'pdrv': pdrv,
+      'location': location,
+      'namepath': namepath,
+      'metadata': metadata,
+    };
+    return jsonEncode(m);
+  }
+
+  String toJson() => toString();
+
   Entry.fromSearch(Map m, List<Drive> d) {
     this.size = m['size'];
     this.ctime = m['ctime'];
@@ -300,26 +321,6 @@ class Entry {
   void toggleSelect() {
     this.selected = !this.selected;
   }
-
-  @override
-  String toString() {
-    Map<String, dynamic> m = {
-      'ctime': ctime,
-      'mtime': mtime,
-      'name': name,
-      'uuid': uuid,
-      'type': type,
-      'hash': hash,
-      'pdir': pdir,
-      'pdrv': pdrv,
-      'location': location,
-      'namepath': namepath,
-      'metadata': metadata,
-    };
-    return jsonEncode(m);
-  }
-
-  String toJson() => toString();
 }
 
 class DirPath {
@@ -363,6 +364,33 @@ class TransferItem {
   TransferItem({this.entry})
       : this.uuid = Uuid().v4(),
         this.previousTime = DateTime.now().millisecondsSinceEpoch;
+
+  TransferItem.fromMap(Map m) {
+    this.entry = Entry.fromMap(jsonDecode(m['entry']));
+    this.uuid = m['uuid'];
+    this.status = m['status'] == 'working' ? 'paused' : m['status'];
+    this.finishedTime = m['finishedTime'];
+    this.startTime = m['startTime'];
+    this.finishedSize = m['finishedSize'] ?? 0;
+    this.filePath = m['filePath'];
+  }
+
+  @override
+  String toString() {
+    Map<String, dynamic> m = {
+      'entry': entry,
+      'uuid': uuid,
+      'status': status,
+      'finishedTime': finishedTime,
+      'startTime': startTime,
+      'finishedSize': finishedSize,
+      'filePath': filePath,
+    };
+
+    return jsonEncode(m);
+  }
+
+  String toJson() => toString();
 
   void setFilePath(String path) {
     this.filePath = path;
@@ -427,33 +455,6 @@ class TransferItem {
     }
     return 1000;
   }
-
-  TransferItem.fromMap(Map m) {
-    this.entry = Entry.fromMap(m['entry']);
-    this.uuid = m['uuid'];
-    this.status = m['status'];
-    this.finishedTime = m['finishedTime'];
-    this.startTime = m['startTime'];
-    this.finishedSize = m['finishedSize'];
-    this.filePath = m['filePath'];
-  }
-
-  @override
-  String toString() {
-    Map<String, dynamic> m = {
-      'entry': entry,
-      'uuid': uuid,
-      'status': status,
-      'finishedTime': finishedTime,
-      'startTime': startTime,
-      'finishedSize': finishedSize,
-      'filePath': filePath,
-    };
-
-    return jsonEncode(m);
-  }
-
-  String toJson() => toString();
 }
 
 /// update Selection, and refresh(setState)

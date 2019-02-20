@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import './login/login.dart';
 import './nav/bottom_navigation.dart';
 import './redux/redux.dart';
+import './transfer/manager.dart';
 
 void main() async {
   Directory root = await getApplicationDocumentsDirectory();
@@ -14,19 +15,24 @@ void main() async {
 
   // init persistor
   final persistor = Persistor<AppState>(
-    storage: FileStorage(File("$_rootDir/config.json")),
+    storage: FileStorage(File("$_rootDir/config_v1.json")),
     serializer: JsonSerializer<AppState>(AppState.fromJson),
   );
 
   // Load initial state
   AppState initialState;
+
+  // initialState = await persistor.load();
   try {
     initialState = await persistor.load(); // AppState.initial(); //
   } catch (error) {
     print(error);
     initialState = AppState.initial();
   }
-
+  if (initialState?.localUser?.uuid != null) {
+    // init TransferManager, load TransferItem
+    TransferManager.init(initialState.localUser.uuid).catchError(print);
+  }
   // Create Store with Persistor middleware
   final store = Store<AppState>(
     appReducer,
@@ -58,7 +64,9 @@ class MyApp extends StatelessWidget {
           '/login': (BuildContext context) => LoginPage(),
           '/station': (BuildContext context) => BottomNavigation(),
         },
-        home: initialState?.account != null ? BottomNavigation() : LoginPage(),
+        home: (initialState?.account != null && initialState?.apis != null)
+            ? BottomNavigation()
+            : LoginPage(),
       ),
     );
   }

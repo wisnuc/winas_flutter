@@ -201,10 +201,18 @@ class _AccountInfoState extends State<AccountInfo> {
                       ),
                   null,
                 ),
-                actionItem(
-                  '注销',
-                  () => Navigator.pushReplacementNamed(context, '/login'),
-                  Container(),
+                StoreConnector<AppState, VoidCallback>(
+                  converter: (store) => () => store.dispatch(LoginAction(null)),
+                  builder: (context, logout) {
+                    return actionItem(
+                      '注销',
+                      () async {
+                        await Navigator.pushReplacementNamed(context, '/login');
+                        logout();
+                      },
+                      Container(),
+                    );
+                  },
                 ),
               ],
             ),
