@@ -161,6 +161,7 @@ class _XCopyViewState extends State<XCopyView> {
                 driveUUID: entry.pdrv,
                 dirUUID: entry.uuid,
                 tag: 'dir',
+                location: 'xcopy',
               ),
               src: src,
               preCtx: preCtx,

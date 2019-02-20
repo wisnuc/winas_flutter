@@ -51,6 +51,7 @@ Widget _buildItem(
                       name: entry.name,
                       driveUUID: entry.pdrv,
                       dirUUID: entry.uuid,
+                      location: entry.location,
                       tag: 'dir',
                     ),
                   );
@@ -106,6 +107,7 @@ class _FilesState extends State<Files> {
         driveUUID: driveUUID,
         dirUUID: driveUUID,
         tag: 'home',
+        location: 'home',
       );
     } else if (node.tag == 'dir') {
       driveUUID = node.driveUUID;
@@ -122,6 +124,7 @@ class _FilesState extends State<Files> {
         driveUUID: driveUUID,
         dirUUID: driveUUID,
         tag: 'built-in',
+        location: 'built-in',
       );
     }
 
@@ -238,7 +241,7 @@ class _FilesState extends State<Files> {
           {
             'icon': Icons.edit,
             'title': '重命名',
-            'types': ['file', 'directory'],
+            'types': node.location == 'backup' ? [] : ['file', 'directory'],
             'action': (BuildContext ctx, Entry entry) {
               Navigator.pop(ctx);
               showDialog(
@@ -252,7 +255,7 @@ class _FilesState extends State<Files> {
           {
             'icon': Icons.content_copy,
             'title': '复制到...',
-            'types': ['file', 'directory'],
+            'types': node.location == 'backup' ? [] : ['file', 'directory'],
             'action': (BuildContext ctx, Entry entry) async {
               Navigator.pop(ctx);
               Navigator.push(
@@ -265,6 +268,7 @@ class _FilesState extends State<Files> {
                       node: Node(
                         name: '全部文件',
                         tag: 'root',
+                        location: 'xcopy',
                       ),
                       src: [entry],
                       preCtx: [ctx, xcopyCtx], // for snackbar and navigation
@@ -279,7 +283,7 @@ class _FilesState extends State<Files> {
           {
             'icon': Icons.forward,
             'title': '移动到...',
-            'types': ['file', 'directory'],
+            'types': node.location == 'backup' ? [] : ['file', 'directory'],
             'action': (BuildContext ctx, Entry entry) async {
               Navigator.pop(ctx);
               Navigator.push(
@@ -289,14 +293,16 @@ class _FilesState extends State<Files> {
                   fullscreenDialog: true,
                   builder: (xcopyCtx) {
                     return XCopyView(
-                        node: Node(
-                          name: '全部文件',
-                          tag: 'root',
-                        ),
-                        src: [entry],
-                        preCtx: [ctx, xcopyCtx], // for snackbar and navigation
-                        actionType: 'move',
-                        callback: () => refresh(state));
+                      node: Node(
+                        name: '全部文件',
+                        tag: 'root',
+                        location: 'xcopy',
+                      ),
+                      src: [entry],
+                      preCtx: [ctx, xcopyCtx], // for snackbar and navigation
+                      actionType: 'move',
+                      callback: () => refresh(state),
+                    );
                   },
                 ),
               );
@@ -316,7 +322,7 @@ class _FilesState extends State<Files> {
           {
             'icon': Icons.share,
             'title': '分享到共享空间',
-            'types': node.tag == 'built-in' ? [] : ['file', 'directory'],
+            'types': node.location == 'home' ? ['file', 'directory'] : [],
             'action': (BuildContext ctx, Entry entry) async {
               Navigator.pop(ctx);
               showLoading(
@@ -681,58 +687,70 @@ class _FilesState extends State<Files> {
         Builder(builder: (ctx) {
           return IconButton(
             icon: Icon(Icons.content_copy),
-            onPressed: () {
-              Navigator.push(
-                this.context,
-                MaterialPageRoute(
-                  settings: RouteSettings(name: 'xcopy'),
-                  fullscreenDialog: true,
-                  builder: (xcopyCtx) {
-                    return XCopyView(
-                        node: Node(
-                          name: '全部文件',
-                          tag: 'root',
-                        ),
-                        src: select.selectedEntry,
-                        preCtx: [ctx, xcopyCtx], // for snackbar and navigation
-                        actionType: 'copy',
-                        callback: () {
-                          select.clearSelect();
-                          refresh(state);
-                        });
+            onPressed: select.selectedEntry.any((e) => e.location == 'backup')
+                ? null
+                : () {
+                    Navigator.push(
+                      this.context,
+                      MaterialPageRoute(
+                        settings: RouteSettings(name: 'xcopy'),
+                        fullscreenDialog: true,
+                        builder: (xcopyCtx) {
+                          return XCopyView(
+                              node: Node(
+                                name: '全部文件',
+                                tag: 'root',
+                                location: 'xcopy',
+                              ),
+                              src: select.selectedEntry,
+                              preCtx: [
+                                ctx,
+                                xcopyCtx
+                              ], // for snackbar and navigation
+                              actionType: 'copy',
+                              callback: () {
+                                select.clearSelect();
+                                refresh(state);
+                              });
+                        },
+                      ),
+                    );
                   },
-                ),
-              );
-            },
           );
         }),
         // move selected entry
         Builder(builder: (ctx) {
           return IconButton(
             icon: Icon(Icons.forward),
-            onPressed: () {
-              Navigator.push(
-                this.context,
-                MaterialPageRoute(
-                  settings: RouteSettings(name: 'xcopy'),
-                  fullscreenDialog: true,
-                  builder: (xcopyCtx) {
-                    return XCopyView(
-                        node: Node(
-                          name: '全部文件',
-                          tag: 'root',
-                        ),
-                        src: select.selectedEntry,
-                        preCtx: [ctx, xcopyCtx], // for snackbar and navigation
-                        actionType: 'move',
-                        callback: () {
-                          select.clearSelect();
-                          refresh(state);
-                        });
+            onPressed: select.selectedEntry.any((e) => e.location == 'backup')
+                ? null
+                : () {
+                    Navigator.push(
+                      this.context,
+                      MaterialPageRoute(
+                        settings: RouteSettings(name: 'xcopy'),
+                        fullscreenDialog: true,
+                        builder: (xcopyCtx) {
+                          return XCopyView(
+                              node: Node(
+                                name: '全部文件',
+                                tag: 'root',
+                                location: 'xcopy',
+                              ),
+                              src: select.selectedEntry,
+                              preCtx: [
+                                ctx,
+                                xcopyCtx
+                              ], // for snackbar and navigation
+                              actionType: 'move',
+                              callback: () {
+                                select.clearSelect();
+                                refresh(state);
+                              });
+                        },
+                      ),
+                    );
                   },
-                ),
-              );
-            },
           );
         }),
         // delete selected entry

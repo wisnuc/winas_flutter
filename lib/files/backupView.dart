@@ -98,6 +98,7 @@ class _BackupViewState extends State<BackupView> {
                                       driveUUID: drive.uuid,
                                       dirUUID: drive.uuid,
                                       tag: 'dir',
+                                      location: 'backup',
                                     ),
                                   );
                                 },

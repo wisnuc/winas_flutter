@@ -137,6 +137,7 @@ class Entry {
   String hmtime;
   String pdir;
   String pdrv;
+  String location;
   List namepath;
   Metadata metadata;
   bool selected = false;
@@ -155,7 +156,7 @@ class Entry {
         m['metadata'] == null ? null : Metadata.fromMap(m['metadata']);
   }
 
-  Entry.fromSearch(Map m, List<String> d) {
+  Entry.fromSearch(Map m, List<Drive> d) {
     this.size = m['size'];
     this.ctime = m['ctime'];
     this.mtime = m['mtime'];
@@ -168,8 +169,10 @@ class Entry {
     this.metadata =
         m['metadata'] == null ? null : Metadata.fromMap(m['metadata']);
     this.pdir = m['pdir'];
-    this.pdrv = d[m['place']];
     this.namepath = m['namepath'];
+    Drive drive = d[m['place']];
+    this.pdrv = drive.uuid;
+    this.location = drive.type ?? drive.tag;
   }
 
   Entry.mixNode(Map m, Node n) {
@@ -186,6 +189,7 @@ class Entry {
         m['metadata'] == null ? null : Metadata.fromMap(m['metadata']);
     this.pdir = n.dirUUID;
     this.pdrv = n.driveUUID;
+    this.location = n.location;
   }
 
   void select() {
@@ -218,7 +222,8 @@ class Node {
   String driveUUID;
   String dirUUID;
   String tag;
-  Node({this.name, this.driveUUID, this.dirUUID, this.tag});
+  String location;
+  Node({this.name, this.driveUUID, this.dirUUID, this.tag, this.location});
 }
 
 class TransferItem {

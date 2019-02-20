@@ -42,6 +42,7 @@ List<FileNavView> fileNavViews = [
                 node: Node(
                   name: '共享空间',
                   tag: 'built-in',
+                  location: 'built-in',
                 ),
               );
             },
@@ -98,7 +99,9 @@ class _BottomNavigationState extends State<BottomNavigation>
         activeIcon: Icon(Icons.folder),
         title: '云盘',
         nav: 'files',
-        view: () => Files(node: Node(tag: 'home'), fileNavViews: fileNavViews),
+        view: () => Files(
+            node: Node(tag: 'home', location: 'home'),
+            fileNavViews: fileNavViews),
         color: Colors.teal,
       ),
       NavigationIconView(
