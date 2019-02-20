@@ -24,10 +24,23 @@ class DetailRows {
     this.dirCount = dirCount ?? this.dirCount;
   }
 
+  String transformLocation(loc) {
+    switch (loc) {
+      case 'home':
+        return '我的空间';
+      case 'built-in':
+        return '共享空间';
+      case 'backup':
+        return '备份空间';
+    }
+    return '';
+  }
+
   List toList() {
     List list = [
       ['类型', type],
-      ['大小', size]
+      ['大小', size],
+      ['位置', transformLocation(location)],
     ];
     if (fileCount != null) list.add(['子文件数目', this.fileCount]);
     if (dirCount != null) list.add(['子文件夹数目', this.dirCount]);
@@ -72,6 +85,7 @@ class _DetailState extends State<Detail> {
     rows = DetailRows(
       type: entry.type == 'file' ? entry?.metadata?.type ?? '文件' : '文件夹',
       size: entry.type == 'file' ? entry.hsize : '加载中',
+      location: entry.location,
       dirCount: entry.type == 'file' ? null : '加载中',
       fileCount: entry.type == 'file' ? null : '加载中',
       date: entry.hmtime,
