@@ -780,8 +780,8 @@ class _FilesState extends State<Files> {
 
   Widget homeView() {
     return StoreConnector<AppState, AppState>(
-      onInit: (store) =>
-          refresh(store.state).catchError((error) => print(error)),
+      onInit: (store) => refresh(store.state),
+      // refresh(store.state).catchError((error) => print(error)),
       onDispose: (store) => {},
       converter: (store) => store.state,
       builder: (context, state) {

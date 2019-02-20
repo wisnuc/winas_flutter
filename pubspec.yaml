@@ -22,9 +22,10 @@ dependencies:
 
   redux: 3.0.0
   flutter_redux: 0.5.0
+  redux_persist: 0.8.1
   path_provider: 0.5.0
   open_file: 1.2.0
-  synchronized: 1.5.3+2
+  synchronized: 2.0.2+1
   uuid: 2.0.0-rc1
 
   dio: 1.0.13

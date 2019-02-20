@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 import 'package:redux/redux.dart';
@@ -29,6 +30,21 @@ class Account {
     this.id = m['id'];
     this.mail = m['mail'];
   }
+
+  @override
+  String toString() {
+    Map<String, dynamic> m = {
+      'token': token,
+      'nickName': nickName,
+      'username': username,
+      'avatarUrl': avatarUrl,
+      'id': id,
+      'mail': mail,
+    };
+    return jsonEncode(m);
+  }
+
+  String toJson() => toString();
 }
 
 class Device {
@@ -37,6 +53,24 @@ class Device {
   String lanIp;
   String lanToken;
   Device({this.deviceSN, this.deviceName, this.lanIp, this.lanToken});
+  Device.fromMap(Map m) {
+    this.deviceSN = m['deviceSN'];
+    this.deviceName = m['deviceName'];
+    this.lanIp = m['lanIp'];
+    this.lanToken = m['lanToken'];
+  }
+  @override
+  String toString() {
+    Map<String, dynamic> m = {
+      'deviceSN': deviceSN,
+      'deviceName': deviceName,
+      'lanIp': lanIp,
+      'lanToken': lanToken,
+    };
+    return jsonEncode(m);
+  }
+
+  String toJson() => toString();
 }
 
 class User {
@@ -57,6 +91,22 @@ class User {
     this.winasUserId = m['winasUserId'];
     this.avatarUrl = m['avatarUrl'];
   }
+
+  @override
+  String toString() {
+    Map<String, dynamic> m = {
+      'uuid': uuid,
+      'username': username,
+      'isFirstUser': isFirstUser,
+      'status': status,
+      'phoneNumber': phoneNumber,
+      'winasUserId': winasUserId,
+      'avatarUrl': avatarUrl,
+    };
+    return jsonEncode(m);
+  }
+
+  String toJson() => toString();
 }
 
 class DriveClient {
@@ -80,6 +130,19 @@ class DriveClient {
     this.lastBackupTime = m['lastBackupTime'];
     this.type = m['type'];
   }
+  @override
+  String toString() {
+    Map<String, dynamic> m = {
+      'id': id,
+      'status': status,
+      'disabled': disabled,
+      'lastBackupTime': lastBackupTime,
+      'type': type,
+    };
+    return jsonEncode(m);
+  }
+
+  String toJson() => toString();
 }
 
 class Drive {
@@ -109,13 +172,31 @@ class Drive {
     this.smb = m['smb'];
     this.ctime = m['ctime'];
     this.mtime = m['mtime'];
-    this.client = m['client'] == null ? null : DriveClient.fromMap(m['client']);
+    this.client = (m['client'] == 'null' || m['client'] == null)
+        ? null
+        : DriveClient.fromMap(
+            m['client'] is String ? jsonDecode(m['client']) : m['client']);
   }
+
   void updateStats(Map s) {
     this.dirCount = s['dirCount'];
     this.fileCount = s['fileCount'];
     this.fileTotalSize = prettySize(s['fileTotalSize']);
   }
+
+  @override
+  String toString() {
+    Map<String, dynamic> m = {
+      'uuid': uuid,
+      'type': type,
+      'client': client.toString(),
+      'label': label,
+      'tag': tag,
+    };
+    return jsonEncode(m);
+  }
+
+  String toJson() => toString();
 }
 
 class Metadata {
@@ -123,6 +204,16 @@ class Metadata {
   Metadata.fromMap(Map m) {
     this.type = m['type'];
   }
+
+  @override
+  String toString() {
+    Map<String, dynamic> m = {
+      'type': type,
+    };
+    return jsonEncode(m);
+  }
+
+  String toJson() => toString();
 }
 
 class Entry {
@@ -152,8 +243,14 @@ class Entry {
     this.hash = m['hash'];
     this.hsize = prettySize(this.size);
     this.hmtime = prettyDate(this.mtime);
-    this.metadata =
-        m['metadata'] == null ? null : Metadata.fromMap(m['metadata']);
+    this.location = m['location'];
+    this.pdir = m['pdir'];
+    this.pdir = m['pdrv'];
+    this.metadata = (m['metadata'] == 'null' || m['metadata'] == null)
+        ? null
+        : Metadata.fromMap(m['metadata'] is String
+            ? jsonDecode(m['metadata'])
+            : m['metadata']);
   }
 
   Entry.fromSearch(Map m, List<Drive> d) {
@@ -203,6 +300,26 @@ class Entry {
   void toggleSelect() {
     this.selected = !this.selected;
   }
+
+  @override
+  String toString() {
+    Map<String, dynamic> m = {
+      'ctime': ctime,
+      'mtime': mtime,
+      'name': name,
+      'uuid': uuid,
+      'type': type,
+      'hash': hash,
+      'pdir': pdir,
+      'pdrv': pdrv,
+      'location': location,
+      'namepath': namepath,
+      'metadata': metadata,
+    };
+    return jsonEncode(m);
+  }
+
+  String toJson() => toString();
 }
 
 class DirPath {
@@ -310,6 +427,33 @@ class TransferItem {
     }
     return 1000;
   }
+
+  TransferItem.fromMap(Map m) {
+    this.entry = Entry.fromMap(m['entry']);
+    this.uuid = m['uuid'];
+    this.status = m['status'];
+    this.finishedTime = m['finishedTime'];
+    this.startTime = m['startTime'];
+    this.finishedSize = m['finishedSize'];
+    this.filePath = m['filePath'];
+  }
+
+  @override
+  String toString() {
+    Map<String, dynamic> m = {
+      'entry': entry,
+      'uuid': uuid,
+      'status': status,
+      'finishedTime': finishedTime,
+      'startTime': startTime,
+      'finishedSize': finishedSize,
+      'filePath': filePath,
+    };
+
+    return jsonEncode(m);
+  }
+
+  String toJson() => toString();
 }
 
 /// update Selection, and refresh(setState)
@@ -350,13 +494,25 @@ class Select {
 
 class Config {
   bool gridView = false;
-  bool selectMode = false;
 
-  Config({this.gridView, this.selectMode});
+  Config({this.gridView});
   Config.combine(Config oldConfig, Config newConfig) {
     this.gridView = newConfig.gridView ?? oldConfig.gridView;
-    this.selectMode = newConfig.selectMode ?? oldConfig.selectMode;
   }
+
+  Config.fromMap(Map m) {
+    this.gridView = m['gridView'];
+  }
+
+  @override
+  String toString() {
+    Map<String, dynamic> m = {
+      'gridView': gridView,
+    };
+    return jsonEncode(m);
+  }
+
+  String toJson() => toString();
 }
 
 // actions
@@ -494,7 +650,7 @@ AppState fakeState = AppState(
       label: "lxw-PC",
     ),
   ],
-  apis: new Apis(
+  apis: Apis(
       '0@eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6IjY5NDc2NjdhLWY4ZmYtNDk4Yy1iMGNiLWViYzRkOTc3MTVkNyIsInBhc3N3b3JkIjoiKjg0QUFDMTJGNTRBQjY2NkVDRkMyQTgzQzY3NjkwOEM4QkJDMzgxQjEiLCJjbGllbnRJZCI6ImZsdXR0ZXJfVGVzdCIsInR5cGUiOiJBbmRyb2lkIn0.9cwn6OHlNfwQAQR7DciV9E2DPIcl-yWGBfvpdWUluaM',
       "10.10.9.234",
       'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1dWlkIjoiY2NmMmJlYzQtOTk2ZC00OTUyLTllNmMtZjRmOTBiNjBkODEwIiwid2luYXNVc2VySWQiOiI2OTQ3NjY3YS1mOGZmLTQ5OGMtYjBjYi1lYmM0ZDk3NzE1ZDciLCJ0aW1lc3RhbXAiOjE1NDgyMjU0ODI2NzB9.qYZv8CyLUxxNu0UrMsx7Y-4wkhW64sv1cE5Qu2JYJus',
@@ -502,7 +658,7 @@ AppState fakeState = AppState(
       false,
       "test_b44-a529-4dcf-aa30-240a151d8e03",
       'cookie'),
-  config: Config(gridView: true, selectMode: false),
+  config: Config(gridView: true),
   transferList: [],
 );
 
@@ -524,14 +680,54 @@ class AppState {
     this.transferList,
   });
 
-  factory AppState.initial() => new AppState(
-      account: null,
-      device: null,
-      localUser: null,
-      drives: [],
-      apis: null,
-      config: null,
-      transferList: []);
+  factory AppState.initial() => AppState(
+        account: null,
+        device: null,
+        localUser: null,
+        drives: [],
+        apis: null,
+        config: Config(gridView: false),
+        transferList: [],
+      );
 
   factory AppState.autologin() => fakeState;
+
+  static AppState fromJson(dynamic json) {
+    var m = jsonDecode(json);
+    return AppState(
+      account: m['account'] == null
+          ? null
+          : Account.fromMap(jsonDecode(m['account'])),
+      device:
+          m['device'] == null ? null : Device.fromMap(jsonDecode(m['device'])),
+      localUser: m['localUser'] == null
+          ? null
+          : User.fromMap(jsonDecode(m['localUser'])),
+      drives: List.from(
+        m['drives'].map((d) => Drive.fromMap(jsonDecode(d))),
+      ),
+      apis: m['apis'] == null ? null : Apis.fromMap(jsonDecode(m['apis'])),
+      config:
+          m['config'] == null ? null : Config.fromMap(jsonDecode(m['config'])),
+      transferList: List.from(
+        m['transferList'].map((d) => TransferItem.fromMap(jsonDecode(d))),
+      ),
+    );
+  }
+
+  @override
+  String toString() {
+    Map<String, dynamic> m = {
+      'account': account,
+      'device': device,
+      'localUser': localUser,
+      'drives': drives,
+      'apis': apis,
+      'config': config,
+      'transferList': transferList,
+    };
+    return jsonEncode(m);
+  }
+
+  String toJson() => toString();
 }

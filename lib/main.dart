@@ -1,19 +1,47 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:redux/redux.dart';
+import 'package:flutter/material.dart';
+import 'package:redux_persist/redux_persist.dart';
 import 'package:flutter_redux/flutter_redux.dart';
+import 'package:path_provider/path_provider.dart';
 import './login/login.dart';
 import './nav/bottom_navigation.dart';
 import './redux/redux.dart';
 
-void main() => runApp(MyApp());
+void main() async {
+  Directory root = await getApplicationDocumentsDirectory();
+  String _rootDir = root.path;
 
-bool logged = true;
+  // init persistor
+  final persistor = Persistor<AppState>(
+    storage: FileStorage(File("$_rootDir/config.json")),
+    serializer: JsonSerializer<AppState>(AppState.fromJson),
+  );
 
-class MyApp extends StatelessWidget {
+  // Load initial state
+  AppState initialState;
+  try {
+    initialState = await persistor.load(); // AppState.initial(); //
+  } catch (error) {
+    print(error);
+    initialState = AppState.initial();
+  }
+
+  // Create Store with Persistor middleware
   final store = Store<AppState>(
     appReducer,
-    initialState: logged ? AppState.autologin() : AppState.initial(),
+    initialState: initialState ?? AppState.initial(),
+    middleware: [persistor.createMiddleware()],
   );
+
+  runApp(MyApp(initialState, store));
+}
+
+class MyApp extends StatelessWidget {
+  final Store<AppState> store;
+  final AppState initialState;
+
+  MyApp(this.initialState, this.store);
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +58,7 @@ class MyApp extends StatelessWidget {
           '/login': (BuildContext context) => LoginPage(),
           '/station': (BuildContext context) => BottomNavigation(),
         },
-        home: logged ? BottomNavigation() : LoginPage(),
+        home: initialState?.account != null ? BottomNavigation() : LoginPage(),
       ),
     );
   }

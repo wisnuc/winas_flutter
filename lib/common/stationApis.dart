@@ -20,6 +20,32 @@ class Apis {
     this.lanAdrress = 'http://${this.lanIp}:3000';
   }
 
+  Apis.fromMap(Map m) {
+    this.token = m['token'];
+    this.lanIp = m['lanIp'];
+    this.lanToken = m['lanToken'];
+    this.userUUID = m['userUUID'];
+    this.isCloud = m['isCloud'];
+    this.deviceSN = m['deviceSN'];
+    this.cookie = m['cookie'];
+    this.lanAdrress = 'http://${this.lanIp}:3000';
+  }
+  @override
+  String toString() {
+    Map<String, dynamic> m = {
+      'token': token,
+      'lanIp': lanIp,
+      'lanToken': lanToken,
+      'userUUID': userUUID,
+      'isCloud': isCloud,
+      'deviceSN': deviceSN,
+      'cookie': cookie,
+    };
+    return jsonEncode(m);
+  }
+
+  String toJson() => toString();
+
   // handle data.data response
   void interceptDio() {
     dio.interceptor.response.onSuccess = (Response response) {

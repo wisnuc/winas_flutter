@@ -147,7 +147,7 @@ class _LoginState extends State<Login> {
           setState(() => _error = null);
           _phoneNumber = text;
         },
-        controller: TextEditingController(text: _phoneNumber),
+        // controller: TextEditingController(text: _phoneNumber),
         autofocus: true,
         decoration: InputDecoration(
             labelText: "手机号",
@@ -164,7 +164,7 @@ class _LoginState extends State<Login> {
         setState(() => _error = null);
         _password = text;
       },
-      controller: TextEditingController(text: _password),
+      // controller: TextEditingController(text: _password),
       focusNode: myFocusNode,
       decoration: InputDecoration(
           labelText: "密码", prefixIcon: Icon(Icons.lock), errorText: _error),
