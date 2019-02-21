@@ -6,7 +6,7 @@ import './manager.dart';
 import '../redux/redux.dart';
 import '../common/format.dart';
 import '../common/renderIcon.dart';
-import '../files/fileRow.dart';
+import '../common/showSnackBar.dart';
 
 class Transfer extends StatefulWidget {
   Transfer({Key key}) : super(key: key);

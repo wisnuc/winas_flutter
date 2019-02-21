@@ -13,6 +13,7 @@ import '../redux/redux.dart';
 import '../common/cache.dart';
 import '../transfer/manager.dart';
 import '../common/loading.dart';
+import '../common/showSnackBar.dart';
 
 Widget _buildItem(
   BuildContext context,

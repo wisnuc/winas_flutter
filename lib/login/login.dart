@@ -5,6 +5,7 @@ import '../common/request.dart';
 import '../common/loading.dart';
 import '../common/stationApis.dart';
 import '../transfer/manager.dart';
+import '../common/showSnackBar.dart';
 
 class LoginPage extends StatelessWidget {
   @override
@@ -299,15 +300,13 @@ class _LoginState extends State<Login> {
       };
       // login to account and device
       accoutLogin(context, store, args).then((res) {
-        // pop loading
-        Navigator.pop(context);
-        // pop login account page
-        Navigator.pop(context);
-        // replace first page
-        Navigator.pushReplacementNamed(context, '/station');
+        //remove all router, and push '/station'
+        Navigator.pushNamedAndRemoveUntil(
+            context, '/station', (Route<dynamic> route) => false);
       }).catchError((err) {
         // pop loading
         Navigator.pop(context);
+        showSnackBar(context, '登录失败');
         print(err);
       });
     }
@@ -323,8 +322,6 @@ class _LoginState extends State<Login> {
               child: Text("忘记密码"),
               textColor: Colors.white,
               onPressed: () {
-                var a = Theme.of(context);
-                print(a);
                 // Navigator to Login
                 Navigator.push(
                   context,
@@ -335,22 +332,21 @@ class _LoginState extends State<Login> {
               }),
         ],
       ),
-      floatingActionButton: StoreConnector<AppState, VoidCallback>(
-        converter: (store) {
-          return () => _nextStep(context, store);
-        },
-        builder: (context, callback) {
-          return FloatingActionButton(
-            // Attach the `callback` to the `onPressed` attribute
-            onPressed: callback,
-            tooltip: '下一步',
-            backgroundColor: Colors.white70,
-            elevation: 0.0,
-            child: Icon(
-              Icons.chevron_right,
-              color: Colors.teal,
-              size: 48,
-            ),
+      floatingActionButton: Builder(
+        builder: (ctx) {
+          return StoreConnector<AppState, VoidCallback>(
+            converter: (store) => () => _nextStep(ctx, store),
+            builder: (context, callback) => FloatingActionButton(
+                  onPressed: callback,
+                  tooltip: '下一步',
+                  backgroundColor: Colors.white70,
+                  elevation: 0.0,
+                  child: Icon(
+                    Icons.chevron_right,
+                    color: Colors.teal,
+                    size: 48,
+                  ),
+                ),
           );
         },
       ),

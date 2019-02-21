@@ -6,6 +6,7 @@ import './newFolder.dart';
 import '../redux/redux.dart';
 import '../common/loading.dart';
 import '../common/renderIcon.dart';
+import '../common/showSnackBar.dart';
 
 class XCopyView extends StatefulWidget {
   XCopyView(
