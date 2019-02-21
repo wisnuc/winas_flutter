@@ -248,7 +248,7 @@ class TransferManager {
     } catch (error) {
       print(error);
       // DioErrorType.CANCEL is not error
-      if (error?.type != DioErrorType.CANCEL) {
+      if (error is DioError && (error?.type != DioErrorType.CANCEL)) {
         item.fail();
       }
     }

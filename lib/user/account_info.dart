@@ -75,6 +75,7 @@ class _AccountInfoState extends State<AccountInfo> {
       onDispose: (store) => {},
       converter: (store) => store.state.account,
       builder: (context, account) {
+        if (account == null) return Container();
         return Scaffold(
           appBar: AppBar(
             elevation: 0.0, // no shadow
@@ -206,9 +207,9 @@ class _AccountInfoState extends State<AccountInfo> {
                   builder: (context, logout) {
                     return actionItem(
                       '注销',
-                      () async {
-                        await Navigator.pushReplacementNamed(context, '/login');
+                      () {
                         logout();
+                        Navigator.pushReplacementNamed(context, '/login');
                       },
                       Container(),
                     );

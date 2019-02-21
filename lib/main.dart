@@ -26,7 +26,7 @@ void main() async {
   try {
     initialState = await persistor.load(); // AppState.initial(); //
   } catch (error) {
-    print(error);
+    print('load initialState error: $error');
     initialState = AppState.initial();
   }
   if (initialState?.localUser?.uuid != null) {
@@ -64,7 +64,7 @@ class MyApp extends StatelessWidget {
           '/login': (BuildContext context) => LoginPage(),
           '/station': (BuildContext context) => BottomNavigation(),
         },
-        home: (initialState?.account != null && initialState?.apis != null)
+        home: (store?.state?.account?.id != null && store?.state?.apis != null)
             ? BottomNavigation()
             : LoginPage(),
       ),

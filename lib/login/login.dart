@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import '../redux/redux.dart';
 import '../common/request.dart';
-import '../common/persistent.dart';
 import '../common/loading.dart';
 import '../common/stationApis.dart';
 import '../transfer/manager.dart';
@@ -117,8 +116,6 @@ class _LoginState extends State<Login> {
 
   var request = Request();
 
-  var persistent = Persistent();
-
   @override
   void initState() {
     super.initState();
@@ -201,7 +198,6 @@ class _LoginState extends State<Login> {
     // update Account
     store.dispatch(LoginAction(Account.fromMap(res.data)));
 
-    await persistent.setString('token', token);
     var stationsRes = await request.req('stations', null);
 
     var stationLists = stationsRes.data['ownStations'];
@@ -251,11 +247,6 @@ class _LoginState extends State<Login> {
       ),
     );
 
-    if (user['uuid'] != null) {
-      // init TransferManager, load TransferItem
-      TransferManager.init(user['uuid']).catchError(print);
-    }
-
     // get current drives data
     List<Drive> drives = List.from(
       results[3].data.map((drive) => Drive.fromMap(drive)),
@@ -274,6 +265,11 @@ class _LoginState extends State<Login> {
     store.dispatch(
       UpdateApisAction(apis),
     );
+
+    if (user['uuid'] != null) {
+      // init TransferManager, load TransferItem
+      TransferManager.init(user['uuid']).catchError(print);
+    }
     return results;
   }
 
