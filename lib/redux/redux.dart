@@ -1,7 +1,4 @@
-import 'dart:math';
 import 'dart:convert';
-import 'package:dio/dio.dart';
-import 'package:uuid/uuid.dart';
 import 'package:redux/redux.dart';
 
 import '../common/format.dart';
@@ -344,119 +341,6 @@ class Node {
   Node({this.name, this.driveUUID, this.dirUUID, this.tag, this.location});
 }
 
-class TransferItem {
-  String uuid;
-  Entry entry;
-  String speed = '';
-  int finishedTime = -1;
-  int startTime = -1;
-  int finishedSize = 0;
-  String filePath = '';
-  int previousSize = 0;
-  int previousTime = 0;
-
-  CancelToken cancelToken;
-  Function deleteFile;
-
-  /// status of TransferItem: init, working, paused, finished, failed;
-  String status = 'init';
-
-  TransferItem({this.entry})
-      : this.uuid = Uuid().v4(),
-        this.previousTime = DateTime.now().millisecondsSinceEpoch;
-
-  TransferItem.fromMap(Map m) {
-    this.entry = Entry.fromMap(jsonDecode(m['entry']));
-    this.uuid = m['uuid'];
-    this.status = m['status'] == 'working' ? 'paused' : m['status'];
-    this.finishedTime = m['finishedTime'];
-    this.startTime = m['startTime'];
-    this.finishedSize = m['finishedSize'] ?? 0;
-    this.filePath = m['filePath'];
-  }
-
-  @override
-  String toString() {
-    Map<String, dynamic> m = {
-      'entry': entry,
-      'uuid': uuid,
-      'status': status,
-      'finishedTime': finishedTime,
-      'startTime': startTime,
-      'finishedSize': finishedSize,
-      'filePath': filePath,
-    };
-
-    return jsonEncode(m);
-  }
-
-  String toJson() => toString();
-
-  void setFilePath(String path) {
-    this.filePath = path;
-  }
-
-  void update(int size) {
-    this.finishedSize = size;
-    int now = DateTime.now().millisecondsSinceEpoch;
-    int timeSpent = max(now - this.previousTime, 1);
-
-    int speed = ((size - this.previousSize) / timeSpent * 1000).round();
-    this.speed = '${prettySize(speed)}/s';
-    this.previousSize = size;
-    this.previousTime = now;
-  }
-
-  void start(CancelToken cancelToken, Function deleteFile) {
-    this.deleteFile = deleteFile;
-    this.cancelToken = cancelToken;
-    this.startTime = DateTime.now().millisecondsSinceEpoch;
-    this.status = 'working';
-  }
-
-  void pause() {
-    this.cancelToken.cancel("cancelled");
-    this.speed = '';
-    this.status = 'paused';
-  }
-
-  void clean() {
-    this.pause();
-    this.deleteFile();
-  }
-
-  void resume() {
-    this.speed = '';
-    this.status = 'working';
-  }
-
-  void finish() {
-    this.finishedTime = DateTime.now().millisecondsSinceEpoch;
-    this.status = 'finished';
-  }
-
-  void fail() {
-    this.status = 'failed';
-  }
-
-  /// sort order
-  int get order {
-    switch (status) {
-      case 'init':
-        return 30;
-      case 'working':
-        return 100;
-      case 'paused':
-        return 50;
-      case 'finished':
-        return 10;
-      case 'failed':
-        return 20;
-    }
-    return 1000;
-  }
-}
-
 /// update Selection, and refresh(setState)
 class Select {
   Function update;
@@ -547,30 +431,6 @@ class UpdateConfigAction {
   UpdateConfigAction(this.data);
 }
 
-class AddTaskAction {
-  final TransferItem data;
-  AddTaskAction(this.data);
-  combineFrom(List<TransferItem> oldList) {
-    List<TransferItem> list = List.from(oldList);
-    list.add(this.data);
-    return list;
-  }
-}
-
-class DeleteTaskAction {
-  final TransferItem data;
-  DeleteTaskAction(this.data);
-  removeFrom(List<TransferItem> oldList) {
-    List<TransferItem> list = List.from(oldList);
-    list.removeWhere((item) => item.uuid == this.data.uuid);
-    return list;
-  }
-}
-
-class ClearTaskAction {
-  ClearTaskAction();
-}
-
 final deviceLoginReducer = combineReducers<Device>([
   TypedReducer<Device, DeviceLoginAction>((data, action) => action.data),
 ]);
@@ -598,18 +458,6 @@ final updateConfigReducer = combineReducers<Config>([
   ),
 ]);
 
-final transferListReducer = combineReducers<List<TransferItem>>([
-  TypedReducer<List<TransferItem>, AddTaskAction>(
-    (oldList, action) => action.combineFrom(oldList),
-  ),
-  TypedReducer<List<TransferItem>, DeleteTaskAction>(
-    (oldList, action) => action.removeFrom(oldList),
-  ),
-  TypedReducer<List<TransferItem>, ClearTaskAction>(
-    (oldList, action) => [],
-  ),
-]);
-
 AppState appReducer(AppState state, action) {
   return AppState(
     account: accountLoginReducer(state.account, action),
@@ -618,7 +466,6 @@ AppState appReducer(AppState state, action) {
     drives: updateDriveReducer(state.drives, action),
     apis: updateApisReducer(state.apis, action),
     config: updateConfigReducer(state.config, action),
-    transferList: transferListReducer(state.transferList, action),
   );
 }
 
@@ -660,7 +507,6 @@ AppState fakeState = AppState(
       "test_b44-a529-4dcf-aa30-240a151d8e03",
       'cookie'),
   config: Config(gridView: true),
-  transferList: [],
 );
 
 class AppState {
@@ -670,7 +516,6 @@ class AppState {
   final List<Drive> drives;
   final Apis apis;
   final Config config;
-  final List<TransferItem> transferList;
   AppState({
     this.account,
     this.device,
@@ -678,7 +523,6 @@ class AppState {
     this.drives,
     this.apis,
     this.config,
-    this.transferList,
   });
 
   factory AppState.initial() => AppState(
@@ -688,7 +532,6 @@ class AppState {
         drives: [],
         apis: null,
         config: Config(gridView: false),
-        transferList: [],
       );
 
   factory AppState.autologin() => fakeState;
@@ -710,9 +553,6 @@ class AppState {
       apis: m['apis'] == null ? null : Apis.fromMap(jsonDecode(m['apis'])),
       config:
           m['config'] == null ? null : Config.fromMap(jsonDecode(m['config'])),
-      transferList: List.from(
-        m['transferList'].map((d) => TransferItem.fromMap(jsonDecode(d))),
-      ),
     );
   }
 
@@ -725,7 +565,6 @@ class AppState {
       'drives': drives,
       'apis': apis,
       'config': config,
-      'transferList': transferList,
     };
     return jsonEncode(m);
   }
