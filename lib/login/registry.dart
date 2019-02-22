@@ -1,13 +1,16 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import '../redux/redux.dart';
 import '../common/request.dart';
 import '../common/loading.dart';
-import '../common/stationApis.dart';
 import '../common/showSnackBar.dart';
 
 class Registry extends StatefulWidget {
-  Registry({Key key}) : super(key: key);
+  Registry({Key key, this.wechat}) : super(key: key);
+
+  /// Wechat token for binding
+  final String wechat;
   @override
   _RegistryState createState() => _RegistryState();
 }
@@ -15,6 +18,13 @@ class Registry extends StatefulWidget {
 class _RegistryState extends State<Registry> {
   String _status = 'phoneNumber';
   bool showPwd = true;
+
+  ///  used in bind wechat
+  ///
+  ///  if (_userExist) -> login and bind
+  ///
+  ///  else -> registry and bind
+  bool _userExist = false;
 
   // Focus action
   FocusNode focusNode1;
@@ -47,6 +57,8 @@ class _RegistryState extends State<Registry> {
 
   String _error;
 
+  String _ticket;
+
   Future<void> accoutLogin(context, store, args) async {
     // dismiss keyboard
     FocusScope.of(context).requestFocus(FocusNode());
@@ -66,39 +78,300 @@ class _RegistryState extends State<Registry> {
     );
   }
 
-  void _nextStep(BuildContext context, store) {
+  /// show loading
+  _loading(BuildContext ctx) {
+    showLoading(
+      barrierDismissible: false,
+      builder: (c) {
+        return Container(
+          constraints: BoxConstraints.expand(),
+          child: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      },
+      context: ctx,
+    );
+  }
+
+  /// close loading
+  _loadingOff(BuildContext ctx) {
+    Navigator.pop(ctx);
+  }
+
+  /// close loading, setState and focus node
+  _nextPage(BuildContext context, String status, FocusNode node) {
+    _loadingOff(context);
+    setState(() {
+      _status = status;
+    });
+
+    var future = Future.delayed(const Duration(milliseconds: 100),
+        () => FocusScope.of(context).requestFocus(node));
+    future.then((res) => print('100ms later'));
+  }
+
+  /// handle SmsError: close loading, setState
+  _handleSmsError(BuildContext context, DioError error) {
+    _loadingOff(context);
+    print(error.response.data);
+    if ([60702, 60003].contains(error.response.data['code'])) {
+      showSnackBar(context, '验证码请求过于频繁，请稍后再试');
+    } else {
+      showSnackBar(context, '获取验证码失败，请稍后再试');
+    }
+    setState(() {});
+  }
+
+  /// nextStep for normal register
+  _nextStep(BuildContext context, store) async {
     if (_status == 'phoneNumber') {
+      // check phoneNumber
       if (_phoneNumber.length != 11 || !_phoneNumber.startsWith('1')) {
         setState(() {
           _error = '请输入11位手机号';
         });
-        return; // TODO: check phone number
+        return;
       }
-      setState(() {
-        _status = 'code';
-      });
-      var future = Future.delayed(const Duration(milliseconds: 100),
-          () => FocusScope.of(context).requestFocus(focusNode1));
-      future.then((res) => print('100ms later'));
-    } else if ((_status == 'code')) {
-      setState(() {
-        _status = 'password';
-      });
-      var future = Future.delayed(const Duration(milliseconds: 100),
-          () => FocusScope.of(context).requestFocus(focusNode2));
-      future.then((res) => print('100ms later'));
+
+      // request smsCode
+      _loading(context);
+      try {
+        await request.req('smsCode', {
+          'type': 'register',
+          'phone': _phoneNumber,
+        });
+      } catch (error) {
+        if (error.response.data['code'] == 60001) {
+          _loadingOff(context);
+          showSnackBar(context, '该手机号已经注册');
+          setState(() {});
+          return;
+        }
+        _handleSmsError(context, error);
+        return;
+      }
+
+      // show next page
+      _nextPage(context, 'code', focusNode1);
+    } else if (_status == 'code') {
+      // check code
+      if (_code.length != 4) {
+        setState(() {
+          _error = '请输入4位验证码';
+        });
+        return;
+      }
+
+      // request smsTicket via code
+      _ticket = null;
+      _loading(context);
+      try {
+        var res = await request.req('smsTicket', {
+          'code': _code,
+          'phone': _phoneNumber,
+          'type': 'register',
+        });
+
+        _ticket = res.data;
+        if (_ticket == null) {
+          throw Error();
+        }
+      } catch (error) {
+        _loadingOff(context);
+        setState(() {
+          _error = '验证码错误';
+        });
+        return;
+      }
+
+      // show next page
+      _nextPage(context, 'password', focusNode2);
     } else if (_status == 'password') {
+      // check password
       if (_password.length <= 7) {
         setState(() {
           _error = '密码长度不应小于8位';
         });
         return;
       }
+
+      // register with _code, _phoneNumber, _ticket
+      _loading(context);
+      try {
+        await request.req('registry', {
+          'code': _code,
+          'phone': _phoneNumber,
+          "ticket": _ticket,
+          'clientId': 'flutter_Test',
+          "password": _password,
+        });
+      } catch (error) {
+        _loadingOff(context);
+        setState(() {
+          _error = '注册失败';
+        });
+        return;
+      }
+
+      // show next page
+      _loadingOff(context);
       setState(() {
         _status = 'success';
       });
     } else {
-      //remove all router, and push '/login'
+      // return to login: remove all router, and push '/login'
+      Navigator.pushNamedAndRemoveUntil(
+          context, '/login', (Route<dynamic> route) => false);
+    }
+  }
+
+  /// nextStep for wechat
+  _wechatNextStep(BuildContext context, store) async {
+    if (_status == 'phoneNumber') {
+      // check phoneNumber
+      if (_phoneNumber.length != 11 || !_phoneNumber.startsWith('1')) {
+        setState(() {
+          _error = '请输入11位手机号';
+        });
+        return;
+      }
+
+      // get smsCode ->
+      // 1. user already exist
+      // 2. new user, need register
+      _loading(context);
+      _userExist = false;
+      try {
+        await request.req('smsCode', {
+          'type': 'register',
+          'phone': _phoneNumber,
+        });
+      } catch (error) {
+        if (error.response.data['code'] == 60001) {
+          // user already exist
+          // request code to login & bind wechat
+          try {
+            await request.req('smsCode', {
+              'type': 'login',
+              'phone': _phoneNumber,
+            });
+          } catch (err) {
+            _handleSmsError(context, err);
+            return;
+          }
+          _userExist = true;
+          // show next page
+          _nextPage(context, 'code', focusNode1);
+          return;
+        } else {
+          // request register smsCode error
+          _handleSmsError(context, error);
+          return;
+        }
+      }
+
+      // _phoneNumber is new, need to register account
+      // show next page
+      _nextPage(context, 'code', focusNode1);
+    } else if (_status == 'code') {
+      if (_code.length != 4) {
+        setState(() {
+          _error = '请输入4位验证码';
+        });
+        return;
+      }
+
+      // _userExist == true, login via code, bind wechat, success TODO, login
+      if (_userExist) {
+        // registry
+        try {
+          await request.req('smsToken', {
+            'code': _code,
+            'phone': _phoneNumber,
+            'clientId': 'flutter_Test',
+          });
+        } catch (err) {
+          print(err);
+          showSnackBar(context, '验证码错误');
+          return;
+        }
+        // bind wechat with account
+        try {
+          await request.req('bindWechat', {
+            "wechatToken": widget.wechat,
+          });
+        } catch (err) {
+          print(err);
+          showSnackBar(context, '绑定失败');
+          return;
+        }
+
+        // show next page
+        _loadingOff(context);
+        setState(() {
+          _status = 'success';
+        });
+      } else {
+        // request smsTicket via code
+        _ticket = null;
+        _loading(context);
+        try {
+          var res = await request.req('smsTicket', {
+            'code': _code,
+            'phone': _phoneNumber,
+            'type': 'register',
+          });
+
+          _ticket = res.data;
+        } catch (error) {
+          _loadingOff(context);
+          print(error);
+          showSnackBar(context, '验证码错误');
+          return;
+        }
+
+        // show next page
+        _nextPage(context, 'password', focusNode2);
+      }
+    } else if (_status == 'password') {
+      // register with _code, _phoneNumber, _ticket
+      if (_password.length <= 7) {
+        setState(() {
+          _error = '密码长度不应小于8位';
+        });
+        return;
+      }
+      _loading(context);
+
+      try {
+        // registry
+        await request.req('registry', {
+          'code': _code,
+          'phone': _phoneNumber,
+          "ticket": _ticket,
+          'clientId': 'flutter_Test',
+          "password": _password,
+        });
+
+        // bind wechat with account
+        await request.req('bindWechat', {
+          "wechatToken": widget.wechat,
+        });
+      } catch (error) {
+        _loadingOff(context);
+        print(error);
+        showSnackBar(context, '注册失败');
+        return;
+      }
+
+      // show next page
+      _loadingOff(context);
+      setState(() {
+        _status = 'success';
+      });
+    } else {
+      // return to login: remove all router, and push '/login'
       Navigator.pushNamedAndRemoveUntil(
           context, '/login', (Route<dynamic> route) => false);
     }
@@ -118,6 +391,7 @@ class _RegistryState extends State<Registry> {
             '手机号码是您忘记密码时，找回面的唯一途径请慎重填写',
             style: TextStyle(color: Colors.white),
           ),
+          Container(height: 32.0),
           TextField(
             key: Key('phoneNumber'),
             onChanged: (text) {
@@ -148,6 +422,7 @@ class _RegistryState extends State<Registry> {
             '我们向 $_phoneNumber 发送了一个验证码请在下面输入',
             style: TextStyle(color: Colors.white),
           ),
+          Container(height: 32.0),
           TextField(
             key: Key('code'),
             onChanged: (text) {
@@ -178,6 +453,7 @@ class _RegistryState extends State<Registry> {
             '您的密码长度至少为8个字符',
             style: TextStyle(color: Colors.white),
           ),
+          Container(height: 32.0),
           TextField(
             key: Key('password'),
             onChanged: (text) {
@@ -268,7 +544,9 @@ class _RegistryState extends State<Registry> {
       floatingActionButton: Builder(
         builder: (ctx) {
           return StoreConnector<AppState, VoidCallback>(
-            converter: (store) => () => _nextStep(ctx, store),
+            converter: (store) => () => widget.wechat == null
+                ? _nextStep(ctx, store)
+                : _wechatNextStep(ctx, store),
             builder: (context, callback) => FloatingActionButton(
                   onPressed: callback,
                   tooltip: '下一步',

@@ -1,12 +1,46 @@
 import 'package:flutter/material.dart';
-
+import 'package:fluwx/fluwx.dart' as fluwx;
 import './registry.dart';
 import './accountLogin.dart';
+import '../common/request.dart';
 import '../icons/winas_icons.dart';
 
 final pColor = Colors.teal;
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
+  @override
+  _LoginPageState createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  bool isWeChatInstalled = false;
+  var request = Request();
+  String code;
+
+  @override
+  void initState() {
+    super.initState();
+    _initFluwx().then((data) {});
+  }
+
+  _initFluwx() async {
+    await fluwx.register(
+      appId: "wx99b54eb728323fe8",
+      doOnAndroid: true,
+      doOnIOS: true,
+      enableMTA: false,
+    );
+    isWeChatInstalled = await fluwx.isWeChatInstalled();
+    if (this.mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,15 +88,47 @@ class LoginPage extends StatelessWidget {
                         width: double.infinity,
                         height: 56,
                         child: FlatButton(
-                          color: Colors.white,
-                          child: Text(
-                            "使用微信登录注册",
-                            style: TextStyle(color: pColor, fontSize: 16),
-                          ),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(28.0)),
-                          onPressed: () => {},
-                        )),
+                            color: Colors.white,
+                            child: Text(
+                              "使用微信登录注册",
+                              style: TextStyle(color: pColor, fontSize: 16),
+                            ),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(28.0)),
+                            onPressed: () async {
+                              await fluwx.sendAuth(
+                                openId: "wx99b54eb728323fe8",
+                                scope: "snsapi_userinfo",
+                                state: "winas_login",
+                              );
+
+                              fluwx.responseFromAuth.listen((data) {
+                                code = data?.code;
+                                if (code != null) {
+                                  print(code);
+                                  final args = {
+                                    'clientId': 'flutter_Test',
+                                    'code': code,
+                                  };
+                                  request.req('wechatLogin', args).then((res) {
+                                    print(res);
+                                    if (res.data['wechat'] != null &&
+                                        res.data['user'] == false) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => Registry(
+                                              wechat: res.data['wechat']),
+                                        ),
+                                      );
+                                    }
+                                  }).catchError(print);
+                                } else {
+                                  print('failed !!!');
+                                  print(data);
+                                }
+                              });
+                            })),
                     Positioned(
                       child: Icon(Winas.wechat, color: pColor),
                       left: 24,

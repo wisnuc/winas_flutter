@@ -190,7 +190,7 @@ class _LoginState extends State<Login> {
         setState(() {
           _error = '请输入11位手机号';
         });
-        return; // TODO: check phone number
+        return;
       }
       setState(() {
         _status = 'password';
@@ -216,6 +216,11 @@ class _LoginState extends State<Login> {
       }).catchError((err) {
         // pop loading
         Navigator.pop(context);
+
+        // remove device and apis if any
+        store.dispatch(UpdateApisAction(null));
+        store.dispatch(DeviceLoginAction(null));
+
         showSnackBar(context, '登录失败');
         print(err);
       });
