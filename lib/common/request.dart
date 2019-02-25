@@ -9,12 +9,15 @@ class Request {
   String lanToken;
   String lanIp;
   Dio dio = new Dio();
+
+  Request({this.token});
+
   // handle data.data response
   void interceptDio() {
     dio.interceptor.response.onSuccess = (Response response) {
       var res = response.data['data'];
-      if (res is Map && res['token'] != null) {
-        token = res['token']; // save cloud token
+      if (res is Map && res['token'] != null && res['id'] != null) {
+        token = res['token']; // save cloud token TODO, lanToken
       }
       if (response.data['url'] == '/c/v1/station') {
         assert(response.headers['set-cookie'][0] != null);
@@ -37,6 +40,12 @@ class Request {
         : dio.post('$cloudAddress/$ep', data: args);
   }
 
+  apatch(String ep, args) {
+    return args == null
+        ? dio.patch('$cloudAddress/$ep')
+        : dio.patch('$cloudAddress/$ep', data: args);
+  }
+
   /// get with token
   tget(String ep, args) {
     assert(token != null);
@@ -48,6 +57,8 @@ class Request {
   tpost(String ep, args) {
     assert(token != null);
     dio.options.headers['Authorization'] = token;
+    dio.options.headers['Content-Type'] = 'application/json';
+    dio.options.headers['cookie'] = cookie;
     return dio.post('$cloudAddress/$ep', data: args);
   }
 
@@ -68,7 +79,7 @@ class Request {
     return dio.post('$cloudAddress/station/$deviceSN/json', data: data);
   }
 
-  req(String name, Map<String, dynamic> args) {
+  Future req(String name, Map<String, dynamic> args) {
     Future r;
     interceptDio();
     switch (name) {
@@ -92,6 +103,10 @@ class Request {
 
       case 'checkUser':
         r = aget('user/phone/check', {"phone": args['phone']});
+        break;
+
+      case 'setLastSN':
+        r = tpost('user/deviceInfo', {'sn': args['sn']});
         break;
 
       case 'token':
@@ -120,18 +135,24 @@ class Request {
 
       case 'smsCode':
         r = apost('user/smsCode', {
-          'type': args['type'], // register, passowrd, login, replace
+          'type': args['type'], // register, password, login, replace
           'phone': args['phone'],
         });
         break;
 
       case 'smsToken':
         r = aget('user/smsCode/token', {
-          // TODO, check doc
           'type': isIOS ? 'iOS' : 'Android',
           'phone': args['phone'],
           'code': args['code'],
           'clientId': args['clientId'],
+        });
+        break;
+
+      case 'resetPwd':
+        r = apatch('user/password', {
+          'password': args['password'],
+          'phoneTicket': args['phoneTicket'],
         });
         break;
 

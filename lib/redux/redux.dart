@@ -4,7 +4,7 @@ import 'package:redux/redux.dart';
 import '../common/format.dart';
 import '../common/stationApis.dart';
 
-// structure of xxData
+/// User account data
 class Account {
   String token;
   String nickName;
@@ -44,6 +44,34 @@ class Account {
   String toJson() => toString();
 }
 
+/// response of station list
+class Station {
+  String sn;
+  String type;
+  int online;
+  bool isOnline;
+  String onlineTime;
+  String offlineTime;
+  String lanIp;
+  String name;
+  String time;
+  bool isOwner;
+
+  Station.fromMap(Map m, {bool isOwner: true}) {
+    this.sn = m['sn'];
+    this.type = m['type'];
+    this.online = m['online'];
+    this.isOnline = m['online'] == 1;
+    this.onlineTime = m['onlineTime'];
+    this.offlineTime = m['offlineTime'];
+    this.lanIp = m['LANIP'];
+    this.name = m['name'];
+    this.time = m['time'];
+    this.isOwner = isOwner;
+  }
+}
+
+/// current logged device
 class Device {
   String deviceSN;
   String deviceName;

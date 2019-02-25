@@ -3,7 +3,7 @@ import 'package:outline_material_icons/outline_material_icons.dart';
 import '../files/file.dart';
 import '../files/fileRow.dart';
 import '../files/backupView.dart';
-import '../device/station.dart';
+import '../device/myStation.dart';
 import '../redux/redux.dart';
 import '../user/account_info.dart';
 import '../transfer/transfer.dart';
@@ -119,7 +119,7 @@ class _BottomNavigationState extends State<BottomNavigation>
         icon: const Icon(OMIcons.router),
         title: '设备',
         nav: 'device',
-        view: () => Station(),
+        view: () => MyStation(),
         color: Colors.deepPurple,
       ),
       NavigationIconView(

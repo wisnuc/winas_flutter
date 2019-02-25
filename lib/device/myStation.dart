@@ -99,14 +99,14 @@ class StorageDetail extends StatelessWidget {
   }
 }
 
-class Station extends StatefulWidget {
-  Station({Key key}) : super(key: key);
+class MyStation extends StatefulWidget {
+  MyStation({Key key}) : super(key: key);
 
   @override
-  _StationState createState() => new _StationState();
+  _MyStationState createState() => new _MyStationState();
 }
 
-class _StationState extends State<Station> {
+class _MyStationState extends State<MyStation> {
   bool loading = true;
   String usage = '';
   String deviceName = '';

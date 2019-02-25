@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:fluwx/fluwx.dart' as fluwx;
 import 'package:flutter_redux/flutter_redux.dart';
-import '../common/showSnackBar.dart';
+
 import './registry.dart';
+import './stationLogin.dart';
 import './accountLogin.dart';
 import '../redux/redux.dart';
 import '../common/loading.dart';
 import '../common/request.dart';
 import '../icons/winas_icons.dart';
-import '../common/stationApis.dart';
-import '../transfer/manager.dart';
+import '../common/showSnackBar.dart';
 
 final pColor = Colors.teal;
 
@@ -43,93 +43,61 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  accoutLogin(context, store) async {
+  accoutLogin(BuildContext context, store) async {
     // show loading, need `Navigator.pop(context)` to dismiss
-
-    var token = tokenRes['token'];
-    var userUUID = tokenRes['id'];
-    assert(token != null);
-    assert(userUUID != null);
+    showLoading(context);
 
     // update Account
-    store.dispatch(LoginAction(Account.fromMap(tokenRes)));
+    Account account = Account.fromMap(tokenRes);
+    store.dispatch(LoginAction(account));
 
-    var stationsRes = await request.req('stations', null);
+    // device login
+    await deviceLogin(context, request, account, store);
+  }
 
-    var stationLists = stationsRes.data['ownStations'];
-    final currentDevice = stationLists.firstWhere(
-        (s) =>
-            s['online'] == 1 &&
-            s['sn'] == 'test_b44-a529-4dcf-aa30-240a151d8e03',
-        orElse: () => null);
-    assert(currentDevice != null);
-
-    var deviceSN = currentDevice['sn'];
-    var lanIp = currentDevice['LANIP'];
-    var deviceName = currentDevice['name'];
-
-    List results = await Future.wait([
-      request.req('localBoot', {'deviceSN': deviceSN}),
-      request.req('localUsers', {'deviceSN': deviceSN}),
-      request.req('localToken', {'deviceSN': deviceSN}),
-      request.req('localDrives', {'deviceSN': deviceSN})
-    ]);
-
-    var lanToken = results[2].data['token'];
-
-    assert(lanToken != null);
-
-    // update StatinData
-    store.dispatch(
-      DeviceLoginAction(
-        Device(
-          deviceSN: deviceSN,
-          deviceName: deviceName,
-          lanIp: lanIp,
-          lanToken: lanToken,
-        ),
-      ),
-    );
-    assert(results[1].data is List);
-
-    // get current user data
-    var user = results[1].data.firstWhere(
-          (s) => s['winasUserId'] == userUUID,
-          orElse: () => null,
-        );
-    store.dispatch(
-      UpdateUserAction(
-        User.fromMap(user),
-      ),
+  wechatAuth(BuildContext ctx, Function callback) async {
+    showLoading(ctx);
+    await fluwx.sendAuth(
+      openId: "wx99b54eb728323fe8",
+      scope: "snsapi_userinfo",
+      state: "winas_login",
     );
 
-    // get current drives data
-    List<Drive> drives = List.from(
-      results[3].data.map((drive) => Drive.fromMap(drive)),
-    );
+    fluwx.responseFromAuth.listen((data) {
+      code = data?.code;
+      if (code != null) {
+        print(code);
+        final args = {
+          'clientId': 'flutter_Test',
+          'code': code,
+        };
+        tokenRes = null;
+        request.req('wechatLogin', args).then((res) {
+          print(res);
+          if (res.data['wechat'] != null && res.data['user'] == false) {
+            // wechat not bind
+            Navigator.pop(ctx); // close loading
 
-    store.dispatch(
-      UpdateDrivesAction(drives),
-    );
-
-    // station apis
-    bool isCloud = false;
-    String cookie = 'blabla';
-    Apis apis =
-        Apis(token, lanIp, lanToken, userUUID, isCloud, deviceSN, cookie);
-
-    store.dispatch(
-      UpdateApisAction(apis),
-    );
-
-    if (user['uuid'] != null) {
-      // init TransferManager, load TransferItem
-      TransferManager.init(user['uuid']).catchError(print);
-    }
-
-    // pop all page
-    Navigator.pushNamedAndRemoveUntil(
-        context, '/station', (Route<dynamic> route) => false);
+            // nav to registry
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => Registry(wechat: res.data['wechat']),
+              ),
+            );
+          } else if (res.data['user'] == true && res.data['token'] != null) {
+            // wechat bound
+            tokenRes = res.data;
+            callback(ctx);
+          }
+        }).catchError(print);
+      } else {
+        print(data);
+        // close loading
+        Navigator.pop(ctx);
+        showSnackBar(ctx, '微信登录失败');
+      }
+    });
   }
 
   @override
@@ -161,11 +129,7 @@ class _LoginPageState extends State<LoginPage> {
           ],
         ),
         body: StoreConnector<AppState, Function>(
-            converter: (store) =>
-                (BuildContext ctx) => accoutLogin(ctx, store).catchError((err) {
-                      Navigator.pop(ctx);
-                      showSnackBar(ctx, '登录失败');
-                    }),
+            converter: (store) => (BuildContext ctx) => accoutLogin(ctx, store),
             builder: (ctx, callback) {
               return Center(
                 child: Container(
@@ -189,72 +153,20 @@ class _LoginPageState extends State<LoginPage> {
                         child: Stack(
                           children: [
                             SizedBox(
-                                width: double.infinity,
-                                height: 56,
-                                child: FlatButton(
-                                    color: Colors.white,
-                                    child: Text(
-                                      "使用微信登录注册",
-                                      style: TextStyle(
-                                          color: pColor, fontSize: 16),
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(28.0)),
-                                    onPressed: () async {
-                                      showLoading(context);
-                                      await fluwx.sendAuth(
-                                        openId: "wx99b54eb728323fe8",
-                                        scope: "snsapi_userinfo",
-                                        state: "winas_login",
-                                      );
-
-                                      fluwx.responseFromAuth.listen((data) {
-                                        code = data?.code;
-                                        if (code != null) {
-                                          print(code);
-                                          final args = {
-                                            'clientId': 'flutter_Test',
-                                            'code': code,
-                                          };
-                                          tokenRes = null;
-                                          request
-                                              .req('wechatLogin', args)
-                                              .then((res) {
-                                            print(res);
-                                            if (res.data['wechat'] != null &&
-                                                res.data['user'] == false) {
-                                              // wechat not bind
-                                              Navigator.pop(
-                                                  ctx); // close loading
-
-                                              // nav to registry
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      Registry(
-                                                          wechat: res
-                                                              .data['wechat']),
-                                                ),
-                                              );
-                                            } else if (res.data['user'] ==
-                                                    true &&
-                                                res.data['token'] != null) {
-                                              // wechat bound
-                                              tokenRes = res.data;
-                                              callback(ctx);
-                                            }
-                                          }).catchError(print);
-                                        } else {
-                                          print('failed !!!');
-                                          print(data);
-
-                                          // close loading
-                                          Navigator.pop(ctx);
-                                        }
-                                      });
-                                    })),
+                              width: double.infinity,
+                              height: 56,
+                              child: FlatButton(
+                                color: Colors.white,
+                                child: Text(
+                                  "使用微信登录注册",
+                                  style: TextStyle(color: pColor, fontSize: 16),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(28.0),
+                                ),
+                                onPressed: () => wechatAuth(ctx, callback),
+                              ),
+                            ),
                             Positioned(
                               child: Icon(Winas.wechat, color: pColor),
                               left: 24,

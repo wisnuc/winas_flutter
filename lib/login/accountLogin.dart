@@ -1,13 +1,14 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 
+import './stationLogin.dart';
 import './forgetPassword.dart';
 
 import '../redux/redux.dart';
 import '../common/request.dart';
 import '../common/loading.dart';
-import '../transfer/manager.dart';
-import '../common/stationApis.dart';
+
 import '../common/showSnackBar.dart';
 
 class Login extends StatefulWidget {
@@ -23,7 +24,7 @@ class _LoginState extends State<Login> {
   // Focus action
   FocusNode myFocusNode;
 
-  var request = Request();
+  final request = Request();
 
   @override
   void initState() {
@@ -82,137 +83,87 @@ class _LoginState extends State<Login> {
     );
   }
 
-  accoutLogin(context, store, args) async {
-    // dismiss keyboard
-    FocusScope.of(context).requestFocus(FocusNode());
-
-    // show loading, need `Navigator.pop(context)` to dismiss
-    showLoading(context);
-
-    var res = await request.req('token', args);
-    var token = res.data['token'];
-    var userUUID = res.data['id'];
-    assert(token != null);
-    assert(userUUID != null);
-
-    // update Account
-    store.dispatch(LoginAction(Account.fromMap(res.data)));
-
-    var stationsRes = await request.req('stations', null);
-
-    var stationLists = stationsRes.data['ownStations'];
-    final currentDevice = stationLists.firstWhere(
-        (s) =>
-            s['online'] == 1 &&
-            s['sn'] == 'test_b44-a529-4dcf-aa30-240a151d8e03',
-        orElse: () => null);
-    assert(currentDevice != null);
-
-    var deviceSN = currentDevice['sn'];
-    var lanIp = currentDevice['LANIP'];
-    var deviceName = currentDevice['name'];
-
-    List results = await Future.wait([
-      request.req('localBoot', {'deviceSN': deviceSN}),
-      request.req('localUsers', {'deviceSN': deviceSN}),
-      request.req('localToken', {'deviceSN': deviceSN}),
-      request.req('localDrives', {'deviceSN': deviceSN})
-    ]);
-
-    var lanToken = results[2].data['token'];
-
-    assert(lanToken != null);
-
-    // update StatinData
-    store.dispatch(
-      DeviceLoginAction(
-        Device(
-          deviceSN: deviceSN,
-          deviceName: deviceName,
-          lanIp: lanIp,
-          lanToken: lanToken,
-        ),
-      ),
-    );
-    assert(results[1].data is List);
-
-    // get current user data
-    var user = results[1].data.firstWhere(
-          (s) => s['winasUserId'] == userUUID,
-          orElse: () => null,
-        );
-    store.dispatch(
-      UpdateUserAction(
-        User.fromMap(user),
-      ),
-    );
-
-    // get current drives data
-    List<Drive> drives = List.from(
-      results[3].data.map((drive) => Drive.fromMap(drive)),
-    );
-
-    store.dispatch(
-      UpdateDrivesAction(drives),
-    );
-
-    // station apis
-    bool isCloud = false;
-    String cookie = 'blabla';
-    Apis apis =
-        Apis(token, lanIp, lanToken, userUUID, isCloud, deviceSN, cookie);
-
-    store.dispatch(
-      UpdateApisAction(apis),
-    );
-
-    if (user['uuid'] != null) {
-      // init TransferManager, load TransferItem
-      TransferManager.init(user['uuid']).catchError(print);
-    }
-    return results;
-  }
-
-  void _nextStep(BuildContext context, store) {
+  void _nextStep(BuildContext context, store) async {
     if (_status == 'account') {
+      // check length
       if (_phoneNumber.length != 11 || !_phoneNumber.startsWith('1')) {
         setState(() {
           _error = '请输入11位手机号';
         });
         return;
       }
-      setState(() {
-        _status = 'password';
-      });
-      var future = Future.delayed(const Duration(milliseconds: 100),
-          () => FocusScope.of(context).requestFocus(myFocusNode));
-      future.then((res) => print('100ms later'));
+
+      // userExist
+      showLoading(context);
+      bool userExist = false;
+      try {
+        final res = await request.req('checkUser', {'phone': _phoneNumber});
+        userExist = res.data['userExist'];
+      } catch (error) {
+        Navigator.pop(context);
+        showSnackBar(context, '校验手机号失败');
+        return;
+      }
+      Navigator.pop(context);
+
+      if (!userExist) {
+        showSnackBar(context, '用户不存在');
+      } else {
+        // next page
+        setState(() {
+          _status = 'password';
+        });
+        final future = Future.delayed(const Duration(milliseconds: 100),
+            () => FocusScope.of(context).requestFocus(myFocusNode));
+        future.then((res) => print('100ms later'));
+      }
     } else {
       // login
       if (_password.length == 0) {
+        setState(() {
+          _error = '请输入密码';
+        });
+        return;
+      } else if (_password.length < 8) {
+        setState(() {
+          _error = '密码错误';
+        });
         return;
       }
+
       final args = {
         'clientId': 'flutter_Test',
         'username': _phoneNumber,
         'password': _password
       };
-      // login to account and device
-      accoutLogin(context, store, args).then((res) {
-        //remove all router, and push '/station'
-        Navigator.pushNamedAndRemoveUntil(
-            context, '/station', (Route<dynamic> route) => false);
-      }).catchError((err) {
-        // pop loading
+
+      // dismiss keyboard
+      FocusScope.of(context).requestFocus(FocusNode());
+
+      // show loading, need `Navigator.pop(context)` to dismiss
+      showLoading(context);
+      var res;
+      try {
+        res = await request.req('token', args);
+      } catch (error) {
+        print(error.response.data);
+        if (error is DioError && error.response.data['code'] == 60008) {
+          Navigator.pop(context);
+          setState(() {
+            _error = '密码错误';
+          });
+          return;
+        }
         Navigator.pop(context);
-
-        // remove device and apis if any
-        store.dispatch(UpdateApisAction(null));
-        store.dispatch(DeviceLoginAction(null));
-
         showSnackBar(context, '登录失败');
-        print(err);
-      });
+      }
+
+      // update Account
+      Account account = Account.fromMap(res.data);
+      store.dispatch(LoginAction(account));
+
+      // device login
+      await deviceLogin(context, request, account, store);
     }
   }
 

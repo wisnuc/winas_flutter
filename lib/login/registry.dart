@@ -260,18 +260,13 @@ class _RegistryState extends State<Registry> {
         return;
       }
 
-      // _userExist == true, login via code, bind wechat, success TODO, login
+      // _userExist == true, login via code, bind wechat, success TODO, login station
       if (_userExist) {
         // registry
         try {
-          // await request.req('smsToken', {
-          //   'code': _code,
-          //   'phone': _phoneNumber,
-          //   'clientId': 'flutter_Test',
-          // });
-          await request.req('token', {
-            'username': _phoneNumber,
-            'password': '12345678',
+          await request.req('smsToken', {
+            'code': _code,
+            'phone': _phoneNumber,
             'clientId': 'flutter_Test',
           });
         } catch (err) {
