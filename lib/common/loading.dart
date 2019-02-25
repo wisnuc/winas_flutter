@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-Future<T> showLoading<T>({
+Future<T> _showLoading<T>({
   @required
       BuildContext context,
   bool barrierDismissible = true,
@@ -46,5 +46,20 @@ Widget _buildMaterialDialogTransitions(
       curve: Curves.easeOut,
     ),
     child: child,
+  );
+}
+
+showLoading(BuildContext context, {bool barrierDismissible: false}) {
+  return _showLoading(
+    barrierDismissible: barrierDismissible,
+    builder: (ctx) {
+      return Container(
+        constraints: BoxConstraints.expand(),
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    },
+    context: context,
   );
 }

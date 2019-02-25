@@ -87,18 +87,7 @@ class _LoginState extends State<Login> {
     FocusScope.of(context).requestFocus(FocusNode());
 
     // show loading, need `Navigator.pop(context)` to dismiss
-    showLoading(
-      barrierDismissible: false,
-      builder: (ctx) {
-        return Container(
-          constraints: BoxConstraints.expand(),
-          child: Center(
-            child: CircularProgressIndicator(),
-          ),
-        );
-      },
-      context: context,
-    );
+    showLoading(context);
 
     var res = await request.req('token', args);
     var token = res.data['token'];

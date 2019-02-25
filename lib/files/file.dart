@@ -201,18 +201,8 @@ class _FilesState extends State<Files> {
   // download and openFile via system or share to other app
   void _download(BuildContext ctx, Entry entry, AppState state,
       {bool share: false}) async {
-    showLoading(
-      barrierDismissible: false,
-      builder: (ctx) {
-        return Container(
-          constraints: BoxConstraints.expand(),
-          child: Center(
-            child: CircularProgressIndicator(),
-          ),
-        );
-      },
-      context: ctx,
-    );
+    showLoading(ctx);
+
     final cm = await CacheManager.getInstance();
     String entryPath = await cm.getTmpFile(entry, state);
 
@@ -328,18 +318,7 @@ class _FilesState extends State<Files> {
             'types': node.location == 'home' ? ['file', 'directory'] : [],
             'action': (BuildContext ctx, Entry entry) async {
               Navigator.pop(ctx);
-              showLoading(
-                barrierDismissible: false,
-                builder: (c) {
-                  return Container(
-                    constraints: BoxConstraints.expand(),
-                    child: Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                },
-                context: this.context,
-              );
+              showLoading(this.context);
 
               // get built-in public drive
               Drive publicDrive = state.drives.firstWhere(

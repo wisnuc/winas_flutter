@@ -195,18 +195,7 @@ class _XCopyViewState extends State<XCopyView> {
       },
       'dst': {'drive': node.driveUUID, 'dir': node.dirUUID},
     };
-    showLoading(
-      barrierDismissible: false,
-      builder: (ctx) {
-        return Container(
-          constraints: BoxConstraints.expand(),
-          child: Center(
-            child: CircularProgressIndicator(),
-          ),
-        );
-      },
-      context: ctx,
-    );
+    showLoading(ctx);
     try {
       await state.apis.req('xcopy', args);
       showSnackBar(preCtx[0], actionType == 'copy' ? '复制成功' : '移动成功');

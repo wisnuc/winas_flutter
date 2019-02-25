@@ -64,34 +64,12 @@ class _RegistryState extends State<Registry> {
     FocusScope.of(context).requestFocus(FocusNode());
 
     // show loading, need `Navigator.pop(context)` to dismiss
-    showLoading(
-      barrierDismissible: false,
-      builder: (ctx) {
-        return Container(
-          constraints: BoxConstraints.expand(),
-          child: Center(
-            child: CircularProgressIndicator(),
-          ),
-        );
-      },
-      context: context,
-    );
+    showLoading(context);
   }
 
   /// show loading
   _loading(BuildContext ctx) {
-    showLoading(
-      barrierDismissible: false,
-      builder: (c) {
-        return Container(
-          constraints: BoxConstraints.expand(),
-          child: Center(
-            child: CircularProgressIndicator(),
-          ),
-        );
-      },
-      context: ctx,
-    );
+    showLoading(ctx);
   }
 
   /// close loading
@@ -286,9 +264,14 @@ class _RegistryState extends State<Registry> {
       if (_userExist) {
         // registry
         try {
-          await request.req('smsToken', {
-            'code': _code,
-            'phone': _phoneNumber,
+          // await request.req('smsToken', {
+          //   'code': _code,
+          //   'phone': _phoneNumber,
+          //   'clientId': 'flutter_Test',
+          // });
+          await request.req('token', {
+            'username': _phoneNumber,
+            'password': '12345678',
             'clientId': 'flutter_Test',
           });
         } catch (err) {
@@ -307,7 +290,7 @@ class _RegistryState extends State<Registry> {
           return;
         }
 
-        // show next page
+        // show success page
         _loadingOff(context);
         setState(() {
           _status = 'success';
@@ -518,21 +501,10 @@ class _RegistryState extends State<Registry> {
             ? <Widget>[
                 Builder(builder: (BuildContext ctx) {
                   return FlatButton(
-                    child: Text("重新发送"),
+                    child: Text("重新发送"), // TODO: resend smgCode
                     textColor: Colors.white,
                     onPressed: () async {
-                      showLoading(
-                        barrierDismissible: false,
-                        builder: (ctx) {
-                          return Container(
-                            constraints: BoxConstraints.expand(),
-                            child: Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          );
-                        },
-                        context: context,
-                      );
+                      showLoading(context);
                       await Future.delayed(Duration(seconds: 1));
                       Navigator.pop(context);
                     },
