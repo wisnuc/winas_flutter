@@ -47,6 +47,7 @@ class _RegistryState extends State<Registry> {
     // Clean up the focus node when the Form is disposed
     focusNode1.dispose();
     focusNode2.dispose();
+    _count = -1;
 
     super.dispose();
   }
@@ -116,6 +117,7 @@ class _RegistryState extends State<Registry> {
 
       // request smsCode
       _loading(context);
+
       try {
         await request.req('smsCode', {
           'type': 'register',
@@ -131,7 +133,7 @@ class _RegistryState extends State<Registry> {
         _handleSmsError(context, error);
         return;
       }
-
+      _startCount();
       // show next page
       _nextPage(context, 'code', focusNode1);
     } else if (_status == 'code') {
@@ -250,7 +252,7 @@ class _RegistryState extends State<Registry> {
           return;
         }
       }
-
+      _startCount();
       // _phoneNumber is new, need to register account
       // show next page
       _nextPage(context, 'code', focusNode1);
@@ -357,6 +359,43 @@ class _RegistryState extends State<Registry> {
       Navigator.pushNamedAndRemoveUntil(
           context, '/login', (Route<dynamic> route) => false);
     }
+  }
+
+  int _count = -1;
+
+  _countDown() async {
+    if (_count > 0 && this.mounted) {
+      await Future.delayed(Duration(seconds: 1));
+      if (this.mounted) {
+        setState(() {
+          _count -= 1;
+        });
+        await _countDown();
+      }
+    }
+  }
+
+  /// start count down of 60 seconds
+  _startCount() {
+    _count = 60;
+    _countDown().catchError(print);
+  }
+
+  /// resendSmg
+  _resendSmg(BuildContext ctx) async {
+    _loading(ctx);
+    try {
+      await request.req('smsCode', {
+        'type': 'password',
+        'phone': _phoneNumber,
+      });
+    } catch (error) {
+      _handleSmsError(ctx, error);
+      return;
+    }
+    _startCount();
+    _loadingOff(ctx);
+    showSnackBar(ctx, '验证码发送成功');
   }
 
   List<Widget> renderPage() {
@@ -500,13 +539,9 @@ class _RegistryState extends State<Registry> {
             ? <Widget>[
                 Builder(builder: (BuildContext ctx) {
                   return FlatButton(
-                    child: Text("重新发送"), // TODO: resend smgCode
+                    child: _count > 0 ? Text('$_count 秒后重新发送') : Text("重新发送"),
                     textColor: Colors.white,
-                    onPressed: () async {
-                      showLoading(context);
-                      await Future.delayed(Duration(seconds: 1));
-                      Navigator.pop(context);
-                    },
+                    onPressed: _count > 0 ? null : () => _resendSmg(ctx),
                   );
                 }),
               ]

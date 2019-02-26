@@ -20,7 +20,17 @@ class _ForgetPasswordState extends State<ForgetPassword> {
   FocusNode focusNode1;
   FocusNode focusNode2;
 
-  var request = Request();
+  Request request = Request();
+
+  String _phoneNumber = '';
+
+  String _code = '';
+
+  String _password = '';
+
+  String _error;
+
+  String _ticket;
 
   @override
   void initState() {
@@ -35,19 +45,9 @@ class _ForgetPasswordState extends State<ForgetPassword> {
     // Clean up the focus node when the Form is disposed
     focusNode1.dispose();
     focusNode2.dispose();
-
+    _count = -1;
     super.dispose();
   }
-
-  String _phoneNumber = '';
-
-  String _code = '';
-
-  String _password = '';
-
-  String _error;
-
-  String _ticket;
 
   /// show loading
   _loading(BuildContext ctx) {
@@ -66,7 +66,7 @@ class _ForgetPasswordState extends State<ForgetPassword> {
       _status = status;
     });
 
-    var future = Future.delayed(const Duration(milliseconds: 100),
+    var future = Future.delayed(Duration(milliseconds: 100),
         () => FocusScope.of(context).requestFocus(node));
     future.then((res) => print('100ms later'));
   }
@@ -96,6 +96,7 @@ class _ForgetPasswordState extends State<ForgetPassword> {
 
       // request smsCode
       _loading(context);
+
       try {
         await request.req('smsCode', {
           'type': 'password',
@@ -111,7 +112,7 @@ class _ForgetPasswordState extends State<ForgetPassword> {
         _handleSmsError(context, error);
         return;
       }
-
+      _startCount();
       // show next page
       _nextPage(context, 'code', focusNode1);
     } else if (_status == 'code') {
@@ -312,6 +313,43 @@ class _ForgetPasswordState extends State<ForgetPassword> {
     }
   }
 
+  int _count = -1;
+
+  _countDown() async {
+    if (_count > 0 && this.mounted) {
+      await Future.delayed(Duration(seconds: 1));
+      if (this.mounted) {
+        setState(() {
+          _count -= 1;
+        });
+        await _countDown();
+      }
+    }
+  }
+
+  /// start count down of 60 seconds
+  _startCount() {
+    _count = 60;
+    _countDown().catchError(print);
+  }
+
+  /// resendSmg
+  _resendSmg(BuildContext ctx) async {
+    _loading(ctx);
+    try {
+      await request.req('smsCode', {
+        'type': 'password',
+        'phone': _phoneNumber,
+      });
+    } catch (error) {
+      _handleSmsError(ctx, error);
+      return;
+    }
+    _startCount();
+    _loadingOff(ctx);
+    showSnackBar(ctx, '验证码发送成功');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -321,13 +359,9 @@ class _ForgetPasswordState extends State<ForgetPassword> {
             ? <Widget>[
                 Builder(builder: (BuildContext ctx) {
                   return FlatButton(
-                    child: Text("重新发送"), // TODO: resend smgCode
+                    child: _count > 0 ? Text('$_count 秒后重新发送') : Text("重新发送"),
                     textColor: Colors.white,
-                    onPressed: () async {
-                      showLoading(context);
-                      await Future.delayed(Duration(seconds: 1));
-                      Navigator.pop(context);
-                    },
+                    onPressed: _count > 0 ? null : () => _resendSmg(ctx),
                   );
                 }),
               ]

@@ -5,7 +5,6 @@ import '../redux/redux.dart';
 import './stationLogin.dart';
 import '../common/loading.dart';
 import '../common/request.dart';
-import '../icons/winas_icons.dart';
 import '../common/showSnackBar.dart';
 
 final pColor = Colors.teal;

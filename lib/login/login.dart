@@ -69,16 +69,17 @@ class _LoginPageState extends State<LoginPage> {
     );
 
     _wxlogin = fluwx.responseFromAuth.listen((data) {
+      print('responseFromAuth>>>>');
+      print(data);
+      print('<<<<<');
       code = data?.code;
       if (code != null) {
-        print(code);
         final args = {
           'clientId': 'flutter_Test',
           'code': code,
         };
         tokenRes = null;
         request.req('wechatLogin', args).then((res) {
-          print(res);
           if (res.data['wechat'] != null && res.data['user'] == false) {
             // wechat not bind
             Navigator.pop(ctx); // close loading
@@ -94,6 +95,9 @@ class _LoginPageState extends State<LoginPage> {
             // wechat bound
             tokenRes = res.data;
             callback(ctx);
+          } else {
+            print(res);
+            throw Error();
           }
         }).catchError((err) {
           print(err);

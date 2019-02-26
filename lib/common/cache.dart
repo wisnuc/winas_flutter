@@ -131,7 +131,7 @@ class CacheManager {
     return entryPath;
   }
 
-  ///  convert callback to Future, TODO: add queue to limit concurrent
+  ///  convert callback to Future
   Future getThumb(Entry entry, AppState state) async {
     Completer c = Completer();
     _getThumbCallback(entry, state, (error, value) {
