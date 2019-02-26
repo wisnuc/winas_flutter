@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io' show Platform;
 import 'package:dio/dio.dart';
 
@@ -11,6 +12,22 @@ class Request {
   Dio dio = new Dio();
 
   Request({this.token});
+
+  Request.fromMap(Map m) {
+    this.token = m['token'];
+    this.cookie = m['cookie'];
+  }
+
+  @override
+  String toString() {
+    Map<String, dynamic> m = {
+      'token': token,
+      'cookie': cookie,
+    };
+    return jsonEncode(m);
+  }
+
+  String toJson() => toString();
 
   // handle data.data response
   void interceptDio() {
@@ -171,6 +188,15 @@ class Request {
         break;
       case 'localUsers':
         r = command(args['deviceSN'], {'verb': 'GET', 'urlPath': '/users'});
+        break;
+      case 'renameStation':
+        r = command(args['deviceSN'], {
+          'verb': 'PATCH',
+          'urlPath': '/station/info',
+          'body': {
+            'name': args['name'],
+          },
+        });
         break;
     }
     return r;

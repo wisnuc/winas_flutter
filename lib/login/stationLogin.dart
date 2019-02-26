@@ -59,6 +59,11 @@ stationLogin(BuildContext context, Request request, Station currentDevice,
     UpdateDrivesAction(drives),
   );
 
+  // cloud apis
+  store.dispatch(
+    UpdateCloudAction(request),
+  );
+
   // station apis
   bool isCloud = false;
   String cookie = 'blabla';

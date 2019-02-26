@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:redux/redux.dart';
 
 import '../common/format.dart';
+import '../common/request.dart';
 import '../common/stationApis.dart';
 
 /// User account data
@@ -454,6 +455,11 @@ class UpdateApisAction {
   UpdateApisAction(this.data);
 }
 
+class UpdateCloudAction {
+  final Request data;
+  UpdateCloudAction(this.data);
+}
+
 class UpdateConfigAction {
   final Config data;
   UpdateConfigAction(this.data);
@@ -479,6 +485,10 @@ final updateApisReducer = combineReducers<Apis>([
   TypedReducer<Apis, UpdateApisAction>((data, action) => action.data),
 ]);
 
+final updateCloudReducer = combineReducers<Request>([
+  TypedReducer<Request, UpdateCloudAction>((data, action) => action.data),
+]);
+
 // combine config
 final updateConfigReducer = combineReducers<Config>([
   TypedReducer<Config, UpdateConfigAction>(
@@ -494,6 +504,7 @@ AppState appReducer(AppState state, action) {
     drives: updateDriveReducer(state.drives, action),
     apis: updateApisReducer(state.apis, action),
     config: updateConfigReducer(state.config, action),
+    cloud: updateCloudReducer(state.cloud, action),
   );
 }
 
@@ -535,6 +546,7 @@ AppState fakeState = AppState(
       "test_b44-a529-4dcf-aa30-240a151d8e03",
       'cookie'),
   config: Config(gridView: true),
+  cloud: Request(),
 );
 
 class AppState {
@@ -544,6 +556,7 @@ class AppState {
   final List<Drive> drives;
   final Apis apis;
   final Config config;
+  final Request cloud;
   AppState({
     this.account,
     this.device,
@@ -551,6 +564,7 @@ class AppState {
     this.drives,
     this.apis,
     this.config,
+    this.cloud,
   });
 
   factory AppState.initial() => AppState(
@@ -581,6 +595,8 @@ class AppState {
       apis: m['apis'] == null ? null : Apis.fromMap(jsonDecode(m['apis'])),
       config:
           m['config'] == null ? null : Config.fromMap(jsonDecode(m['config'])),
+      cloud:
+          m['cloud'] == null ? null : Request.fromMap(jsonDecode(m['cloud'])),
     );
   }
 
@@ -593,6 +609,7 @@ class AppState {
       'drives': drives,
       'apis': apis,
       'config': config,
+      'cloud': cloud,
     };
     return jsonEncode(m);
   }

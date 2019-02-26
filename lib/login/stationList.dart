@@ -10,11 +10,15 @@ import '../common/showSnackBar.dart';
 final pColor = Colors.teal;
 
 class StationList extends StatefulWidget {
-  StationList({Key key, this.stationList, this.request}) : super(key: key);
+  StationList({Key key, this.stationList, this.request, this.selfInit})
+      : super(key: key);
 
   /// Wechat token for binding
   final List<Station> stationList;
   final Request request;
+
+  /// need to refresh on init
+  final bool selfInit;
   @override
   _StationListState createState() => _StationListState();
 }
@@ -63,6 +67,9 @@ class _StationListState extends State<StationList> {
   void initState() {
     super.initState();
     stationList = widget.stationList;
+    if (widget.selfInit == true) {
+      refresh();
+    }
   }
 
   renderPadding(double height) {

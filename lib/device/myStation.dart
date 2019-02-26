@@ -1,11 +1,15 @@
-import 'package:flutter_redux/flutter_redux.dart';
-import 'package:flutter/material.dart';
 import 'dart:math';
-import '../redux/redux.dart';
-import '../common/format.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_redux/flutter_redux.dart';
+
 import './backup.dart';
 import './network.dart';
+import './newDeviceName.dart';
 import './advanced_settings.dart';
+
+import '../redux/redux.dart';
+import '../common/format.dart';
+import '../login/stationList.dart';
 
 class StorageDetail extends StatelessWidget {
   StorageDetail(this.usageData);
@@ -211,20 +215,53 @@ class _MyStationState extends State<MyStation> {
     return null;
   }
 
-  List<Widget> _actions = [
-    IconButton(
-      icon: Icon(Icons.add),
-      onPressed: () => {},
-    ),
-    IconButton(
-      icon: Icon(Icons.edit),
-      onPressed: () => {},
-    ),
-    IconButton(
-      icon: Icon(Icons.swap_horiz),
-      onPressed: () => {},
-    ),
-  ];
+  List<Widget> _actions(AppState state) {
+    return [
+      Builder(
+        builder: (ctx) => IconButton(
+              icon: Icon(Icons.add),
+              onPressed: () => {},
+            ),
+      ),
+      Builder(
+        builder: (ctx) {
+          return IconButton(
+            icon: Icon(Icons.edit),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (ctx) {
+                    return NewDeviceName(deviceName: deviceName);
+                  },
+                  fullscreenDialog: true,
+                ),
+              );
+            },
+          );
+        },
+      ),
+      Builder(
+        builder: (ctx) => IconButton(
+              icon: Icon(Icons.swap_horiz),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) {
+                      return StationList(
+                        request: state.cloud,
+                        stationList: null,
+                        selfInit: true,
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+      ),
+    ];
+  }
 
   Widget actionItem(String title, Function action) {
     return Container(
@@ -271,7 +308,7 @@ class _MyStationState extends State<MyStation> {
             iconTheme: IconThemeData(color: Colors.black38),
             title: Text('设备', style: TextStyle(color: Colors.black87)),
             elevation: 0.0, // no shadow
-            actions: _actions,
+            actions: _actions(state),
           ),
           body: loading
               ? Center(
