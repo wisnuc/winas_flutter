@@ -16,8 +16,9 @@ class Request {
   void interceptDio() {
     dio.interceptor.response.onSuccess = (Response response) {
       var res = response.data['data'];
+      // save cloud token not lanToken
       if (res is Map && res['token'] != null && res['id'] != null) {
-        token = res['token']; // save cloud token TODO, lanToken
+        token = res['token'];
       }
       if (response.data['url'] == '/c/v1/station') {
         assert(response.headers['set-cookie'][0] != null);

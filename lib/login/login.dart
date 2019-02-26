@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:fluwx/fluwx.dart' as fluwx;
 import 'package:flutter_redux/flutter_redux.dart';
@@ -27,8 +28,10 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _initFluwx().then((data) {});
+    _initFluwx().catchError(print);
   }
+
+  StreamSubscription<fluwx.WeChatAuthResponse> _wxlogin;
 
   _initFluwx() async {
     await fluwx.register(
@@ -56,14 +59,16 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   wechatAuth(BuildContext ctx, Function callback) async {
-    showLoading(ctx);
+    // remove previous listener
+    _wxlogin?.cancel();
+
     await fluwx.sendAuth(
       openId: "wx99b54eb728323fe8",
       scope: "snsapi_userinfo",
       state: "winas_login",
     );
 
-    fluwx.responseFromAuth.listen((data) {
+    _wxlogin = fluwx.responseFromAuth.listen((data) {
       code = data?.code;
       if (code != null) {
         print(code);
@@ -90,11 +95,13 @@ class _LoginPageState extends State<LoginPage> {
             tokenRes = res.data;
             callback(ctx);
           }
-        }).catchError(print);
+        }).catchError((err) {
+          print(err);
+          showSnackBar(ctx, '微信登录失败');
+        });
       } else {
         print(data);
         // close loading
-        Navigator.pop(ctx);
         showSnackBar(ctx, '微信登录失败');
       }
     });
@@ -102,6 +109,8 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
+    // remove listener
+    _wxlogin?.cancel();
     super.dispose();
   }
 
@@ -147,65 +156,59 @@ class _LoginPageState extends State<LoginPage> {
                         width: double.infinity,
                       ),
                       Container(height: 48.0),
-                      SizedBox(
-                        width: double.infinity,
+                      Container(
                         height: 56,
-                        child: Stack(
-                          children: [
-                            SizedBox(
-                              width: double.infinity,
-                              height: 56,
-                              child: FlatButton(
-                                color: Colors.white,
-                                child: Text(
-                                  "使用微信登录注册",
-                                  style: TextStyle(color: pColor, fontSize: 16),
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(28.0),
-                                ),
-                                onPressed: () => wechatAuth(ctx, callback),
+                        width: double.infinity,
+                        child: RaisedButton(
+                          color: Colors.white,
+                          elevation: 1.0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(48),
+                          ),
+                          onPressed: () => wechatAuth(ctx, callback),
+                          child: Row(
+                            children: <Widget>[
+                              Icon(Winas.wechat, color: pColor),
+                              Expanded(child: Container()),
+                              Text(
+                                '使用微信登录注册',
+                                style: TextStyle(color: pColor, fontSize: 16),
                               ),
-                            ),
-                            Positioned(
-                              child: Icon(Winas.wechat, color: pColor),
-                              left: 24,
-                              top: 16,
-                            )
-                          ],
+                              Expanded(child: Container()),
+                              Container(width: 24),
+                            ],
+                          ),
                         ),
                       ),
-                      Container(height: 16.0),
-                      SizedBox(
-                        width: double.infinity,
+                      Container(height: 32.0),
+                      Container(
                         height: 56,
+                        padding: EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                        width: double.infinity,
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(28),
-                          child: Material(
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => Registry(),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: pColor,
-                                  borderRadius: BorderRadius.circular(28),
-                                  border:
-                                      Border.all(width: 3, color: Colors.white),
+                          child: RaisedButton(
+                            color: pColor,
+                            elevation: 1.0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => Registry(),
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    "创建账号",
-                                    style: TextStyle(
-                                        color: Colors.white, fontSize: 16),
-                                  ),
-                                ),
-                              ),
+                              );
+                            },
+                            child: Text(
+                              '创建账号',
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 16),
                             ),
                           ),
                         ),

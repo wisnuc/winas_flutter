@@ -75,13 +75,15 @@ stationLogin(BuildContext context, Request request, Station currentDevice,
   }
 
   // set lastUserDeviceSn
-  request.req('setLastSN', {'sn': deviceSN}).catchError(print);
+  var r = await request.req('setLastSN', {'sn': deviceSN});
+  print(r.data);
+  // request.req('setLastSN', {'sn': deviceSN}).catchError(print);
 }
 
 /// Request station list
 reqStationList(Request request) async {
   final stationsRes = await request.req('stations', null);
-  final lastUserDeviceSn = stationsRes.data['lastUserDeviceSn'];
+  final lastUseDeviceSn = stationsRes.data['lastUseDeviceSn'];
   List<Station> stationList = List.from(
     stationsRes.data['ownStations'].map(
       (s) => Station.fromMap(s, isOwner: true),
@@ -96,7 +98,7 @@ reqStationList(Request request) async {
   stationList.addAll(sharedStations);
 
   final lastDevice = stationList.firstWhere(
-      (s) => s.sn == lastUserDeviceSn && s.sn != null,
+      (s) => s.sn == lastUseDeviceSn && s.sn != null,
       orElse: () => null);
 
   return ({

@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
+
+import './stationLogin.dart';
 import '../redux/redux.dart';
 import '../common/request.dart';
 import '../common/loading.dart';
@@ -260,11 +262,12 @@ class _RegistryState extends State<Registry> {
         return;
       }
 
-      // _userExist == true, login via code, bind wechat, success TODO, login station
+      // _userExist == true, login via code, bind wechat, login station
       if (_userExist) {
-        // registry
+        // get token
+        var res;
         try {
-          await request.req('smsToken', {
+          res = await request.req('smsToken', {
             'code': _code,
             'phone': _phoneNumber,
             'clientId': 'flutter_Test',
@@ -285,11 +288,12 @@ class _RegistryState extends State<Registry> {
           return;
         }
 
-        // show success page
-        _loadingOff(context);
-        setState(() {
-          _status = 'success';
-        });
+        // update Account
+        Account account = Account.fromMap(res.data);
+        store.dispatch(LoginAction(account));
+
+        // device login
+        await deviceLogin(context, request, account, store);
       } else {
         // request smsTicket via code
         _ticket = null;
