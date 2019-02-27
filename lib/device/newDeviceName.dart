@@ -18,8 +18,6 @@ class _NewDeviceNameState extends State<NewDeviceName> {
     AppState state = store.state;
     Device device = state.device;
 
-    print(_newName);
-
     setState(() {
       loading = true;
     });

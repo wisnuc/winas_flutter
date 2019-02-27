@@ -113,7 +113,6 @@ class MyStation extends StatefulWidget {
 class _MyStationState extends State<MyStation> {
   bool loading = true;
   String usage = '';
-  String deviceName = '';
   List usageData = [];
 
   Future refresh(AppState state) async {
@@ -127,7 +126,6 @@ class _MyStationState extends State<MyStation> {
       ]);
       space = results[0].data;
       stats = results[1].data;
-      deviceName = state.device.deviceName;
     } catch (error) {
       setState(() {
         loading = false;
@@ -217,30 +215,39 @@ class _MyStationState extends State<MyStation> {
 
   List<Widget> _actions(AppState state) {
     return [
+      // add device
       Builder(
         builder: (ctx) => IconButton(
               icon: Icon(Icons.add),
               onPressed: () => {},
             ),
       ),
+      // rename device
       Builder(
         builder: (ctx) {
           return IconButton(
             icon: Icon(Icons.edit),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (ctx) {
-                    return NewDeviceName(deviceName: deviceName);
-                  },
-                  fullscreenDialog: true,
-                ),
-              );
+            onPressed: () async {
+              try {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (ctx) {
+                      return NewDeviceName(deviceName: state.device.deviceName);
+                    },
+                    fullscreenDialog: true,
+                  ),
+                );
+
+                await refresh(state);
+              } catch (error) {
+                print(error);
+              }
             },
           );
         },
       ),
+      // switch device
       Builder(
         builder: (ctx) => IconButton(
               icon: Icon(Icons.swap_horiz),
@@ -328,7 +335,7 @@ class _MyStationState extends State<MyStation> {
                             Expanded(
                               flex: 10,
                               child: Text(
-                                deviceName,
+                                state.device.deviceName,
                                 style: TextStyle(fontSize: 28),
                                 textAlign: TextAlign.start,
                                 overflow: TextOverflow.ellipsis,
