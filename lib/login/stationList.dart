@@ -189,7 +189,7 @@ class _StationListState extends State<StationList> {
           (context, index) => Container(
                 padding: EdgeInsets.all(16),
                 child: Text(
-                  widget.switchDevice
+                  widget.switchDevice == true
                       ? '请选择要切换的设备'
                       : '未能自动登录上次使用的设备，您可以重试或者选择其他设备。',
                   style: TextStyle(fontSize: 21),
@@ -304,7 +304,8 @@ class _StationListState extends State<StationList> {
             backgroundColor: Colors.grey[50],
             titleSpacing: 0,
             iconTheme: IconThemeData(color: Colors.black38),
-            title: widget.switchDevice
+            automaticallyImplyLeading: widget.switchDevice == true,
+            title: widget.switchDevice == true
                 ? null
                 : Material(
                     child: InkWell(

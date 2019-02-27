@@ -272,17 +272,17 @@ class _MyStationState extends State<MyStation> {
   }
 
   Widget actionItem(String title, Function action) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(width: 1.0, color: Colors.grey[200]),
-        ),
-      ),
-      height: 64,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: action,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: action,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(width: 1.0, color: Colors.grey[200]),
+            ),
+          ),
+          height: 64,
           child: Row(
             children: <Widget>[
               Text(
