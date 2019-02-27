@@ -248,11 +248,12 @@ class _MyStationState extends State<MyStation> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
+                    fullscreenDialog: true,
                     builder: (context) {
                       return StationList(
                         request: state.cloud,
                         stationList: null,
-                        selfInit: true,
+                        switchDevice: true,
                       );
                     },
                   ),

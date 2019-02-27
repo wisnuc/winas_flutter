@@ -1,6 +1,7 @@
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:flutter/material.dart';
 
+import './about.dart';
 import '../common/cache.dart';
 import '../redux/redux.dart';
 import '../common/format.dart';
@@ -194,10 +195,7 @@ class _AccountInfoState extends State<AccountInfo> {
                   () => Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) {
-                          return Scaffold(
-                            appBar: AppBar(),
-                            body: Container(),
-                          );
+                          return About();
                         }),
                       ),
                   null,

@@ -33,4 +33,5 @@ class Winas {
   static const IconData txt = const IconData(0xe80a, fontFamily: _kFontFam);
   static const IconData video = const IconData(0xe80b, fontFamily: _kFontFam);
   static const IconData audio = const IconData(0xe80c, fontFamily: _kFontFam);
+  static const IconData logo = const IconData(0xe80d, fontFamily: _kFontFam);
 }

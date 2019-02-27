@@ -10,15 +10,15 @@ import '../common/showSnackBar.dart';
 final pColor = Colors.teal;
 
 class StationList extends StatefulWidget {
-  StationList({Key key, this.stationList, this.request, this.selfInit})
+  StationList({Key key, this.stationList, this.request, this.switchDevice})
       : super(key: key);
 
   /// Wechat token for binding
   final List<Station> stationList;
   final Request request;
 
-  /// need to refresh on init
-  final bool selfInit;
+  /// in switch device page
+  final bool switchDevice;
   @override
   _StationListState createState() => _StationListState();
 }
@@ -27,6 +27,7 @@ class _StationListState extends State<StationList> {
   ScrollController myScrollController = ScrollController();
   int selected = -1;
   List<Station> stationList;
+  bool loading = false;
 
   String stationStatus(Station s) {
     if (!s.isOnline) {
@@ -61,13 +62,15 @@ class _StationListState extends State<StationList> {
       print(error);
       stationList = null;
     }
+    loading = false;
   }
 
   @override
   void initState() {
     super.initState();
     stationList = widget.stationList;
-    if (widget.selfInit == true) {
+    if (widget.switchDevice == true) {
+      loading = true;
       refresh();
     }
   }
@@ -186,7 +189,9 @@ class _StationListState extends State<StationList> {
           (context, index) => Container(
                 padding: EdgeInsets.all(16),
                 child: Text(
-                  '未能自动登录上次使用的设备，您可以重试或者选择其他设备。',
+                  widget.switchDevice
+                      ? '请选择要切换的设备'
+                      : '未能自动登录上次使用的设备，您可以重试或者选择其他设备。',
                   style: TextStyle(fontSize: 21),
                 ),
               ),
@@ -297,25 +302,29 @@ class _StationListState extends State<StationList> {
             elevation: 0,
             brightness: Brightness.light,
             backgroundColor: Colors.grey[50],
-            automaticallyImplyLeading: false,
             titleSpacing: 0,
-            title: Material(
-              child: InkWell(
-                onTap: () {
-                  Navigator.pushNamedAndRemoveUntil(
-                      context, '/login', (Route<dynamic> route) => false);
-                },
-                child: Container(
-                  padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: Text(
-                    '注销',
-                    style: TextStyle(color: pColor, fontSize: 14),
+            iconTheme: IconThemeData(color: Colors.black38),
+            title: widget.switchDevice
+                ? null
+                : Material(
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.pushNamedAndRemoveUntil(
+                            context, '/login', (Route<dynamic> route) => false);
+                      },
+                      child: Container(
+                        padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+                        child: Text(
+                          '注销',
+                          style: TextStyle(color: pColor, fontSize: 14),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
             centerTitle: false,
-            actions: stationList != null && stationList.length > 0
+            actions: widget.switchDevice != true &&
+                    stationList != null &&
+                    stationList.length > 0
                 ? <Widget>[
                     IconButton(
                       icon: Icon(Icons.add, color: Colors.black38),
@@ -327,8 +336,9 @@ class _StationListState extends State<StationList> {
                 : [],
           ),
           body: Builder(
-            builder: (BuildContext c) =>
-                stationList != null && stationList.length == 0
+            builder: (BuildContext c) => loading
+                ? Center(child: CircularProgressIndicator())
+                : stationList != null && stationList.length == 0
                     ? renderNoDevice()
                     : RefreshIndicator(
                         onRefresh: refresh,

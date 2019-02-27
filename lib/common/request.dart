@@ -7,8 +7,6 @@ class Request {
   String cloudAddress = 'https://test.nodetribe.com/c/v1';
   String token;
   String cookie;
-  String lanToken;
-  String lanIp;
   Dio dio = new Dio();
 
   Request({this.token});
@@ -191,8 +189,8 @@ class Request {
         break;
       case 'renameStation':
         r = command(args['deviceSN'], {
-          'verb': 'PATCH',
-          'urlPath': '/station/info',
+          'verb': 'POST',
+          'urlPath': '/winasd/device',
           'body': {
             'name': args['name'],
           },

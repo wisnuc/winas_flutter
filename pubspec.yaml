@@ -27,6 +27,7 @@ dependencies:
   open_file: 1.2.0
   synchronized: 2.0.2+1
   uuid: 2.0.0-rc1
+  url_launcher: 4.2.0+3
 
   dio: 1.0.13
   shared_preferences: 0.4.3
