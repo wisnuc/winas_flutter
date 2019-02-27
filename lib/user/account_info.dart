@@ -41,17 +41,18 @@ class _AccountInfoState extends State<AccountInfo> {
   }
 
   Widget actionItem(String title, Function action, Widget rightItem) {
-    return Container(
-      height: 64,
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(width: 1.0, color: Colors.grey[200]),
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: action,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: action,
+        child: Container(
+          padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
+          height: 64,
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(width: 1.0, color: Colors.grey[200]),
+            ),
+          ),
           child: Row(
             children: <Widget>[
               Text(
@@ -85,8 +86,6 @@ class _AccountInfoState extends State<AccountInfo> {
             brightness: Brightness.light,
           ),
           body: Container(
-            constraints: BoxConstraints.expand(),
-            padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Column(
               children: <Widget>[
                 GestureDetector(
@@ -98,6 +97,7 @@ class _AccountInfoState extends State<AccountInfo> {
                       ),
                   child: Container(
                     height: 72,
+                    padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
                     child: Row(
                       children: <Widget>[
                         Expanded(

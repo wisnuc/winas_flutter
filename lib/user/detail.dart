@@ -2,7 +2,6 @@ import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import './license.dart';
 import '../icons/winas_icons.dart';
 
 class Detail extends StatefulWidget {
@@ -18,18 +17,19 @@ class _DetailState extends State<Detail> {
   }
 
   Widget actionItem(String title, Function action, Widget rightItem) {
-    return Container(
-      height: 64,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: action,
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(width: 1.0, color: Colors.grey[200]),
-              ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: action,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(width: 1.0, color: Colors.grey[200]),
             ),
+          ),
+          child: Container(
+            height: 64,
+            padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
             child: Row(
               children: <Widget>[
                 Text(
@@ -58,36 +58,38 @@ class _DetailState extends State<Detail> {
         brightness: Brightness.light,
         iconTheme: IconThemeData(color: Colors.black38),
       ),
-      body: Container(
-        constraints: BoxConstraints.expand(),
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text('个人中心', style: TextStyle(color: Colors.black87, fontSize: 21)),
-            Container(height: 16),
-            actionItem(
-              '语言',
-              () => {},
-              Text('中文'),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Container(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              '个人中心',
+              style: TextStyle(color: Colors.black87, fontSize: 21),
             ),
-            actionItem(
-              '语言',
-              () => {},
-              Text('中文'),
-            ),
-            actionItem(
-              '语言',
-              () => {},
-              Text('中文'),
-            ),
-            actionItem(
-              '语言',
-              () => {},
-              Text('中文'),
-            ),
-          ],
-        ),
+          ),
+          Container(height: 16),
+          actionItem(
+            '头像',
+            () => {},
+            Text('中文'),
+          ),
+          actionItem(
+            '昵称',
+            () => {},
+            Text('中文'),
+          ),
+          actionItem(
+            '账户名',
+            () => {},
+            Text('中文'),
+          ),
+          actionItem(
+            '微信',
+            () => {},
+            Text('中文'),
+          ),
+        ],
       ),
     );
   }
