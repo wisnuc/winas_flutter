@@ -26,7 +26,7 @@ class _WeChatState extends State<WeChat> {
 
   _initFluwx() async {
     await fluwx.register(
-      appId: "wx99b54eb728323fe8",
+      appId: "wxb137485b7b2ce4f0",
       doOnAndroid: true,
       doOnIOS: true,
       enableMTA: false,

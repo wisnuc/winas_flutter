@@ -35,7 +35,7 @@ class _LoginPageState extends State<LoginPage> {
 
   _initFluwx() async {
     await fluwx.register(
-      appId: "wx99b54eb728323fe8",
+      appId: "wxb137485b7b2ce4f0",
       doOnAndroid: true,
       doOnIOS: true,
       enableMTA: false,
@@ -68,7 +68,7 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     await fluwx.sendAuth(
-      openId: "wx99b54eb728323fe8",
+      openId: "wxb137485b7b2ce4f0",
       scope: "snsapi_userinfo",
       state: "winas_login",
     );

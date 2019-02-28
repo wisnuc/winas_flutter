@@ -1,4 +1,4 @@
-package com.winsun.fruitmix;
+package com.wisnuc.winas;
 
 import android.os.Bundle;
 import io.flutter.app.FlutterActivity;
