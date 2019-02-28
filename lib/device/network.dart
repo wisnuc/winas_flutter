@@ -1,70 +1,148 @@
 import 'package:flutter/material.dart';
-import 'package:draggable_scrollbar/draggable_scrollbar.dart';
+import 'package:flutter_redux/flutter_redux.dart';
+import '../redux/redux.dart';
 
-class NetWork extends StatelessWidget {
-  final myScrollController = ScrollController();
+class Network extends StatefulWidget {
+  Network({Key key}) : super(key: key);
   @override
-  Widget build(BuildContext context) {
-    return Material(
-      child: DraggableScrollbar.semicircle(
-        controller: myScrollController,
-        child: CustomScrollView(
-          controller: myScrollController,
-          physics: AlwaysScrollableScrollPhysics(),
-          slivers: <Widget>[
-            // AppBar，包含一个导航栏
-            SliverAppBar(
-              pinned: true,
-              expandedHeight: 250.0,
-              flexibleSpace: FlexibleSpaceBar(
-                title: Text('网络'),
-                background: Image.network(
-                  "https://picsum.photos/250?image=0",
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
+  _NetworkState createState() => _NetworkState();
+}
 
-            SliverPadding(
-              padding: EdgeInsets.all(8.0),
-              sliver: SliverGrid(
-                // Grid
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2, // Grid按两列显示
-                  mainAxisSpacing: 10.0,
-                  crossAxisSpacing: 10.0,
-                  childAspectRatio: 4.0,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (BuildContext context, int index) {
-                    //创建子widget
-                    return Container(
-                      alignment: Alignment.center,
-                      color: Colors.cyan[100 * (index % 9)],
-                      child: Text('grid item $index'),
-                    );
-                  },
-                  childCount: 20,
-                ),
-              ),
+class _NetworkState extends State<Network> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  Widget actionItem(String title, Function action, Widget rightItem) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: action,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(width: 1.0, color: Colors.grey[200]),
             ),
-            // List
-            SliverFixedExtentList(
-              itemExtent: 50.0,
-              delegate: SliverChildBuilderDelegate(
-                (BuildContext context, int index) {
-                  return Container(
-                    alignment: Alignment.center,
-                    color: Colors.lightBlue[100 * (index % 9)],
-                    child: Text('list item $index'),
-                  );
-                },
-                childCount: 50,
-              ),
+          ),
+          child: Container(
+            height: 64,
+            padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
+            child: Row(
+              children: <Widget>[
+                Text(
+                  title,
+                  style: TextStyle(fontSize: 16),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Container(),
+                ),
+                rightItem ?? Icon(Icons.keyboard_arrow_right),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StoreConnector<AppState, Account>(
+        onInit: (store) => {},
+        onDispose: (store) => {},
+        converter: (store) => store.state.account,
+        builder: (context, account) {
+          return Scaffold(
+            appBar: AppBar(
+              elevation: 0.0, // no shadow
+              backgroundColor: Colors.white10,
+              brightness: Brightness.light,
+              iconTheme: IconThemeData(color: Colors.black38),
+            ),
+            body: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Container(
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    '个人中心',
+                    style: TextStyle(color: Colors.black87, fontSize: 21),
+                  ),
+                ),
+                Container(height: 16),
+                actionItem(
+                  '头像',
+                  () => {},
+                  Row(
+                    children: <Widget>[
+                      Container(
+                        height: 48,
+                        width: 48,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(24),
+                          ),
+                          child: account.avatarUrl == null
+                              ? Icon(
+                                  Icons.account_circle,
+                                  color: Colors.blueGrey,
+                                  size: 48,
+                                )
+                              : Image.network(
+                                  account.avatarUrl,
+                                ),
+                        ),
+                      ),
+                      Container(width: 8),
+                      Icon(Icons.chevron_right, color: Colors.black38),
+                    ],
+                  ),
+                ),
+                actionItem(
+                  '昵称',
+                  () => {},
+                  Row(
+                    children: <Widget>[
+                      Text(
+                        account.nickName,
+                        style: TextStyle(color: Colors.black38),
+                      ),
+                      Container(width: 8),
+                      Icon(Icons.chevron_right, color: Colors.black38),
+                    ],
+                  ),
+                ),
+                actionItem(
+                  '账户名',
+                  () => {},
+                  Text(
+                    account.username,
+                    style: TextStyle(color: Colors.black38),
+                  ),
+                ),
+                StoreConnector<AppState, VoidCallback>(
+                  converter: (store) => () {
+                        // remove account, apis, device
+                        store.dispatch(LoginAction(null));
+                        store.dispatch(UpdateApisAction(null));
+                        store.dispatch(DeviceLoginAction(null));
+                      },
+                  builder: (context, logout) {
+                    return actionItem(
+                      '注销',
+                      () {
+                        logout();
+                        Navigator.pushReplacementNamed(context, '/login');
+                      },
+                      Container(),
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
+        });
   }
 }

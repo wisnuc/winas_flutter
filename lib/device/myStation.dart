@@ -2,10 +2,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 
-import './backup.dart';
 import './network.dart';
+import './deviceInfo.dart';
 import './newDeviceName.dart';
-import './advanced_settings.dart';
 
 import '../redux/redux.dart';
 import '../common/format.dart';
@@ -433,29 +432,20 @@ class _MyStationState extends State<MyStation> {
                       ),
                     ),
                     actionItem(
-                      '备份',
-                      () => Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) {
-                              return Backup();
-                            }),
-                          ),
-                    ),
-                    actionItem(
                       '网络',
                       () => Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) {
-                              return NetWork();
+                              return Network();
                             }),
                           ),
                     ),
                     actionItem(
-                      '高级',
+                      '关于本机',
                       () => Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) {
-                              return AdvancedSettings();
+                              return DeviceInfo();
                             }),
                           ),
                     ),

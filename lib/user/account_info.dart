@@ -204,24 +204,6 @@ class _AccountInfoState extends State<AccountInfo> {
                       ),
                   null,
                 ),
-                StoreConnector<AppState, VoidCallback>(
-                  converter: (store) => () {
-                        // remove account, apis, device
-                        store.dispatch(LoginAction(null));
-                        store.dispatch(UpdateApisAction(null));
-                        store.dispatch(DeviceLoginAction(null));
-                      },
-                  builder: (context, logout) {
-                    return actionItem(
-                      '注销',
-                      () {
-                        logout();
-                        Navigator.pushReplacementNamed(context, '/login');
-                      },
-                      Container(),
-                    );
-                  },
-                ),
               ],
             ),
           ),

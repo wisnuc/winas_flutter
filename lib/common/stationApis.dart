@@ -130,6 +130,10 @@ class Apis {
       case 'search':
         r = tget('files', args);
         break;
+
+      case 'winasInfo':
+        r = dio.get('http://${this.lanIp}:3001/winasd/info');
+        break;
     }
     return r;
   }
