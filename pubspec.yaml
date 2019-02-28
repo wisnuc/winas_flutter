@@ -36,7 +36,12 @@ dependencies:
 
   fluwx: 0.5.7
 
-  # draggable_scrollbar: ^0.0.4
+  # share_extend: 1.0.3
+  # to fix conflict with open_file
+  share_extend:
+    git: https://github.com/juncaixinchi/ShareExtend.git
+
+  # draggable_scrollbar: 0.0.4
   # to use draggable-scrollbar with sliver list
   draggable_scrollbar:
     git: https://github.com/juncaixinchi/flutter-draggable-scrollbar.git

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:open_file/open_file.dart';
+import 'package:share_extend/share_extend.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 
@@ -212,8 +213,7 @@ class _FilesState extends State<Files> {
     } else {
       try {
         if (share) {
-          // TODO: share
-          await OpenFile.open(entryPath);
+          ShareExtend.share(entryPath, "file");
         } else {
           await OpenFile.open(entryPath);
         }
