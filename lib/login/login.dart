@@ -62,6 +62,11 @@ class _LoginPageState extends State<LoginPage> {
     // remove previous listener
     _wxlogin?.cancel();
 
+    if (isWeChatInstalled != true) {
+      showSnackBar(ctx, '未检测到微信应用，请先安装微信');
+      return;
+    }
+
     await fluwx.sendAuth(
       openId: "wx99b54eb728323fe8",
       scope: "snsapi_userinfo",

@@ -6,6 +6,7 @@ import 'package:flutter_redux/flutter_redux.dart';
 import '../redux/redux.dart';
 import '../icons/winas_icons.dart';
 import '../common/showSnackBar.dart';
+import '../common/loading.dart';
 
 final pColor = Colors.teal;
 
@@ -37,11 +38,6 @@ class _WeChatState extends State<WeChat> {
   }
 
   _refresh(AppState state) async {
-    // await Future.delayed(Duration(seconds: 1));
-    // setState(() {
-    //   _loading = false;
-    // });
-    // return;
     final res = await state.cloud.req('wechat', null);
     wechatInfo = res.data;
     if (this.mounted) {
@@ -54,6 +50,11 @@ class _WeChatState extends State<WeChat> {
   _bindWeChat(BuildContext ctx, AppState state) async {
     // remove previous listener
     _wxlogin?.cancel();
+
+    if (isWeChatInstalled != true) {
+      showSnackBar(ctx, '未检测到微信应用，请先安装微信');
+      return;
+    }
 
     await fluwx.sendAuth(
       openId: "wx99b54eb728323fe8",
@@ -79,6 +80,11 @@ class _WeChatState extends State<WeChat> {
               'wechatToken': res.data['wechat'],
             }).then((data) {
               showSnackBar(ctx, '绑定成功');
+              if (this.mounted) {
+                this.setState(() {
+                  _loading = true;
+                });
+              }
               _refresh(state);
             });
           } else if (res.data['user'] == true && res.data['token'] != null) {
@@ -102,12 +108,14 @@ class _WeChatState extends State<WeChat> {
   _unbindWeChat(BuildContext ctx, AppState state) async {
     // remove previous listener
     _wxlogin?.cancel();
-
+    showLoading(ctx);
     try {
       await state.cloud.req('unbindWechat', {
         'unionid': wechatInfo[0]['unionid'],
       });
       await _refresh(state);
+      Navigator.pop(ctx);
+      showSnackBar(ctx, '解绑成功');
     } catch (error) {
       print(error);
 
@@ -116,6 +124,7 @@ class _WeChatState extends State<WeChat> {
           _loading = false;
         });
       }
+      Navigator.pop(ctx);
       showSnackBar(ctx, '操作失败');
     }
   }
