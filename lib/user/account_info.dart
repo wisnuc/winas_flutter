@@ -134,9 +134,15 @@ class _AccountInfoState extends State<AccountInfo> {
                             borderRadius: BorderRadius.all(
                               Radius.circular(28),
                             ),
-                            child: Image.network(
-                              account.avatarUrl,
-                            ),
+                            child: account.avatarUrl == null
+                                ? Icon(
+                                    Icons.account_circle,
+                                    color: Colors.blueGrey,
+                                    size: 56,
+                                  )
+                                : Image.network(
+                                    account.avatarUrl,
+                                  ),
                           ),
                         ),
                       ],

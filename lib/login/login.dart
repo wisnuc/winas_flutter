@@ -81,9 +81,6 @@ class _LoginPageState extends State<LoginPage> {
         tokenRes = null;
         request.req('wechatLogin', args).then((res) {
           if (res.data['wechat'] != null && res.data['user'] == false) {
-            // wechat not bind
-            Navigator.pop(ctx); // close loading
-
             // nav to registry
             Navigator.push(
               context,
@@ -105,7 +102,7 @@ class _LoginPageState extends State<LoginPage> {
         });
       } else {
         print(data);
-        // close loading
+
         showSnackBar(ctx, '微信登录失败');
       }
     });

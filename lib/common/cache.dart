@@ -131,7 +131,7 @@ class CacheManager {
     return entryPath;
   }
 
-  ///  convert callback to Future
+  /// convert callback to Future
   Future getThumb(Entry entry, AppState state) async {
     Completer c = Completer();
     _getThumbCallback(entry, state, (error, value) {
@@ -144,14 +144,14 @@ class CacheManager {
     return c.future;
   }
 
-  //  convert Future to  callback
+  /// convert Future to  callback
   void _getThumbCallback(Entry entry, AppState state, Function callback) {
     _getThumb(entry, state)
         .then((value) => callback(null, value))
         .catchError((onError) => callback(onError));
   }
 
-  // download thumb
+  /// download thumb
   Future<String> _getThumb(Entry entry, AppState state) async {
     String entryPath = _thumbnailDir() + entry.hash + '&width=200&height=200';
     String transPath = _transDir() + '/' + Uuid().v4();

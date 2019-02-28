@@ -85,6 +85,13 @@ class Request {
     return dio.patch('$cloudAddress/$ep', data: args);
   }
 
+  /// patch with token
+  tdel(String ep, args) {
+    assert(token != null);
+    dio.options.headers['Authorization'] = token;
+    return dio.delete('$cloudAddress/$ep', data: args);
+  }
+
   /// command via pipe
   command(deviceSN, data) {
     assert(token != null);
@@ -131,6 +138,16 @@ class Request {
           'type': isIOS ? 'iOS' : 'Android',
           'username': args['username'],
           'password': args['password']
+        });
+        break;
+
+      case 'wechat':
+        r = tget('wechat', null);
+        break;
+
+      case 'unbindWechat':
+        r = tdel('user/wechat', {
+          'unionid': args['unionid'],
         });
         break;
 
