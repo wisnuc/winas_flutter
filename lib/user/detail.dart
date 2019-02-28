@@ -55,6 +55,7 @@ class _DetailState extends State<Detail> {
         onDispose: (store) => {},
         converter: (store) => store.state.account,
         builder: (context, account) {
+          if (!(account is Account)) return Container();
           return Scaffold(
             appBar: AppBar(
               elevation: 0.0, // no shadow
