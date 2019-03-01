@@ -4,9 +4,8 @@ import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import './fileRow.dart';
 import './newFolder.dart';
 import '../redux/redux.dart';
-import '../common/loading.dart';
+import '../common/utils.dart';
 import '../common/renderIcon.dart';
-import '../common/showSnackBar.dart';
 
 class XCopyView extends StatefulWidget {
   XCopyView(

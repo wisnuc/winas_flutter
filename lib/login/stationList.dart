@@ -3,9 +3,8 @@ import 'package:flutter_redux/flutter_redux.dart';
 
 import '../redux/redux.dart';
 import './stationLogin.dart';
-import '../common/loading.dart';
+import '../common/utils.dart';
 import '../common/request.dart';
-import '../common/showSnackBar.dart';
 
 final pColor = Colors.teal;
 

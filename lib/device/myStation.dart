@@ -7,7 +7,7 @@ import './deviceInfo.dart';
 import './newDeviceName.dart';
 
 import '../redux/redux.dart';
-import '../common/format.dart';
+import '../common/utils.dart';
 import '../login/stationList.dart';
 
 class StorageDetail extends StatelessWidget {
@@ -270,37 +270,6 @@ class _MyStationState extends State<MyStation> {
     ];
   }
 
-  Widget actionItem(String title, Function action) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: action,
-        child: Container(
-          padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(width: 1.0, color: Colors.grey[200]),
-            ),
-          ),
-          height: 64,
-          child: Row(
-            children: <Widget>[
-              Text(
-                title,
-                style: TextStyle(fontSize: 16),
-              ),
-              Expanded(
-                flex: 1,
-                child: Container(),
-              ),
-              Icon(Icons.keyboard_arrow_right),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return StoreConnector<AppState, AppState>(
@@ -425,13 +394,13 @@ class _MyStationState extends State<MyStation> {
                                 flex: 1,
                                 child: Container(),
                               ),
-                              Icon(Icons.keyboard_arrow_right),
+                              Icon(Icons.chevron_right),
                             ],
                           ),
                         ),
                       ),
                     ),
-                    actionItem(
+                    actionButton(
                       '网络',
                       () => Navigator.push(
                             context,
@@ -439,8 +408,9 @@ class _MyStationState extends State<MyStation> {
                               return Network();
                             }),
                           ),
+                      null,
                     ),
-                    actionItem(
+                    actionButton(
                       '关于本机',
                       () => Navigator.push(
                             context,
@@ -448,6 +418,7 @@ class _MyStationState extends State<MyStation> {
                               return DeviceInfo();
                             }),
                           ),
+                      null,
                     ),
                   ],
                 ),

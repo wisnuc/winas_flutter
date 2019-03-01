@@ -1,52 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
-import '../common/format.dart';
+import '../common/utils.dart';
 import '../redux/redux.dart';
 
-Widget _actionItem(String title, Function action, Widget rightItem) {
-  return Material(
-    color: Colors.transparent,
-    child: InkWell(
-      onTap: action,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(width: 1.0, color: Colors.grey[200]),
-          ),
-        ),
-        child: Container(
-          height: 64,
-          padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-          child: Row(
-            children: <Widget>[
-              Text(
-                title,
-                style: TextStyle(fontSize: 16),
-              ),
-              Expanded(
-                flex: 1,
-                child: Container(),
-              ),
-              rightItem ?? Icon(Icons.keyboard_arrow_right),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
 Widget _ellipsisText(String text) {
-  return Expanded(
-    child: Text(
-      text ?? '',
-      textAlign: TextAlign.end,
-      overflow: TextOverflow.ellipsis,
-      maxLines: 1,
-      style: TextStyle(color: Colors.black38),
-    ),
-    flex: 10,
-  );
+  return ellipsisText(text, style: TextStyle(color: Colors.black38));
 }
 
 class Info {
@@ -106,32 +64,32 @@ class Auth extends StatelessWidget {
                   ),
                 ),
                 Container(height: 16),
-                _actionItem(
+                actionButton(
                   '设备SN',
                   () => {},
                   _ellipsisText(info.sn),
                 ),
-                _actionItem(
+                actionButton(
                   '证书',
                   () => {},
                   _ellipsisText(info.cert),
                 ),
-                _actionItem(
+                actionButton(
                   '证书指纹',
                   () => {},
                   _ellipsisText(info.fingerprint),
                 ),
-                _actionItem(
+                actionButton(
                   '证书签发身份',
                   () => {},
                   _ellipsisText(info.signer),
                 ),
-                _actionItem(
+                actionButton(
                   '证书签发时间',
                   () => {},
                   _ellipsisText(info.certNotBefore),
                 ),
-                _actionItem(
+                actionButton(
                   '证书有效期至',
                   () => {},
                   _ellipsisText(info.certNotAfter),
@@ -200,22 +158,22 @@ class _DeviceInfoState extends State<DeviceInfo> {
                     : Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          _actionItem(
+                          actionButton(
                             '蓝牙地址',
                             () => {},
                             _ellipsisText(info.bleAddr),
                           ),
-                          _actionItem(
+                          actionButton(
                             '加密芯片',
                             () => {},
                             _ellipsisText(info.eccName),
                           ),
-                          _actionItem(
+                          actionButton(
                             '网卡带宽',
                             () => {},
                             _ellipsisText(info.bandwidth),
                           ),
-                          _actionItem(
+                          actionButton(
                             '设备身份',
                             () {
                               Navigator.push(

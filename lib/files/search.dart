@@ -6,8 +6,8 @@ import './rename.dart';
 import './fileRow.dart';
 import './xcopyDialog.dart';
 import '../redux/redux.dart';
+import '../common/utils.dart';
 import '../common/renderIcon.dart';
-import '../common/showSnackBar.dart';
 
 class Search extends StatefulWidget {
   Search({Key key, this.node, this.actions, this.download}) : super(key: key);

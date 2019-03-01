@@ -4,9 +4,8 @@ import 'package:flutter_redux/flutter_redux.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import './manager.dart';
 import '../redux/redux.dart';
-import '../common/format.dart';
+import '../common/utils.dart';
 import '../common/renderIcon.dart';
-import '../common/showSnackBar.dart';
 
 class Transfer extends StatefulWidget {
   Transfer({Key key}) : super(key: key);

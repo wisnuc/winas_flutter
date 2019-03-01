@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
+
+import '../common/utils.dart';
 import '../redux/redux.dart';
 
 class Network extends StatefulWidget {
@@ -12,39 +14,6 @@ class _NetworkState extends State<Network> {
   @override
   void initState() {
     super.initState();
-  }
-
-  Widget actionItem(String title, Function action, Widget rightItem) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: action,
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(width: 1.0, color: Colors.grey[200]),
-            ),
-          ),
-          child: Container(
-            height: 64,
-            padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-            child: Row(
-              children: <Widget>[
-                Text(
-                  title,
-                  style: TextStyle(fontSize: 16),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Container(),
-                ),
-                rightItem ?? Icon(Icons.keyboard_arrow_right),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   @override
@@ -67,13 +36,13 @@ class _NetworkState extends State<Network> {
                 Container(
                   padding: EdgeInsets.all(16),
                   child: Text(
-                    '个人中心',
+                    '设备网络',
                     style: TextStyle(color: Colors.black87, fontSize: 21),
                   ),
                 ),
                 Container(height: 16),
-                actionItem(
-                  '头像',
+                actionButton(
+                  'IP地址',
                   () => {},
                   Row(
                     children: <Widget>[
@@ -100,7 +69,7 @@ class _NetworkState extends State<Network> {
                     ],
                   ),
                 ),
-                actionItem(
+                actionButton(
                   '昵称',
                   () => {},
                   Row(
@@ -114,31 +83,13 @@ class _NetworkState extends State<Network> {
                     ],
                   ),
                 ),
-                actionItem(
+                actionButton(
                   '账户名',
                   () => {},
                   Text(
                     account.username,
                     style: TextStyle(color: Colors.black38),
                   ),
-                ),
-                StoreConnector<AppState, VoidCallback>(
-                  converter: (store) => () {
-                        // remove account, apis, device
-                        store.dispatch(LoginAction(null));
-                        store.dispatch(UpdateApisAction(null));
-                        store.dispatch(DeviceLoginAction(null));
-                      },
-                  builder: (context, logout) {
-                    return actionItem(
-                      '注销',
-                      () {
-                        logout();
-                        Navigator.pushReplacementNamed(context, '/login');
-                      },
-                      Container(),
-                    );
-                  },
                 ),
               ],
             ),

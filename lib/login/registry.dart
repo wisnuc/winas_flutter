@@ -4,9 +4,8 @@ import 'package:flutter_redux/flutter_redux.dart';
 
 import './stationLogin.dart';
 import '../redux/redux.dart';
+import '../common/utils.dart';
 import '../common/request.dart';
-import '../common/loading.dart';
-import '../common/showSnackBar.dart';
 
 class Registry extends StatefulWidget {
   Registry({Key key, this.wechat}) : super(key: key);

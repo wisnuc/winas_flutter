@@ -7,10 +7,10 @@ import './registry.dart';
 import './stationLogin.dart';
 import './accountLogin.dart';
 import '../redux/redux.dart';
-import '../common/loading.dart';
+import '../common/utils.dart';
+
 import '../common/request.dart';
 import '../icons/winas_icons.dart';
-import '../common/showSnackBar.dart';
 
 final pColor = Colors.teal;
 

@@ -9,7 +9,7 @@ import 'package:synchronized/synchronized.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../redux/redux.dart';
-import '../common/format.dart';
+import '../common/utils.dart';
 
 class Task {
   final AsyncMemoizer lock = AsyncMemoizer();

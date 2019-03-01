@@ -6,10 +6,8 @@ import './stationLogin.dart';
 import './forgetPassword.dart';
 
 import '../redux/redux.dart';
+import '../common/utils.dart';
 import '../common/request.dart';
-import '../common/loading.dart';
-
-import '../common/showSnackBar.dart';
 
 class Login extends StatefulWidget {
   Login({Key key}) : super(key: key);

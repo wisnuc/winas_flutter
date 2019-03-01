@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:redux/redux.dart';
 
-import '../common/format.dart';
+import '../common/utils.dart';
 import '../common/request.dart';
 import '../common/stationApis.dart';
 

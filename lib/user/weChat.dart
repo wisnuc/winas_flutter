@@ -4,9 +4,8 @@ import 'package:fluwx/fluwx.dart' as fluwx;
 import 'package:flutter_redux/flutter_redux.dart';
 
 import '../redux/redux.dart';
+import '../common/utils.dart';
 import '../icons/winas_icons.dart';
-import '../common/showSnackBar.dart';
-import '../common/loading.dart';
 
 final pColor = Colors.teal;
 

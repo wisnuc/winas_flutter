@@ -2,9 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import '../redux/redux.dart';
+import '../common/utils.dart';
 import '../common/request.dart';
-import '../common/loading.dart';
-import '../common/showSnackBar.dart';
 
 class ForgetPassword extends StatefulWidget {
   ForgetPassword({Key key}) : super(key: key);

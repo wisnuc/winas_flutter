@@ -12,9 +12,8 @@ import './newFolder.dart';
 import './xcopyDialog.dart';
 import '../redux/redux.dart';
 import '../common/cache.dart';
+import '../common/utils.dart';
 import '../transfer/manager.dart';
-import '../common/loading.dart';
-import '../common/showSnackBar.dart';
 
 Widget _buildItem(
   BuildContext context,

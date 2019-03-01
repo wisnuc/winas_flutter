@@ -5,7 +5,7 @@ import './about.dart';
 import './detail.dart';
 import '../common/cache.dart';
 import '../redux/redux.dart';
-import '../common/format.dart';
+import '../common/utils.dart';
 
 class AccountInfo extends StatefulWidget {
   AccountInfo({Key key}) : super(key: key);
@@ -38,37 +38,6 @@ class _AccountInfoState extends State<AccountInfo> {
   void initState() {
     super.initState();
     getCacheSize();
-  }
-
-  Widget actionItem(String title, Function action, Widget rightItem) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: action,
-        child: Container(
-          padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-          height: 64,
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(width: 1.0, color: Colors.grey[200]),
-            ),
-          ),
-          child: Row(
-            children: <Widget>[
-              Text(
-                title,
-                style: TextStyle(fontSize: 16),
-              ),
-              Expanded(
-                flex: 1,
-                child: Container(),
-              ),
-              rightItem ?? Icon(Icons.keyboard_arrow_right),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   @override
@@ -150,7 +119,7 @@ class _AccountInfoState extends State<AccountInfo> {
                   ),
                 ),
                 Container(height: 16),
-                actionItem(
+                actionButton(
                   '账户安全',
                   () => Navigator.push(
                         context,
@@ -163,12 +132,12 @@ class _AccountInfoState extends State<AccountInfo> {
                       ),
                   null,
                 ),
-                actionItem(
+                actionButton(
                   '语言',
                   () => {},
                   Text('中文'),
                 ),
-                actionItem(
+                actionButton(
                   '清除缓存',
                   () async {
                     await showDialog(
@@ -194,7 +163,7 @@ class _AccountInfoState extends State<AccountInfo> {
                   },
                   Text(cacheSize != null ? prettySize(cacheSize) : ''),
                 ),
-                actionItem(
+                actionButton(
                   '关于',
                   () => Navigator.push(
                         context,

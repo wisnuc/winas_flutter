@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import './weChat.dart';
+
 import '../redux/redux.dart';
+import '../common/utils.dart';
 
 class Detail extends StatefulWidget {
   Detail({Key key}) : super(key: key);
@@ -13,39 +15,6 @@ class _DetailState extends State<Detail> {
   @override
   void initState() {
     super.initState();
-  }
-
-  Widget actionItem(String title, Function action, Widget rightItem) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: action,
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(width: 1.0, color: Colors.grey[200]),
-            ),
-          ),
-          child: Container(
-            height: 64,
-            padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-            child: Row(
-              children: <Widget>[
-                Text(
-                  title,
-                  style: TextStyle(fontSize: 16),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Container(),
-                ),
-                rightItem ?? Icon(Icons.keyboard_arrow_right),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   @override
@@ -74,7 +43,7 @@ class _DetailState extends State<Detail> {
                   ),
                 ),
                 Container(height: 16),
-                actionItem(
+                actionButton(
                   '头像',
                   () => {},
                   Row(
@@ -102,7 +71,7 @@ class _DetailState extends State<Detail> {
                     ],
                   ),
                 ),
-                actionItem(
+                actionButton(
                   '昵称',
                   () => {},
                   Row(
@@ -116,7 +85,7 @@ class _DetailState extends State<Detail> {
                     ],
                   ),
                 ),
-                actionItem(
+                actionButton(
                   '账户名',
                   () => {},
                   Text(
@@ -124,7 +93,7 @@ class _DetailState extends State<Detail> {
                     style: TextStyle(color: Colors.black38),
                   ),
                 ),
-                actionItem(
+                actionButton(
                   '微信',
                   () {
                     Navigator.push(
@@ -153,7 +122,7 @@ class _DetailState extends State<Detail> {
                         store.dispatch(DeviceLoginAction(null));
                       },
                   builder: (context, logout) {
-                    return actionItem(
+                    return actionButton(
                       '注销',
                       () {
                         logout();

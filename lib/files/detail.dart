@@ -1,7 +1,7 @@
-import 'package:flutter_redux/flutter_redux.dart';
 import 'package:flutter/material.dart';
-import '../common/format.dart';
+import 'package:flutter_redux/flutter_redux.dart';
 import '../redux/redux.dart';
+import '../common/utils.dart';
 import '../common/renderIcon.dart';
 
 class DetailRows {
