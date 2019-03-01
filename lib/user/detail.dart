@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import './weChat.dart';
-
+import './avatarView.dart';
+import './newNickName.dart';
 import '../redux/redux.dart';
 import '../common/utils.dart';
 
@@ -45,7 +46,16 @@ class _DetailState extends State<Detail> {
                 Container(height: 16),
                 actionButton(
                   '头像',
-                  () => {},
+                  () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (ctx) {
+                          return AvatarView(avatarUrl: account.avatarUrl);
+                        },
+                      ),
+                    );
+                  },
                   Row(
                     children: <Widget>[
                       Container(
@@ -73,7 +83,17 @@ class _DetailState extends State<Detail> {
                 ),
                 actionButton(
                   '昵称',
-                  () => {},
+                  () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (ctx) {
+                          return NewNickName(nickName: account.nickName);
+                        },
+                        fullscreenDialog: true,
+                      ),
+                    );
+                  },
                   Row(
                     children: <Widget>[
                       Text(

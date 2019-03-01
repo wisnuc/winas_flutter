@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io' show Platform;
+import 'dart:io';
 import 'package:dio/dio.dart';
 
 class Request {
@@ -189,6 +189,12 @@ class Request {
         });
         break;
 
+      case 'newNickName':
+        r = tpatch('/user/nickname', {
+          'nickName': args['nickName'],
+        });
+        break;
+
       case 'stations':
         r = tget('station', null);
         break;
@@ -215,5 +221,16 @@ class Request {
         break;
     }
     return r;
+  }
+
+  setAvatar(String filePath, {CancelToken cancelToken}) async {
+    assert(token != null);
+    dio.options.headers['Authorization'] = token;
+
+    await dio.put(
+      '$cloudAddress/user/avatar',
+      data: UploadFileInfo(File(filePath), 'avatar'),
+      cancelToken: cancelToken,
+    );
   }
 }

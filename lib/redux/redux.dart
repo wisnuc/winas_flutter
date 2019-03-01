@@ -22,11 +22,19 @@ class Account {
       this.mail});
   Account.fromMap(Map m) {
     this.token = m['token'];
-    this.nickName = m['nickName'];
+    this.nickName = m['nickName'] ?? m['username'];
     this.username = m['username'];
     this.avatarUrl = m['avatarUrl'];
     this.id = m['id'];
     this.mail = m['mail'];
+  }
+
+  void updateNickName(String name) {
+    this.nickName = name;
+  }
+
+  void updateAvatar(String url) {
+    this.avatarUrl = url;
   }
 
   @override

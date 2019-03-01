@@ -275,15 +275,14 @@ class _FileRowState extends State<FileRow> {
 
   Widget actionItem(
       BuildContext ctx, IconData icon, String title, Function action) {
-    return Container(
-      height: 40,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => action(ctx, entry),
+    return Material(
+      child: InkWell(
+        onTap: () => action(ctx, entry),
+        child: Container(
+          padding: EdgeInsets.all(8),
           child: Row(
             children: <Widget>[
-              Container(width: 24),
+              Container(width: 16),
               Icon(icon),
               Container(width: 32),
               Text(

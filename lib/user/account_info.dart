@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 
 import './about.dart';
 import './detail.dart';
-import '../common/cache.dart';
 import '../redux/redux.dart';
+import '../common/cache.dart';
 import '../common/utils.dart';
 
 class AccountInfo extends StatefulWidget {
@@ -119,19 +119,6 @@ class _AccountInfoState extends State<AccountInfo> {
                   ),
                 ),
                 Container(height: 16),
-                actionButton(
-                  '账户安全',
-                  () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) {
-                          return Scaffold(
-                            appBar: AppBar(),
-                            body: Container(),
-                          );
-                        }),
-                      ),
-                  null,
-                ),
                 actionButton(
                   '语言',
                   () => {},
