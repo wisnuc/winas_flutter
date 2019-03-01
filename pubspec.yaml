@@ -35,6 +35,10 @@ dependencies:
   async: 2.0.8
 
   fluwx: 0.5.7
+  
+  image_picker: 0.4.12+1
+  image_cropper: 1.0.0
+ 
 
   # share_extend: 1.0.3
   # to fix conflict with open_file

@@ -223,13 +223,13 @@ class Request {
     return r;
   }
 
-  setAvatar(String filePath, {CancelToken cancelToken}) async {
+  setAvatar(File imageFile, {CancelToken cancelToken}) async {
     assert(token != null);
     dio.options.headers['Authorization'] = token;
 
     await dio.put(
       '$cloudAddress/user/avatar',
-      data: UploadFileInfo(File(filePath), 'avatar'),
+      data: UploadFileInfo(imageFile, 'avatar'),
       cancelToken: cancelToken,
     );
   }

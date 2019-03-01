@@ -1,6 +1,11 @@
-import 'package:flutter_redux/flutter_redux.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter_redux/flutter_redux.dart';
+import 'package:image_cropper/image_cropper.dart';
+
 import '../redux/redux.dart';
+import '../common/utils.dart';
 
 class AvatarView extends StatefulWidget {
   AvatarView({Key key, this.avatarUrl}) : super(key: key);
@@ -11,32 +16,47 @@ class AvatarView extends StatefulWidget {
 
 class _AvatarViewState extends State<AvatarView> {
   String avatarUrl;
-  String filePath;
-  String _error;
-  bool loading = false;
+  File imageFile;
 
-  _onPressed(context, store) async {
+  Future getImage(BuildContext ctx, store, {bool camera}) async {
+    final rawFile = await ImagePicker.pickImage(
+      source: camera ? ImageSource.camera : ImageSource.gallery,
+    );
+
+    final cropFile = await ImageCropper.cropImage(
+      toolbarColor: Colors.black,
+      toolbarTitle: '照片编辑',
+      sourcePath: rawFile.path,
+      ratioX: 1.0,
+      ratioY: 1.0,
+      maxWidth: 512,
+      maxHeight: 512,
+    );
+
+    showLoading(ctx);
+    setState(() {
+      imageFile = cropFile;
+    });
+
     AppState state = store.state;
     Account account = state.account;
 
-    setState(() {
-      loading = true;
-    });
     try {
-      final res = await state.cloud.setAvatar(filePath);
+      await Future.delayed(Duration(seconds: 2));
+      // final res = await state.cloud.setAvatar(imageFile);
 
-      // update Account in store
-      account.updateAvatar(res.avatarUrl);
-      store.dispatch(LoginAction(account));
+      // // update Account in store
+      // print(res.data);
+      // account.updateAvatar(res.data);
+      // store.dispatch(LoginAction(account));
     } catch (error) {
-      print(error.response.data);
-      setState(() {
-        loading = false;
-        _error = '操作失败';
-      });
-      return;
+      throw error;
+      print(error);
+      showSnackBar(ctx, '上传头像失败');
+    } finally {
+      Navigator.pop(ctx);
+      showSnackBar(ctx, '头像修改成功');
     }
-    Navigator.pop(context, true);
   }
 
   @override
@@ -47,11 +67,11 @@ class _AvatarViewState extends State<AvatarView> {
 
   @override
   Widget build(BuildContext context) {
-    return StoreConnector<AppState, AppState>(
+    return StoreConnector<AppState, dynamic>(
       onInit: (store) => {},
       onDispose: (store) => {},
-      converter: (store) => store.state,
-      builder: (context, state) {
+      converter: (store) => store,
+      builder: (context, store) {
         return Scaffold(
           appBar: AppBar(
             elevation: 0.0, // no shadow
@@ -63,43 +83,49 @@ class _AvatarViewState extends State<AvatarView> {
               style: TextStyle(color: Colors.white),
             ),
             actions: <Widget>[
-              IconButton(
-                icon: Icon(Icons.more_horiz),
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    builder: (BuildContext c) {
-                      return Container(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Material(
-                              child: InkWell(
-                                onTap: () {
-                                  Navigator.pop(c);
-                                },
-                                child: Container(
-                                  width: double.infinity,
-                                  padding: EdgeInsets.all(16),
-                                  child: Text('拍照'),
+              Builder(
+                builder: (ctx) {
+                  return IconButton(
+                    icon: Icon(Icons.more_horiz),
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: ctx,
+                        builder: (BuildContext c) {
+                          return Container(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Material(
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.pop(c);
+                                      getImage(ctx, store, camera: true);
+                                    },
+                                    child: Container(
+                                      width: double.infinity,
+                                      padding: EdgeInsets.all(16),
+                                      child: Text('拍照'),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            Material(
-                              child: InkWell(
-                                onTap: () {
-                                  Navigator.pop(c);
-                                },
-                                child: Container(
-                                  width: double.infinity,
-                                  padding: EdgeInsets.all(16),
-                                  child: Text('从相册选取'),
+                                Material(
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.pop(c);
+                                      getImage(ctx, store, camera: false);
+                                    },
+                                    child: Container(
+                                      width: double.infinity,
+                                      padding: EdgeInsets.all(16),
+                                      child: Text('从相册选取'),
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       );
                     },
                   );
@@ -114,16 +140,21 @@ class _AvatarViewState extends State<AvatarView> {
               child: Container(
                 width: double.infinity,
                 child: Container(
-                  child: avatarUrl == null
-                      ? Icon(
-                          Icons.account_circle,
-                          color: Colors.blueGrey,
-                          size: 48,
-                        )
-                      : Image.network(
-                          avatarUrl,
+                  child: imageFile is File
+                      ? Image.file(
+                          imageFile,
                           fit: BoxFit.fitWidth,
-                        ),
+                        )
+                      : avatarUrl == null
+                          ? Icon(
+                              Icons.account_circle,
+                              color: Colors.blueGrey,
+                              size: 48,
+                            )
+                          : Image.network(
+                              avatarUrl,
+                              fit: BoxFit.fitWidth,
+                            ),
                 ),
               ),
             ),
