@@ -401,7 +401,7 @@ class _MyStationState extends State<MyStation> {
                       ),
                     ),
                     actionButton(
-                      '网络',
+                      '设备网络',
                       () => Navigator.push(
                             context,
                             MaterialPageRoute(builder: (context) {

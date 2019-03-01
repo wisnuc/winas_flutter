@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 
-import '../common/utils.dart';
+import './info.dart';
 import '../redux/redux.dart';
+import '../common/utils.dart';
 
 class Network extends StatefulWidget {
   Network({Key key}) : super(key: key);
@@ -11,15 +12,39 @@ class Network extends StatefulWidget {
 }
 
 class _NetworkState extends State<Network> {
-  @override
-  void initState() {
-    super.initState();
+  Info info;
+  bool loading = true;
+  bool failed = false;
+
+  Widget _ellipsisText(String text) {
+    return ellipsisText(text, style: TextStyle(color: Colors.black38));
+  }
+
+  refresh(AppState state) async {
+    try {
+      final res = await state.apis.req('winasInfo', null);
+      info = Info.fromMap(res.data);
+      if (this.mounted) {
+        setState(() {
+          loading = false;
+          failed = false;
+        });
+      }
+    } catch (error) {
+      print(error);
+      if (this.mounted) {
+        setState(() {
+          loading = false;
+          failed = true;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return StoreConnector<AppState, Account>(
-        onInit: (store) => {},
+        onInit: (store) => refresh(store.state),
         onDispose: (store) => {},
         converter: (store) => store.state.account,
         builder: (context, account) {
@@ -29,70 +54,54 @@ class _NetworkState extends State<Network> {
               backgroundColor: Colors.white10,
               brightness: Brightness.light,
               iconTheme: IconThemeData(color: Colors.black38),
-            ),
-            body: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Container(
-                  padding: EdgeInsets.all(16),
-                  child: Text(
-                    '设备网络',
-                    style: TextStyle(color: Colors.black87, fontSize: 21),
-                  ),
-                ),
-                Container(height: 16),
-                actionButton(
-                  'IP地址',
-                  () => {},
-                  Row(
-                    children: <Widget>[
-                      Container(
-                        height: 48,
-                        width: 48,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.all(
-                            Radius.circular(24),
-                          ),
-                          child: account.avatarUrl == null
-                              ? Icon(
-                                  Icons.account_circle,
-                                  color: Colors.blueGrey,
-                                  size: 48,
-                                )
-                              : Image.network(
-                                  account.avatarUrl,
-                                ),
-                        ),
-                      ),
-                      Container(width: 8),
-                      Icon(Icons.chevron_right, color: Colors.black38),
-                    ],
-                  ),
-                ),
-                actionButton(
-                  '昵称',
-                  () => {},
-                  Row(
-                    children: <Widget>[
-                      Text(
-                        account.nickName,
-                        style: TextStyle(color: Colors.black38),
-                      ),
-                      Container(width: 8),
-                      Icon(Icons.chevron_right, color: Colors.black38),
-                    ],
-                  ),
-                ),
-                actionButton(
-                  '账户名',
-                  () => {},
-                  Text(
-                    account.username,
-                    style: TextStyle(color: Colors.black38),
-                  ),
-                ),
+              actions: <Widget>[
+                Builder(builder: (ctx) {
+                  return FlatButton(
+                    child: Text(
+                      '切换Wi-Fi',
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                    onPressed: () {},
+                  );
+                })
               ],
             ),
+            body: loading
+                ? Container(
+                    height: 256,
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : (info == null || failed)
+                    ? Container(
+                        height: 256,
+                        child: Center(
+                          child: Text('加载页面失败'),
+                        ),
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Container(
+                            padding: EdgeInsets.all(16),
+                            child: Text(
+                              '设备网络',
+                              style: TextStyle(
+                                  color: Colors.black87, fontSize: 21),
+                            ),
+                          ),
+                          Container(height: 16),
+                          actionButton(
+                            'Wi-Fi名称',
+                            () => {},
+                            _ellipsisText(info.interfaceName),
+                          ),
+                          actionButton(
+                            'IP地址',
+                            () => {},
+                            _ellipsisText(info.address),
+                          ),
+                        ],
+                      ),
           );
         });
   }

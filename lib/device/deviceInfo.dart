@@ -1,37 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
-import '../common/utils.dart';
+
+import './info.dart';
 import '../redux/redux.dart';
+import '../common/utils.dart';
 
 Widget _ellipsisText(String text) {
   return ellipsisText(text, style: TextStyle(color: Colors.black38));
-}
-
-class Info {
-  String bleAddr;
-  String eccName;
-  String bandwidth;
-  String sn;
-  String cert;
-
-  String fingerprint;
-  String signer;
-  String certNotBefore;
-  String certNotAfter;
-  Info.fromMap(Map m) {
-    final device = m['device'];
-    final net = m['net'];
-    this.bleAddr = device['bleAddr'];
-    this.eccName = device['ecc'];
-    this.bandwidth = '${net['networkInterface']['speed']} Mbps';
-    this.sn = device['sn'];
-    this.cert = device['cert'];
-
-    this.fingerprint = device['fingerprint'];
-    this.signer = device['signer'];
-    this.certNotBefore = prettyDate(device['notBefore']);
-    this.certNotAfter = prettyDate(device['notAfter']);
-  }
 }
 
 class Auth extends StatelessWidget {
@@ -110,6 +85,7 @@ class DeviceInfo extends StatefulWidget {
 class _DeviceInfoState extends State<DeviceInfo> {
   Info info;
   bool loading = true;
+  bool failed = false;
 
   refresh(AppState state) async {
     try {
@@ -118,10 +94,17 @@ class _DeviceInfoState extends State<DeviceInfo> {
       if (this.mounted) {
         setState(() {
           loading = false;
+          failed = false;
         });
       }
     } catch (error) {
       print(error);
+      if (this.mounted) {
+        setState(() {
+          loading = false;
+          failed = true;
+        });
+      }
     }
   }
 
@@ -150,45 +133,52 @@ class _DeviceInfoState extends State<DeviceInfo> {
                   ),
                 ),
                 Container(height: 16),
-                info == null
+                loading
                     ? Container(
                         height: 256,
                         child: Center(child: CircularProgressIndicator()),
                       )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          actionButton(
-                            '蓝牙地址',
-                            () => {},
-                            _ellipsisText(info.bleAddr),
+                    : (info == null || failed)
+                        ? Container(
+                            height: 256,
+                            child: Center(
+                              child: Text('加载页面失败'),
+                            ),
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              actionButton(
+                                '蓝牙地址',
+                                () => {},
+                                _ellipsisText(info.bleAddr),
+                              ),
+                              actionButton(
+                                '加密芯片',
+                                () => {},
+                                _ellipsisText(info.eccName),
+                              ),
+                              actionButton(
+                                '网卡带宽',
+                                () => {},
+                                _ellipsisText(info.bandwidth),
+                              ),
+                              actionButton(
+                                '设备身份',
+                                () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        fullscreenDialog: true,
+                                        builder: (context) {
+                                          return Auth(info);
+                                        }),
+                                  );
+                                },
+                                null,
+                              ),
+                            ],
                           ),
-                          actionButton(
-                            '加密芯片',
-                            () => {},
-                            _ellipsisText(info.eccName),
-                          ),
-                          actionButton(
-                            '网卡带宽',
-                            () => {},
-                            _ellipsisText(info.bandwidth),
-                          ),
-                          actionButton(
-                            '设备身份',
-                            () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    fullscreenDialog: true,
-                                    builder: (context) {
-                                      return Auth(info);
-                                    }),
-                              );
-                            },
-                            null,
-                          ),
-                        ],
-                      ),
               ],
             ),
           );
