@@ -115,14 +115,14 @@ class TitleRow extends StatelessWidget {
                       entrySort.changeType(value);
                     },
                     value: entrySort.type,
-                    items: entrySort.types
+                    items: SortTypes.values
                         .map(
                           (type) => DropdownMenuItem(
                               value: type,
                               child: Row(
                                 children: <Widget>[
                                   Icon(
-                                    type.endsWith('Up')
+                                    type.toString().endsWith('Up')
                                         ? Icons.arrow_upward
                                         : Icons.arrow_downward,
                                     color: Colors.black26,
@@ -134,10 +134,6 @@ class TitleRow extends StatelessWidget {
                                       style: TextStyle(color: Colors.black38),
                                     ),
                                   ),
-                                  // Expanded(
-                                  //   flex: 1,
-                                  //   child: Container(),
-                                  // ),
                                 ],
                               )),
                         )
@@ -235,7 +231,7 @@ class _FileRowState extends State<FileRow> {
       showModalBottomSheet(
         context: ctx,
         builder: (BuildContext c) {
-          return Container(
+          return SafeArea(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[

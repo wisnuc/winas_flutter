@@ -414,23 +414,15 @@ class Select {
   bool selectMode() => selectedEntry.length != 0;
 }
 
+/// Types of sortBy:
+enum SortTypes { nameUp, nameDown, sizeUp, sizeDown, mtimeUp, mtimeDown }
+
 class EntrySort {
-  /// Types of sortBy:
-  ///
-  /// nameUp, nameDown, sizeUp, sizeDown, mtimeUp, mtimeDown
-  List<String> types = [
-    'nameUp',
-    'nameDown',
-    'sizeUp',
-    'sizeDown',
-    'mtimeUp',
-    'mtimeDown',
-  ];
-  String type = 'nameUp';
+  SortTypes type = SortTypes.nameUp;
   Function update;
   EntrySort(this.update);
 
-  void changeType(newType) {
+  void changeType(SortTypes newType) {
     this.type = newType;
     print('newType $newType');
     this.update();
@@ -442,27 +434,22 @@ class EntrySort {
     }
 
     switch (type) {
-      case 'nameUp':
+      case SortTypes.nameUp:
         return a.name.compareTo(b.name);
 
-      case 'nameDown':
+      case SortTypes.nameDown:
         return b.name.compareTo(a.name);
 
-      case 'mtimeUp':
+      case SortTypes.mtimeUp:
         return a.mtime.compareTo(b.mtime);
 
-      case 'mtimeDown':
+      case SortTypes.mtimeDown:
         return b.mtime.compareTo(a.mtime);
 
-      case 'sizeUp':
-        if (a.size == null || b.size == null) {
-          print(a);
-          print(b);
-        }
-
+      case SortTypes.sizeUp:
         return a.size.compareTo(b.size);
 
-      case 'sizeDown':
+      case SortTypes.sizeDown:
         return b.size.compareTo(a.size);
 
       default:
@@ -470,18 +457,18 @@ class EntrySort {
     }
   }
 
-  String getName(String value) {
+  String getName(SortTypes value) {
     switch (value) {
-      case 'sizeDown':
-      case 'sizeUp':
+      case SortTypes.sizeDown:
+      case SortTypes.sizeUp:
         return '大小';
 
-      case 'mtimeDown':
-      case 'mtimeUp':
+      case SortTypes.mtimeDown:
+      case SortTypes.mtimeUp:
         return '修改时间';
 
-      case 'nameDown':
-      case 'nameUp':
+      case SortTypes.nameDown:
+      case SortTypes.nameUp:
         return '名称';
 
       default:

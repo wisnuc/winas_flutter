@@ -96,7 +96,7 @@ class _AvatarViewState extends State<AvatarView> {
                       showModalBottomSheet(
                         context: ctx,
                         builder: (BuildContext c) {
-                          return Container(
+                          return SafeArea(
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.start,

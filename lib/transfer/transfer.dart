@@ -253,70 +253,72 @@ class _TransferState extends State<Transfer> {
                   showModalBottomSheet(
                     context: ctx,
                     builder: (BuildContext c) {
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          // start all
-                          Material(
-                            child: InkWell(
-                              onTap: () async {
-                                Navigator.pop(c);
-                                List<Entry> resumeList = [];
-                                for (int i = list.length - 1; i >= 0; i--) {
-                                  TransferItem item = list[i];
-                                  if (item.status == 'paused') {
-                                    item.clean();
-                                    list.removeAt(i);
-                                    resumeList.add(item.entry);
+                      return SafeArea(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            // start all
+                            Material(
+                              child: InkWell(
+                                onTap: () async {
+                                  Navigator.pop(c);
+                                  List<Entry> resumeList = [];
+                                  for (int i = list.length - 1; i >= 0; i--) {
+                                    TransferItem item = list[i];
+                                    if (item.status == 'paused') {
+                                      item.clean();
+                                      list.removeAt(i);
+                                      resumeList.add(item.entry);
+                                    }
                                   }
-                                }
-                                final cm = TransferManager.getInstance();
-                                for (Entry entry in resumeList) {
-                                  cm.newDownload(entry, state);
-                                }
-                              },
-                              child: Container(
-                                width: double.infinity,
-                                padding: EdgeInsets.all(16),
-                                child: Text('全部开始'),
+                                  final cm = TransferManager.getInstance();
+                                  for (Entry entry in resumeList) {
+                                    cm.newDownload(entry, state);
+                                  }
+                                },
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: EdgeInsets.all(16),
+                                  child: Text('全部开始'),
+                                ),
                               ),
                             ),
-                          ),
-                          // pause all
-                          Material(
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.pop(c);
-                                for (TransferItem item in list) {
-                                  if (item.status == 'working') item.pause();
-                                }
-                              },
-                              child: Container(
-                                width: double.infinity,
-                                padding: EdgeInsets.all(16),
-                                child: Text('全部暂停'),
+                            // pause all
+                            Material(
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.pop(c);
+                                  for (TransferItem item in list) {
+                                    if (item.status == 'working') item.pause();
+                                  }
+                                },
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: EdgeInsets.all(16),
+                                  child: Text('全部暂停'),
+                                ),
                               ),
                             ),
-                          ),
-                          // clear all
-                          Material(
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.pop(c);
-                                for (TransferItem item in list) {
-                                  item.clean();
-                                }
-                                list.clear();
-                              },
-                              child: Container(
-                                width: double.infinity,
-                                padding: EdgeInsets.all(16),
-                                child: Text('全部清除'),
+                            // clear all
+                            Material(
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.pop(c);
+                                  for (TransferItem item in list) {
+                                    item.clean();
+                                  }
+                                  list.clear();
+                                },
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: EdgeInsets.all(16),
+                                  child: Text('全部清除'),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       );
                     },
                   );

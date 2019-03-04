@@ -456,7 +456,7 @@ class _FilesState extends State<Files> {
               showModalBottomSheet(
                 context: this.context,
                 builder: (BuildContext c) {
-                  return Container(
+                  return SafeArea(
                     child: Material(
                       child: InkWell(
                         onTap: () {
@@ -628,7 +628,7 @@ class _FilesState extends State<Files> {
             showModalBottomSheet(
               context: this.context,
               builder: (BuildContext c) {
-                return Container(
+                return SafeArea(
                   child: Material(
                     child: InkWell(
                       onTap: () {
