@@ -99,6 +99,10 @@ class _AccountInfoState extends State<AccountInfo> {
                         Container(
                           height: 56,
                           width: 56,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(color: Colors.grey[400]),
+                          ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.all(
                               Radius.circular(28),

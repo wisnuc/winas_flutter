@@ -42,15 +42,20 @@ class _AvatarViewState extends State<AvatarView> {
     Account account = state.account;
 
     try {
-      await Future.delayed(Duration(seconds: 2));
-      // final res = await state.cloud.setAvatar(imageFile);
+      // await Future.delayed(Duration(seconds: 2));
+      final res = await state.cloud.setAvatar(imageFile);
+      print(res.data);
 
-      // // update Account in store
-      // print(res.data);
-      // account.updateAvatar(res.data);
-      // store.dispatch(LoginAction(account));
+      // update Account in store
+      final String url = res.data['data'];
+      print(url);
+      if (url.startsWith('https')) {
+        account.updateAvatar(res.data['data']);
+        store.dispatch(LoginAction(account));
+      } else {
+        throw Error();
+      }
     } catch (error) {
-      throw error;
       print(error);
       showSnackBar(ctx, '上传头像失败');
     } finally {

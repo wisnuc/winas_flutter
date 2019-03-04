@@ -61,6 +61,10 @@ class _DetailState extends State<Detail> {
                       Container(
                         height: 48,
                         width: 48,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: Colors.grey[400]),
+                        ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.all(
                             Radius.circular(24),
