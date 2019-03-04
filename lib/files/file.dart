@@ -94,6 +94,7 @@ class _FilesState extends State<Files> {
   Function actions;
 
   Select select;
+  EntrySort entrySort;
 
   Future refresh(AppState state) async {
     String driveUUID;
@@ -144,7 +145,7 @@ class _FilesState extends State<Files> {
       });
 
       print(error);
-      return null;
+      return;
     }
 
     // assert(listNav.data is Map<String, List>);
@@ -154,8 +155,14 @@ class _FilesState extends State<Files> {
     List<DirPath> rawPath =
         List.from(listNav.data['path'].map((path) => DirPath.fromMap(path)));
 
+    parseEntries(rawEntries, rawPath);
+    return;
+  }
+
+  /// sort entries, update dirs, files
+  void parseEntries(List<Entry> rawEntries, List<DirPath> rawPath) {
     // sort by type
-    rawEntries.sort((a, b) => a.type.compareTo(b.type));
+    rawEntries.sort((a, b) => entrySort.sort(a, b));
 
     // insert FileNavView
     List<Entry> newEntries = [];
@@ -170,14 +177,13 @@ class _FilesState extends State<Files> {
         newDirs = List.from(rawEntries.take(index));
 
         // filter entry.hash
-        newFiles = List.from(
-            rawEntries.skip(index).where((entry) => entry.hash != null));
+        newFiles = List.from(rawEntries.skip(index));
       } else {
         newDirs = rawEntries;
       }
     } else if (rawEntries[0]?.type == 'file') {
       // filter entry.hash
-      newFiles = List.from(rawEntries.where((entry) => entry.hash != null));
+      newFiles = List.from(rawEntries);
     } else {
       print('other entries!!!!');
     }
@@ -195,7 +201,6 @@ class _FilesState extends State<Files> {
         _error = null;
       });
     }
-    return null;
   }
 
   // download and openFile via system or share to other app
@@ -228,6 +233,12 @@ class _FilesState extends State<Files> {
     super.initState();
 
     select = Select(() => this.setState(() {}));
+    entrySort = EntrySort(() {
+      setState(() {
+        loading = true;
+      });
+      parseEntries(entries, paths);
+    });
 
     actions = (AppState state) => [
           {
@@ -473,7 +484,11 @@ class _FilesState extends State<Files> {
       itemExtent: 48,
       delegate: SliverChildBuilderDelegate(
         (BuildContext context, int index) {
-          return TitleRow(isFirst: true, type: 'directory');
+          return TitleRow(
+            isFirst: true,
+            type: 'directory',
+            entrySort: entrySort,
+          );
         },
         childCount: dirs.length > 0 ? 1 : 0,
       ),
@@ -485,7 +500,11 @@ class _FilesState extends State<Files> {
       itemExtent: 48,
       delegate: SliverChildBuilderDelegate(
         (BuildContext context, int index) {
-          return TitleRow(isFirst: dirs.length == 0, type: 'file');
+          return TitleRow(
+            isFirst: dirs.length == 0,
+            type: 'file',
+            entrySort: entrySort,
+          );
         },
         childCount: files.length > 0 ? 1 : 0,
       ),

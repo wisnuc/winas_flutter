@@ -73,10 +73,12 @@ class TitleRow extends StatelessWidget {
   TitleRow({
     @required this.type, // directory or file
     @required this.isFirst,
+    this.entrySort,
   });
 
   final type;
   final isFirst;
+  final EntrySort entrySort;
 
   @override
   Widget build(BuildContext context) {
@@ -100,12 +102,48 @@ class TitleRow extends StatelessWidget {
             flex: 1,
             child: Container(),
           ),
-          Container(
-            child: Text(
-              '名称',
-              style: TextStyle(color: Colors.black54),
-            ),
-          ),
+          entrySort == null
+              ? Container(
+                  child: Text(
+                    '名称',
+                    style: TextStyle(color: Colors.black38),
+                  ),
+                )
+              : DropdownButtonHideUnderline(
+                  child: DropdownButton(
+                    onChanged: (value) {
+                      entrySort.changeType(value);
+                    },
+                    value: entrySort.type,
+                    items: entrySort.types
+                        .map(
+                          (type) => DropdownMenuItem(
+                              value: type,
+                              child: Row(
+                                children: <Widget>[
+                                  Icon(
+                                    type.endsWith('Up')
+                                        ? Icons.arrow_upward
+                                        : Icons.arrow_downward,
+                                    color: Colors.black26,
+                                  ),
+                                  Container(width: 8),
+                                  Container(
+                                    child: Text(
+                                      entrySort.getName(type),
+                                      style: TextStyle(color: Colors.black38),
+                                    ),
+                                  ),
+                                  // Expanded(
+                                  //   flex: 1,
+                                  //   child: Container(),
+                                  // ),
+                                ],
+                              )),
+                        )
+                        .toList(),
+                  ),
+                ),
           Container(width: 16),
         ],
       ),

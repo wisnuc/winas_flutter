@@ -268,9 +268,9 @@ class Entry {
   bool selected = false;
   Entry({this.name, this.uuid, this.type, this.pdir, this.pdrv});
   Entry.fromMap(Map m) {
-    this.size = m['size'];
-    this.ctime = m['ctime'];
-    this.mtime = m['mtime'];
+    this.size = m['size'] ?? 0;
+    this.ctime = m['ctime'] ?? 0;
+    this.mtime = m['mtime'] ?? 0;
     this.name = m['bname'] ?? m['name'];
     this.uuid = m['uuid'];
     this.type = m['type'];
@@ -309,9 +309,9 @@ class Entry {
   String toJson() => toString();
 
   Entry.fromSearch(Map m, List<Drive> d) {
-    this.size = m['size'];
-    this.ctime = m['ctime'];
-    this.mtime = m['mtime'];
+    this.size = m['size'] ?? 0;
+    this.ctime = m['ctime'] ?? 0;
+    this.mtime = m['mtime'] ?? 0;
     this.name = m['name'];
     this.uuid = m['uuid'];
     this.type = 'file';
@@ -328,9 +328,9 @@ class Entry {
   }
 
   Entry.mixNode(Map m, Node n) {
-    this.size = m['size'];
-    this.ctime = m['ctime'];
-    this.mtime = m['mtime'];
+    this.size = m['size'] ?? 0;
+    this.ctime = m['ctime'] ?? 0;
+    this.mtime = m['mtime'] ?? 0;
     this.name = m['bname'] ?? m['name'];
     this.uuid = m['uuid'];
     this.type = m['type'];
@@ -412,6 +412,82 @@ class Select {
   }
 
   bool selectMode() => selectedEntry.length != 0;
+}
+
+class EntrySort {
+  /// Types of sortBy:
+  ///
+  /// nameUp, nameDown, sizeUp, sizeDown, mtimeUp, mtimeDown
+  List<String> types = [
+    'nameUp',
+    'nameDown',
+    'sizeUp',
+    'sizeDown',
+    'mtimeUp',
+    'mtimeDown',
+  ];
+  String type = 'nameUp';
+  Function update;
+  EntrySort(this.update);
+
+  void changeType(newType) {
+    this.type = newType;
+    print('newType $newType');
+    this.update();
+  }
+
+  int sort(Entry a, Entry b) {
+    if (a.type != b.type) {
+      return a.type.compareTo(b.type);
+    }
+
+    switch (type) {
+      case 'nameUp':
+        return a.name.compareTo(b.name);
+
+      case 'nameDown':
+        return b.name.compareTo(a.name);
+
+      case 'mtimeUp':
+        return a.mtime.compareTo(b.mtime);
+
+      case 'mtimeDown':
+        return b.mtime.compareTo(a.mtime);
+
+      case 'sizeUp':
+        if (a.size == null || b.size == null) {
+          print(a);
+          print(b);
+        }
+
+        return a.size.compareTo(b.size);
+
+      case 'sizeDown':
+        return b.size.compareTo(a.size);
+
+      default:
+        return 0;
+    }
+  }
+
+  String getName(String value) {
+    switch (value) {
+      case 'sizeDown':
+      case 'sizeUp':
+        return '大小';
+
+      case 'mtimeDown':
+      case 'mtimeUp':
+        return '修改时间';
+
+      case 'nameDown':
+      case 'nameUp':
+        return '名称';
+
+      default:
+        return '';
+    }
+  }
 }
 
 class Config {
