@@ -74,17 +74,22 @@ String prettySize(num size) {
   return '${(size / 1024 / 1024 / 1024).toStringAsFixed(2)} GB';
 }
 
+String twoDigits(int n) {
+  if (n >= 10) return "$n";
+  return "0$n";
+}
+
 /// Provide pretty printed date time
 String prettyDate(int time) {
   if (time == null) return '';
   var t = DateTime.fromMillisecondsSinceEpoch(time);
   var year = t.year;
-  var month = t.month;
-  var day = t.day;
-  var hour = t.hour;
-  var minute = t.minute;
+  var month = twoDigits(t.month);
+  var day = twoDigits(t.day);
+  var hour = twoDigits(t.hour);
+  var minute = twoDigits(t.minute);
   // var second = t.second;
-  return '$year.$month.$day $hour: $minute';
+  return '$year-$month-$day $hour:$minute';
 }
 
 /// Ellipsis Text

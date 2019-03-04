@@ -458,7 +458,7 @@ class _FileRowState extends State<FileRow> {
                                 TextStyle(fontSize: 12, color: Colors.black54),
                           ),
                           Container(width: 8),
-                          size != null
+                          size != null && type == 'file'
                               ? Text(
                                   size,
                                   style: TextStyle(
