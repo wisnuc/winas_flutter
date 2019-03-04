@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import './about.dart';
 import './detail.dart';
+import './security.dart';
 import '../redux/redux.dart';
 import '../common/cache.dart';
 import '../common/utils.dart';
@@ -123,6 +124,16 @@ class _AccountInfoState extends State<AccountInfo> {
                   ),
                 ),
                 Container(height: 16),
+                actionButton(
+                  '账户安全',
+                  () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) {
+                          return Security();
+                        }),
+                      ),
+                  null,
+                ),
                 actionButton(
                   '语言',
                   () => {},

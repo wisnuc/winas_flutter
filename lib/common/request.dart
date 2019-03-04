@@ -189,6 +189,13 @@ class Request {
         });
         break;
 
+      case 'replacePhone':
+        r = apatch('user/phone', {
+          'oldTicket': args['oldTicket'],
+          'newTicket': args['newTicket'],
+        });
+        break;
+
       case 'newNickName':
         r = tpatch('/user/nickname', {
           'nickName': args['nickName'],
