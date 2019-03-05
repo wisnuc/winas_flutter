@@ -10,6 +10,11 @@ stationLogin(BuildContext context, Request request, Station currentDevice,
     Account account, store) async {
   assert(currentDevice != null);
 
+  // cancel network monitor
+  if (store?.state?.apis != null) {
+    store.state.apis?.monitorCancel();
+  }
+
   final deviceSN = currentDevice.sn;
   final lanIp = currentDevice.lanIp;
   final deviceName = currentDevice.name;
@@ -18,8 +23,11 @@ stationLogin(BuildContext context, Request request, Station currentDevice,
     request.req('localBoot', {'deviceSN': deviceSN}),
     request.req('localUsers', {'deviceSN': deviceSN}),
     request.req('localToken', {'deviceSN': deviceSN}),
-    request.req('localDrives', {'deviceSN': deviceSN})
+    request.req('localDrives', {'deviceSN': deviceSN}),
+    request.testLAN(lanIp, deviceSN),
   ]);
+
+  bool isCloud = !results[4];
 
   final lanToken = results[2].data['token'];
 
@@ -65,10 +73,13 @@ stationLogin(BuildContext context, Request request, Station currentDevice,
   );
 
   // station apis, TODO: handle cloud
-  bool isCloud = true;
+
   String cookie = request.cookie;
   Apis apis = Apis(
       account.token, lanIp, lanToken, account.id, isCloud, deviceSN, cookie);
+
+  // start to monitor network change
+  apis.monitorStart();
 
   store.dispatch(
     UpdateApisAction(apis),

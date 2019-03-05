@@ -102,6 +102,22 @@ class Request {
     return dio.post('$cloudAddress/station/$deviceSN/json', data: data);
   }
 
+  /// test lanIp
+  Future<bool> testLAN(String ip, String deviceSN) async {
+    bool isLAN = false;
+    try {
+      final res = await dio.get(
+        'http://$ip:3001/winasd/info',
+        options: Options(connectTimeout: 1000),
+      );
+      isLAN = res.data['device']['sn'] == deviceSN;
+    } catch (error) {
+      print(error);
+      isLAN = false;
+    }
+    return isLAN;
+  }
+
   Future req(String name, Map<String, dynamic> args) {
     Future r;
     interceptDio();

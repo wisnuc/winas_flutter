@@ -140,6 +140,9 @@ class _DetailState extends State<Detail> {
                 ),
                 StoreConnector<AppState, VoidCallback>(
                   converter: (store) => () {
+                        // cancel network monitor
+                        store.state.apis.monitorCancel();
+
                         // remove account, apis, device
                         store.dispatch(LoginAction(null));
                         store.dispatch(UpdateApisAction(null));

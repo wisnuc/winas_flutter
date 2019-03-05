@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'dart:io' show Platform;
@@ -5,7 +6,7 @@ import 'package:connectivity/connectivity.dart';
 
 class Apis {
   bool isIOS = !Platform.isAndroid;
-  bool isCloud = true;
+  bool isCloud;
   final cloudAddress = 'https://test.nodetribe.com/c/v1';
   String token;
   String cookie;
@@ -14,6 +15,7 @@ class Apis {
   String lanAdrress;
   String userUUID;
   String deviceSN;
+  StreamSubscription<ConnectivityResult> sub;
   Dio dio = Dio();
 
   Apis(this.token, this.lanIp, this.lanToken, this.userUUID, this.isCloud,
@@ -26,8 +28,8 @@ class Apis {
     this.lanIp = m['lanIp'];
     this.lanToken = m['lanToken'];
     this.userUUID = m['userUUID'];
-    // this.isCloud = m['isCloud'];
-    this.isCloud = true;
+    // reload from disk, isCloud = null, need to re-test;
+    this.isCloud = null;
     this.deviceSN = m['deviceSN'];
     this.cookie = m['cookie'];
     this.lanAdrress = 'http://${this.lanIp}:3000';
@@ -39,7 +41,6 @@ class Apis {
       'lanIp': lanIp,
       'lanToken': lanToken,
       'userUUID': userUUID,
-      'isCloud': isCloud,
       'deviceSN': deviceSN,
       'cookie': cookie,
     };
@@ -61,7 +62,7 @@ class Apis {
   /// request with token
   tget(String ep, Map<String, dynamic> args) {
     assert(token != null);
-    if (isCloud) return command('GET', ep, args);
+    if (isCloud ?? true) return command('GET', ep, args);
     dio.options.headers['Authorization'] = 'JWT $lanToken';
     return dio.get('$lanAdrress/$ep', data: args);
   }
@@ -69,7 +70,7 @@ class Apis {
   /// request with token
   tpost(String ep, dynamic args) {
     assert(token != null);
-    if (isCloud) return command('POST', ep, args);
+    if (isCloud ?? true) return command('POST', ep, args);
     dio.options.headers['Authorization'] = 'JWT $lanToken';
     return dio.post('$lanAdrress/$ep', data: args);
   }
@@ -112,7 +113,9 @@ class Apis {
 
   ///  handle formdata
   writeDir(String ep, FormData formData) {
-    return isCloud ? command('POST', ep, formData) : tpost(ep, formData);
+    return (isCloud ?? true)
+        ? command('POST', ep, formData)
+        : tpost(ep, formData);
   }
 
   Future<bool> isMobile() async {
@@ -127,15 +130,35 @@ class Apis {
     return false;
   }
 
+  monitorStart() {
+    sub = Connectivity().onConnectivityChanged.listen((ConnectivityResult res) {
+      print('Network Changed to $res');
+      if (res == ConnectivityResult.wifi) {
+        this.testLAN().catchError(print);
+      } else if (res == ConnectivityResult.mobile) {
+        this.isCloud = true;
+      }
+    });
+  }
+
+  monitorCancel() {
+    sub?.cancel();
+  }
+
   Future<bool> testLAN() async {
     bool isLAN = false;
     try {
-      final res = await this.req('winasInfo', null);
+      final res = await dio.get(
+        'http://${this.lanIp}:3001/winasd/info',
+        options: Options(connectTimeout: 1000),
+      );
       isLAN = res.data['device']['sn'] == this.deviceSN;
     } catch (error) {
       print(error);
       isLAN = false;
     }
+    this.isCloud = !isLAN;
+    print('this.lanIp: $lanIp, isCloud: $isCloud');
     return isLAN;
   }
 
@@ -204,7 +227,7 @@ class Apis {
   download(String ep, Map<String, dynamic> qs, String downloadPath,
       {Function onProgress, CancelToken cancelToken}) async {
     // download via cloud pipe
-    if (isCloud) {
+    if (isCloud ?? true) {
       final url = '$cloudAddress/station/$deviceSN/pipe';
       final qsData = {
         'data': jsonEncode({

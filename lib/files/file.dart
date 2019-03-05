@@ -96,7 +96,7 @@ class _FilesState extends State<Files> {
   Select select;
   EntrySort entrySort;
 
-  Future refresh(AppState state) async {
+  Future refresh(AppState state, {bool isRetry: false}) async {
     String driveUUID;
     String dirUUID;
     if (node.tag == 'home') {
@@ -134,6 +134,15 @@ class _FilesState extends State<Files> {
     // request listNav
     var listNav;
     try {
+      // restart monitorStart
+      if (state.apis.sub == null) {
+        state.apis.monitorStart();
+      }
+
+      // test network
+      if (state.apis.isCloud == null || isRetry) {
+        await state.apis.testLAN();
+      }
       listNav = await state.apis
           .req('listNavDir', {'driveUUID': driveUUID, 'dirUUID': dirUUID});
       _error = null;
@@ -143,8 +152,6 @@ class _FilesState extends State<Files> {
         loading = false;
         _error = error;
       });
-
-      print(error);
       return;
     }
 
@@ -802,7 +809,22 @@ class _FilesState extends State<Files> {
                     onRefresh: () => refresh(state),
                     child: _error != null
                         ? Center(
-                            child: Text('出错啦！'),
+                            child: Row(
+                              children: <Widget>[
+                                Expanded(flex: 1, child: Container()),
+                                Text('加载页面失败！'),
+                                FlatButton(
+                                  padding: EdgeInsets.all(0),
+                                  child: Text(
+                                    '重试',
+                                    style: TextStyle(color: Colors.teal),
+                                  ),
+                                  onPressed: () =>
+                                      refresh(state, isRetry: true),
+                                ),
+                                Expanded(flex: 1, child: Container()),
+                              ],
+                            ),
                           )
                         : entries.length == 0 && !loading
                             ? Center(
