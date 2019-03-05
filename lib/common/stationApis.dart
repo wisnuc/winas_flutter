@@ -218,7 +218,9 @@ class Apis {
         break;
 
       case 'winasInfo':
-        r = dio.get('http://${this.lanIp}:3001/winasd/info');
+        r = isCloud
+            ? command('GET', 'winasd/info', null)
+            : dio.get('http://${this.lanIp}:3001/winasd/info');
         break;
     }
     return r;
