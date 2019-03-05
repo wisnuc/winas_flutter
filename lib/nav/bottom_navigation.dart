@@ -5,6 +5,7 @@ import '../user/user.dart';
 import '../files/file.dart';
 import '../redux/redux.dart';
 import '../files/fileRow.dart';
+import '../photos/photos.dart';
 import '../files/backupView.dart';
 import '../device/myStation.dart';
 import '../transfer/transfer.dart';
@@ -110,9 +111,10 @@ class _BottomNavigationState extends State<BottomNavigation>
         icon: Icon(OMIcons.photoLibrary),
         title: '相簿',
         nav: 'photos',
-        view: () => Center(
-              child: Text('相簿'),
-            ),
+        // view: () => Center(
+        //       child: Text('相簿'),
+        //     ),
+        view: () => Photos(),
         color: Colors.indigo,
       ),
       NavigationIconView(
