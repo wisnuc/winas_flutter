@@ -14,6 +14,7 @@ import '../redux/redux.dart';
 import '../common/cache.dart';
 import '../common/utils.dart';
 import '../transfer/manager.dart';
+import '../icons/winas_icons.dart';
 
 Widget _buildItem(
   BuildContext context,
@@ -665,10 +666,7 @@ class _FilesState extends State<Files> {
       titleSpacing: 0.0,
       iconTheme: IconThemeData(color: Colors.black38),
       title: Container(
-        color: Colors.grey[200],
-        child: Container(
-          child: searchBar(state),
-        ),
+        child: searchBar(state),
       ),
     );
   }
@@ -809,20 +807,37 @@ class _FilesState extends State<Files> {
                     onRefresh: () => refresh(state),
                     child: _error != null
                         ? Center(
-                            child: Row(
+                            child: Column(
                               children: <Widget>[
-                                Expanded(flex: 1, child: Container()),
-                                Text('加载页面失败！'),
+                                Expanded(flex: 4, child: Container()),
+                                Container(
+                                  padding: EdgeInsets.all(16),
+                                  child: Container(
+                                    width: 72,
+                                    height: 72,
+                                    // padding: EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[300],
+                                      borderRadius: BorderRadius.circular(36),
+                                    ),
+                                    child: Icon(Winas.logo,
+                                        color: Colors.grey[50], size: 84),
+                                  ),
+                                ),
+                                Text(
+                                  '加载页面失败，请检查网络设置',
+                                  style: TextStyle(color: Colors.black38),
+                                ),
                                 FlatButton(
                                   padding: EdgeInsets.all(0),
                                   child: Text(
-                                    '重试',
+                                    '重新加载',
                                     style: TextStyle(color: Colors.teal),
                                   ),
                                   onPressed: () =>
                                       refresh(state, isRetry: true),
                                 ),
-                                Expanded(flex: 1, child: Container()),
+                                Expanded(flex: 6, child: Container()),
                               ],
                             ),
                           )

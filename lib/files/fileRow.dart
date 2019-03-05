@@ -106,7 +106,7 @@ class TitleRow extends StatelessWidget {
               ? Container(
                   child: Text(
                     '名称',
-                    style: TextStyle(color: Colors.black38),
+                    style: TextStyle(color: Colors.black38, fontSize: 14),
                   ),
                 )
               : DropdownButtonHideUnderline(
@@ -131,7 +131,8 @@ class TitleRow extends StatelessWidget {
                                   Container(
                                     child: Text(
                                       entrySort.getName(type),
-                                      style: TextStyle(color: Colors.black38),
+                                      style: TextStyle(
+                                          color: Colors.black38, fontSize: 14),
                                     ),
                                   ),
                                 ],
