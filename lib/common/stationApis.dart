@@ -1,10 +1,11 @@
 import 'dart:convert';
-import 'dart:io' show Platform;
 import 'package:dio/dio.dart';
+import 'dart:io' show Platform;
+import 'package:connectivity/connectivity.dart';
 
 class Apis {
   bool isIOS = !Platform.isAndroid;
-  bool isCloud;
+  bool isCloud = true;
   final cloudAddress = 'https://test.nodetribe.com/c/v1';
   String token;
   String cookie;
@@ -13,7 +14,7 @@ class Apis {
   String lanAdrress;
   String userUUID;
   String deviceSN;
-  Dio dio = new Dio();
+  Dio dio = Dio();
 
   Apis(this.token, this.lanIp, this.lanToken, this.userUUID, this.isCloud,
       this.deviceSN, this.cookie) {
@@ -25,7 +26,8 @@ class Apis {
     this.lanIp = m['lanIp'];
     this.lanToken = m['lanToken'];
     this.userUUID = m['userUUID'];
-    this.isCloud = m['isCloud'];
+    // this.isCloud = m['isCloud'];
+    this.isCloud = true;
     this.deviceSN = m['deviceSN'];
     this.cookie = m['cookie'];
     this.lanAdrress = 'http://${this.lanIp}:3000';
@@ -46,7 +48,7 @@ class Apis {
 
   String toJson() => toString();
 
-  // handle data.data response
+  /// handle data.data response
   void interceptDio() {
     dio.interceptor.response.onSuccess = (Response response) {
       if (response.data is Map && response.data['data'] != null) {
@@ -56,30 +58,86 @@ class Apis {
     };
   }
 
-  // request with token
-  tget(String ep, args) {
+  /// request with token
+  tget(String ep, Map<String, dynamic> args) {
     assert(token != null);
+    if (isCloud) return command('GET', ep, args);
     dio.options.headers['Authorization'] = 'JWT $lanToken';
     return dio.get('$lanAdrress/$ep', data: args);
   }
 
-  tpost(String ep, args) {
+  /// request with token
+  tpost(String ep, dynamic args) {
     assert(token != null);
+    if (isCloud) return command('POST', ep, args);
     dio.options.headers['Authorization'] = 'JWT $lanToken';
     return dio.post('$lanAdrress/$ep', data: args);
   }
 
-  command(data) {
+  /// request via cloud
+  command(
+    String verb,
+    String ep,
+    dynamic data, // qs, body or formdata
+  ) {
     assert(token != null);
     assert(cookie != null);
+    bool isFormData = data is FormData;
+    bool isGet = verb == 'GET';
     dio.options.headers['Authorization'] = token;
-    dio.options.headers['Content-Type'] = 'application/json';
     dio.options.headers['cookie'] = cookie;
-    return dio.post('$cloudAddress/station/${this.deviceSN}/json', data: data);
+
+    final url = '$cloudAddress/station/$deviceSN/json';
+    final url2 = '$cloudAddress/station/$deviceSN/pipe';
+
+    // handle formdata
+    if (isFormData) {
+      final qs = {
+        'verb': verb,
+        'urlPath': '/$ep',
+      };
+      final qsData = Uri.encodeQueryComponent(jsonEncode(qs));
+      final newUrl = '$url2?data=$qsData';
+      return dio.post(newUrl, data: data);
+    }
+
+    // normal pipe-json
+    return dio.post(url, data: {
+      'verb': verb,
+      'urlPath': '/$ep',
+      'body': isGet ? null : data,
+      'params': isGet ? data : null,
+    });
   }
 
-  // case 'localBoot':
-  //       r = command(args['deviceSN'], {'verb': 'GET', 'urlPath': '/boot'});
+  ///  handle formdata
+  writeDir(String ep, FormData formData) {
+    return isCloud ? command('POST', ep, formData) : tpost(ep, formData);
+  }
+
+  Future<bool> isMobile() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.mobile) {
+      print('current netwprk status: mobile');
+      return true;
+    } else if (connectivityResult == ConnectivityResult.wifi) {
+      print('current netwprk status: wifi');
+      return false;
+    }
+    return false;
+  }
+
+  Future<bool> testLAN() async {
+    bool isLAN = false;
+    try {
+      final res = await this.req('winasInfo', null);
+      isLAN = res.data['device']['sn'] == this.deviceSN;
+    } catch (error) {
+      print(error);
+      isLAN = false;
+    }
+    return isLAN;
+  }
 
   Future req(String name, Map<String, dynamic> args) {
     Future r;
@@ -101,26 +159,31 @@ class Apis {
         r = tget(
             'drives/${args['driveUUID']}/dirs/${args['dirUUID']}/stats', null);
         break;
+
       case 'mkdir':
-        r = tpost(
-            'drives/${args['driveUUID']}/dirs/${args['dirUUID']}/entries',
-            FormData.from({
-              args['dirname']: jsonEncode({'op': 'mkdir'}),
-            }));
+        r = writeDir(
+          'drives/${args['driveUUID']}/dirs/${args['dirUUID']}/entries',
+          FormData.from({
+            args['dirname']: jsonEncode({'op': 'mkdir'}),
+          }),
+        );
         break;
 
       case 'rename':
-        r = tpost(
-            'drives/${args['driveUUID']}/dirs/${args['dirUUID']}/entries',
-            FormData.from({
-              '${args['oldName']}|${args['newName']}':
-                  jsonEncode({'op': 'rename'}),
-            }));
+        r = writeDir(
+          'drives/${args['driveUUID']}/dirs/${args['dirUUID']}/entries',
+          FormData.from({
+            '${args['oldName']}|${args['newName']}':
+                jsonEncode({'op': 'rename'}),
+          }),
+        );
         break;
 
       case 'deleteDirOrFile':
-        r = tpost('drives/${args['driveUUID']}/dirs/${args['dirUUID']}/entries',
-            args['formdata']);
+        r = writeDir(
+          'drives/${args['driveUUID']}/dirs/${args['dirUUID']}/entries',
+          args['formdata'],
+        );
         break;
 
       case 'xcopy':
@@ -140,14 +203,34 @@ class Apis {
 
   download(String ep, Map<String, dynamic> qs, String downloadPath,
       {Function onProgress, CancelToken cancelToken}) async {
-    assert(token != null);
-    dio.options.headers['Authorization'] = 'JWT $lanToken';
-    await dio.download(
-      '$lanAdrress/$ep',
-      downloadPath,
-      data: qs,
-      cancelToken: cancelToken,
-      onProgress: (a, b) => onProgress != null ? onProgress(a, b) : null,
-    );
+    // download via cloud pipe
+    if (isCloud) {
+      final url = '$cloudAddress/station/$deviceSN/pipe';
+      final qsData = {
+        'data': jsonEncode({
+          'verb': 'GET',
+          'urlPath': '/$ep',
+          'params': qs,
+        })
+      };
+      dio.options.headers['Authorization'] = token;
+      dio.options.headers['cookie'] = cookie;
+      await dio.download(
+        url,
+        downloadPath,
+        data: qsData,
+        cancelToken: cancelToken,
+        onProgress: (a, b) => onProgress != null ? onProgress(a, b) : null,
+      );
+    } else {
+      dio.options.headers['Authorization'] = 'JWT $lanToken';
+      await dio.download(
+        '$lanAdrress/$ep',
+        downloadPath,
+        data: qs,
+        cancelToken: cancelToken,
+        onProgress: (a, b) => onProgress != null ? onProgress(a, b) : null,
+      );
+    }
   }
 }

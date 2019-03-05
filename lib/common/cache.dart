@@ -167,7 +167,7 @@ class CacheManager {
     final ep = 'media/${entry.hash}';
     final qs = {
       'alt': 'thumbnail',
-      'autoOrient': true,
+      'autoOrient': 'true',
       'modifier': 'caret',
       'width': 200,
       'height': 200,

@@ -38,6 +38,8 @@ dependencies:
   
   image_picker: 0.4.12+1
   image_cropper: 1.0.0
+
+  connectivity: 0.3.2
  
   # dio: 1.0.13
   # fix bug in PUT List<int> method

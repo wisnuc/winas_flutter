@@ -64,9 +64,9 @@ stationLogin(BuildContext context, Request request, Station currentDevice,
     UpdateCloudAction(request),
   );
 
-  // station apis
-  bool isCloud = false;
-  String cookie = 'blabla';
+  // station apis, TODO: handle cloud
+  bool isCloud = true;
+  String cookie = request.cookie;
   Apis apis = Apis(
       account.token, lanIp, lanToken, account.id, isCloud, deviceSN, cookie);
 
@@ -80,9 +80,7 @@ stationLogin(BuildContext context, Request request, Station currentDevice,
   }
 
   // set lastUserDeviceSn
-  var r = await request.req('setLastSN', {'sn': deviceSN});
-  print(r.data);
-  // request.req('setLastSN', {'sn': deviceSN}).catchError(print);
+  request.req('setLastSN', {'sn': deviceSN}).catchError(print);
 }
 
 /// Request station list

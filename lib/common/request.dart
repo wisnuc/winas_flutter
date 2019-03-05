@@ -7,7 +7,7 @@ class Request {
   String cloudAddress = 'https://test.nodetribe.com/c/v1';
   String token;
   String cookie;
-  Dio dio = new Dio();
+  Dio dio = Dio();
 
   Request({this.token});
 
@@ -233,6 +233,7 @@ class Request {
   Future setAvatar(List<int> imageData, {CancelToken cancelToken}) async {
     assert(token != null);
     dio.options.headers['Authorization'] = token;
+    interceptDio();
     return dio.put(
       '$cloudAddress/user/avatar',
       options: Options(

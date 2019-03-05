@@ -45,7 +45,6 @@ class _AvatarViewState extends State<AvatarView> {
       // await Future.delayed(Duration(seconds: 2));
       final List<int> imageData = await imageFile.readAsBytes();
       final res = await state.cloud.setAvatar(imageData);
-
       // update Account in store
       final String url = res.data;
       print(url);
