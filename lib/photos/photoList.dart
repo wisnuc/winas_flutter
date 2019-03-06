@@ -15,9 +15,35 @@ class PhotoList extends StatefulWidget {
 class _PhotoListState extends State<PhotoList> {
   ScrollController myScrollController = ScrollController();
 
+  int lineCount = 4;
+  getList(Album album) {
+    final items = album.items;
+    if (items.length == 0) return [];
+    items.sort((a, b) => b.hdate.compareTo(a.hdate));
+
+    /// String headers '2019-03-06' or List of Entry
+    final List photoMapDates = [
+      items[0].hdate,
+      [items[0]],
+    ];
+
+    items.forEach((entry) {
+      final last = photoMapDates.last;
+      if (last[0].hdate == entry.hdate) {
+        last.add(entry);
+      } else if (last[0].hdate != entry.hdate) {
+        photoMapDates.add(entry.hdate);
+        photoMapDates.add([entry]);
+      }
+    });
+
+    return photoMapDates;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final album = widget.album;
+    final list = getList(widget.album);
+
     return StoreConnector<AppState, AppState>(
       onInit: (store) => {},
       onDispose: (store) => {},
@@ -26,7 +52,7 @@ class _PhotoListState extends State<PhotoList> {
         return Scaffold(
           appBar: AppBar(
             title: Text(
-              album.name,
+              widget.album.name,
               style: TextStyle(
                 color: Colors.black87,
                 fontWeight: FontWeight.normal,
@@ -41,37 +67,44 @@ class _PhotoListState extends State<PhotoList> {
             color: Colors.grey[100],
             child: DraggableScrollbar.semicircle(
               controller: myScrollController,
-              child: Container(
-                padding: EdgeInsets.fromLTRB(8, 0, 8, 0),
-                child: CustomScrollView(
-                  key: Key(album.length.toString()),
-                  controller: myScrollController,
-                  physics: AlwaysScrollableScrollPhysics(),
-                  slivers: <Widget>[
-                    SliverFixedExtentList(
-                      itemExtent: 24,
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) => Container(),
-                        childCount: 0,
-                      ),
-                    ),
-                    SliverGrid(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 4,
-                        mainAxisSpacing: 4.0,
-                        crossAxisSpacing: 4.0,
-                        childAspectRatio: 1.0,
-                      ),
-                      delegate: SliverChildBuilderDelegate(
-                        (BuildContext context, int index) {
-                          return PhotoItem(
-                            item: album.items[index],
-                          );
-                        },
-                        childCount: album.length,
-                      ),
-                    )
-                  ],
+              labelTextBuilder: (double offset) => Text("${offset ~/ 100}"),
+              child: CustomScrollView(
+                key: Key(list.length.toString()),
+                controller: myScrollController,
+                physics: AlwaysScrollableScrollPhysics(),
+                slivers: List.from(
+                  list.map(
+                    (line) {
+                      if (line is String) {
+                        return SliverFixedExtentList(
+                          itemExtent: 24,
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) => Container(
+                                  padding: EdgeInsets.all(8),
+                                  child: Text(line),
+                                ),
+                            childCount: 1,
+                          ),
+                        );
+                      }
+                      return SliverGrid(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: lineCount,
+                          mainAxisSpacing: 4.0,
+                          crossAxisSpacing: 4.0,
+                          childAspectRatio: 1.0,
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (BuildContext context, int index) {
+                            return PhotoItem(
+                              item: line[index],
+                            );
+                          },
+                          childCount: line.length,
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ),

@@ -79,8 +79,10 @@ String twoDigits(int n) {
   return "0$n";
 }
 
-/// Provide pretty printed date time
-String prettyDate(int time) {
+/// Provide pretty printed date time, result:
+/// date == false: 2019-03-06 17:46
+/// date == true: 2019-03-06
+String prettyDate(int time, {bool date: false}) {
   if (time == null) return '';
   var t = DateTime.fromMillisecondsSinceEpoch(time);
   var year = t.year;
@@ -88,7 +90,7 @@ String prettyDate(int time) {
   var day = twoDigits(t.day);
   var hour = twoDigits(t.hour);
   var minute = twoDigits(t.minute);
-  // var second = t.second;
+  if (date) return '$year-$month-$day';
   return '$year-$month-$day $hour:$minute';
 }
 

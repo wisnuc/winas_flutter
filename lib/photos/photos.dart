@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
+import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 
 import './photoList.dart';
 import '../redux/redux.dart';
@@ -18,8 +19,10 @@ class Photos extends StatefulWidget {
 }
 
 class _PhotosState extends State<Photos> {
-  bool loading = true;
-  List<Album> albumList = [];
+  static bool loading = true;
+  static List<Album> albumList = [];
+  static String userUUID;
+  ScrollController myScrollController = ScrollController();
 
   Future getCover(Album album, AppState state) async {
     Entry entry = album.items[0];
@@ -33,7 +36,11 @@ class _PhotosState extends State<Photos> {
     }
   }
 
-  Future refresh(AppState state) async {
+  Future refresh(AppState state, bool isManual) async {
+    if (!isManual && state.localUser.uuid == userUUID && albumList.length > 0) {
+      return;
+    }
+
     List<String> driveUUIDs = List.from(state.drives.map((d) => d.uuid));
     String places = driveUUIDs.join('.');
 
@@ -84,6 +91,8 @@ class _PhotosState extends State<Photos> {
         getCover(album, state).catchError(print);
       }
 
+      // cache data
+      userUUID = state.localUser.uuid;
       if (this.mounted) {
         setState(() {
           loading = false;
@@ -103,7 +112,7 @@ class _PhotosState extends State<Photos> {
   Widget build(BuildContext context) {
     return StoreConnector<AppState, AppState>(
       onInit: (store) =>
-          refresh(store.state).catchError((error) => print(error)),
+          refresh(store.state, false).catchError((error) => print(error)),
       onDispose: (store) => {},
       converter: (store) => store.state,
       builder: (context, state) {
@@ -119,59 +128,83 @@ class _PhotosState extends State<Photos> {
               ? Center(
                   child: CircularProgressIndicator(),
                 )
-              : Container(
-                  padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-                  child: GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.8,
-                    ),
-                    itemCount: albumList.length,
-                    itemBuilder: (context, index) {
-                      Album album = albumList[index];
-                      return Material(
-                        child: InkWell(
-                          onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) {
-                                    return PhotoList(album: album);
-                                  },
+              : RefreshIndicator(
+                  onRefresh: () => refresh(state, true),
+                  child: DraggableScrollbar.semicircle(
+                    controller: myScrollController,
+                    child: Container(
+                      child: CustomScrollView(
+                        controller: myScrollController,
+                        physics: AlwaysScrollableScrollPhysics(),
+                        slivers: <Widget>[
+                          SliverPadding(
+                              padding: EdgeInsets.all(16),
+                              sliver: SliverGrid(
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  mainAxisSpacing: 16.0,
+                                  crossAxisSpacing: 16.0,
+                                  childAspectRatio: 0.8,
                                 ),
-                              ),
-                          child: Container(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  flex: 1,
-                                  child: album.cover != null
-                                      ? Image.file(
-                                          File(album.cover),
-                                          fit: BoxFit.cover,
-                                        )
-                                      : Container(
-                                          color: Colors.grey[300],
+                                delegate: SliverChildBuilderDelegate(
+                                  (BuildContext context, int index) {
+                                    Album album = albumList[index];
+                                    return Container(
+                                      child: Material(
+                                        child: InkWell(
+                                          onTap: () => Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) {
+                                                    return PhotoList(
+                                                        album: album);
+                                                  },
+                                                ),
+                                              ),
+                                          child: Container(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Expanded(
+                                                  flex: 1,
+                                                  child: album.cover != null
+                                                      ? Image.file(
+                                                          File(album.cover),
+                                                          fit: BoxFit.cover,
+                                                        )
+                                                      : Container(
+                                                          color:
+                                                              Colors.grey[300],
+                                                        ),
+                                                ),
+                                                Container(
+                                                  padding: EdgeInsets.fromLTRB(
+                                                      0, 4, 0, 4),
+                                                  width: double.infinity,
+                                                  child: Text(album.name),
+                                                ),
+                                                Container(
+                                                  padding: EdgeInsets.fromLTRB(
+                                                      0, 0, 0, 4),
+                                                  width: double.infinity,
+                                                  child: Text(
+                                                      album.length.toString()),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
                                         ),
+                                      ),
+                                    );
+                                  },
+                                  childCount: albumList.length,
                                 ),
-                                Container(
-                                  padding: EdgeInsets.fromLTRB(0, 4, 0, 4),
-                                  width: double.infinity,
-                                  child: Text(album.name),
-                                ),
-                                Container(
-                                  padding: EdgeInsets.fromLTRB(0, 0, 0, 4),
-                                  width: double.infinity,
-                                  child: Text(album.length.toString()),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
+                              )),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
         );

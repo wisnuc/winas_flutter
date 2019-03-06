@@ -5,7 +5,6 @@ import 'package:flutter_redux/flutter_redux.dart';
 import '../files/photo.dart';
 import '../redux/redux.dart';
 import '../common/cache.dart';
-import '../common/renderIcon.dart';
 
 const photoTypes = ['JPEG', 'PNG', 'JPG', 'GIF', 'BMP', 'RAW'];
 
@@ -62,18 +61,15 @@ class _PhotoItemState extends State<PhotoItem> {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    child: Container(
-                      child: thumbSrc == null
-                          ? renderIcon(entry.name, entry.metadata, size: 72.0)
-                          // show thumb
-                          : Hero(
-                              tag: entry.uuid,
-                              child: Image.file(
-                                File(thumbSrc),
-                                fit: BoxFit.cover,
-                              ),
+                    child: thumbSrc == null
+                        ? Container(color: Colors.grey[300])
+                        : Hero(
+                            tag: entry.uuid,
+                            child: Image.file(
+                              File(thumbSrc),
+                              fit: BoxFit.cover,
                             ),
-                    ),
+                          ),
                   ),
                   Positioned(
                     top: 0,

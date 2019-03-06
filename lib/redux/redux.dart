@@ -235,8 +235,23 @@ class Drive {
 
 class Metadata {
   String type;
+  String datetime;
+  String hdate;
   Metadata.fromMap(Map m) {
     this.type = m['type'];
+    this.datetime = m['date'];
+    try {
+      // only allow format: "2017:06:17 17:31:18", Res: 2017-06-17
+      if (this.datetime != null &&
+          !this.datetime.startsWith('0') &&
+          this.datetime.split(':').length == 5) {
+        this.hdate = this.datetime.split(' ')[0];
+        this.hdate.replaceAll(':', '-');
+      }
+    } catch (err) {
+      this.hdate = null;
+      print(err);
+    }
   }
 
   @override
@@ -263,6 +278,9 @@ class Entry {
   String pdir;
   String pdrv;
   String location;
+
+  /// photo token date
+  String hdate;
   List namepath;
   Metadata metadata;
   bool selected = false;
@@ -325,6 +343,8 @@ class Entry {
     Drive drive = d[m['place']];
     this.pdrv = drive.uuid;
     this.location = drive.type ?? drive.tag;
+
+    this.hdate = this.metadata?.hdate ?? prettyDate(this.mtime, date: true);
   }
 
   Entry.mixNode(Map m, Node n) {
