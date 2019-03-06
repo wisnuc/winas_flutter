@@ -206,7 +206,7 @@ class Request {
         break;
 
       case 'replacePhone':
-        r = apatch('user/phone', {
+        r = tpatch('user/phone', {
           'oldTicket': args['oldTicket'],
           'newTicket': args['newTicket'],
         });

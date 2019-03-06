@@ -102,17 +102,21 @@ class _AccountInfoState extends State<AccountInfo> {
                           width: 56,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(28),
-                            border: Border.all(color: Colors.grey[400]),
+                            border: account.avatarUrl == null
+                                ? null
+                                : Border.all(color: Colors.grey[400]),
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.all(
                               Radius.circular(28),
                             ),
                             child: account.avatarUrl == null
-                                ? Icon(
-                                    Icons.account_circle,
-                                    color: Colors.blueGrey,
-                                    size: 56,
+                                ? Center(
+                                    child: Icon(
+                                      Icons.account_circle,
+                                      color: Colors.blueGrey,
+                                      size: 56,
+                                    ),
                                   )
                                 : Image.network(
                                     account.avatarUrl,

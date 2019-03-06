@@ -168,11 +168,9 @@ class _DeviceInfoState extends State<DeviceInfo> {
                                 () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(
-                                        fullscreenDialog: true,
-                                        builder: (context) {
-                                          return Auth(info);
-                                        }),
+                                    MaterialPageRoute(builder: (context) {
+                                      return Auth(info);
+                                    }),
                                   );
                                 },
                                 null,

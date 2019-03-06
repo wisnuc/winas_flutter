@@ -153,7 +153,7 @@ class _AvatarViewState extends State<AvatarView> {
                           ? Icon(
                               Icons.account_circle,
                               color: Colors.blueGrey,
-                              size: 48,
+                              size: 72,
                             )
                           : Image.network(
                               avatarUrl,

@@ -153,7 +153,7 @@ class _SmsCodeState extends State<SmsCode> {
 
       try {
         await request.req('smsCode', {
-          'type': 'replace',
+          'type': 'register',
           'phone': _phoneNumber,
         });
       } catch (error) {
@@ -182,11 +182,12 @@ class _SmsCodeState extends State<SmsCode> {
         final res = await request.req('smsTicket', {
           'code': _code,
           'phone': _phoneNumber,
-          'type': 'replace',
+          'type': 'register',
         });
 
         _newTicket = res.data;
       } catch (error) {
+        print(error);
         _loadingOff(context);
         setState(() {
           _error = '验证码错误';
@@ -316,13 +317,13 @@ class _SmsCodeState extends State<SmsCode> {
       case 'success':
         return <Widget>[
           Text(
-            '密码重置成功',
+            '更换手机号成功',
             textAlign: TextAlign.left,
             style: TextStyle(fontSize: 28.0),
           ),
           Container(height: 16.0),
           Text(
-            '请使用新密码登录',
+            '请使用新手机号登录',
             style: TextStyle(color: Colors.black54),
           ),
           Expanded(

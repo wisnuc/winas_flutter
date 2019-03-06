@@ -390,11 +390,6 @@ class _MyStationState extends State<MyStation> {
                                 '设备运行健康，存储详情查看',
                                 style: TextStyle(fontSize: 14),
                               ),
-                              Expanded(
-                                flex: 1,
-                                child: Container(),
-                              ),
-                              Icon(Icons.chevron_right),
                             ],
                           ),
                         ),
