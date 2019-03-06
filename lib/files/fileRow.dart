@@ -5,8 +5,8 @@ import 'package:flutter_redux/flutter_redux.dart';
 import './photo.dart';
 import './detail.dart';
 import '../redux/redux.dart';
-import '../common/renderIcon.dart';
 import '../common/cache.dart';
+import '../common/renderIcon.dart';
 
 class FileNavView {
   final Widget _icon;

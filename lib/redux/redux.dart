@@ -378,6 +378,21 @@ class Node {
   Node({this.name, this.driveUUID, this.dirUUID, this.tag, this.location});
 }
 
+class Album {
+  List<Entry> items = [];
+  String name;
+  String places;
+
+  // thumbSrc
+  String cover;
+  Album(this.items, this.name, this.places);
+  get length => items.length;
+
+  void setCover(thumbSrc) {
+    this.cover = thumbSrc;
+  }
+}
+
 /// update Selection, and refresh(setState)
 class Select {
   Function update;

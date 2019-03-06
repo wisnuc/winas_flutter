@@ -1,8 +1,14 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 
+import './photoList.dart';
 import '../redux/redux.dart';
-import '../common/utils.dart';
+import '../common/cache.dart';
+
+const mediaTypes =
+    'JPEG.PNG.JPG.GIF.BMP.RAW.RM.RMVB.WMV.AVI.MP4.3GP.MKV.MOV.FLV';
+const videoTypes = 'RM.RMVB.WMV.AVI.MP4.3GP.MKV.MOV.FLV';
 
 class Photos extends StatefulWidget {
   Photos({Key key}) : super(key: key);
@@ -13,14 +19,88 @@ class Photos extends StatefulWidget {
 
 class _PhotosState extends State<Photos> {
   bool loading = true;
+  List<Album> albumList = [];
+
+  Future getCover(Album album, AppState state) async {
+    Entry entry = album.items[0];
+
+    final cm = await CacheManager.getInstance();
+    final String thumbSrc = await cm.getThumb(entry, state);
+
+    if (this.mounted && thumbSrc != null) {
+      album.setCover(thumbSrc);
+      setState(() {});
+    }
+  }
 
   Future refresh(AppState state) async {
-    await Future.delayed(Duration(seconds: 1));
+    List<String> driveUUIDs = List.from(state.drives.map((d) => d.uuid));
+    String places = driveUUIDs.join('.');
+
+    try {
+      // all photos and videos
+      final res = await state.apis.req('search', {
+        'places': places,
+        'types': mediaTypes,
+        'order': 'newest',
+      });
+
+      final List<Entry> allMedia = List.from(
+        res.data.map((d) => Entry.fromSearch(d, state.drives)),
+      );
+
+      final allMediaAlbum = Album(allMedia, '所有照片', places);
+
+      final videoArray = videoTypes.split('.');
+
+      final List<Entry> allVideos = List.from(
+        allMedia.where(
+          (entry) => videoArray.contains(entry?.metadata?.type),
+        ),
+      );
+      final allVideosAlbum = Album(allVideos, '所有视频', places);
+
+      // find photos in each backup drives, filter: lenth > 0
+      final List<Album> backupAlbums = List.from(
+        state.drives
+            .where((d) => d.type == 'backup')
+            .map(
+              (d) => Album(
+                    List.from(allMedia.where((entry) => entry.pdrv == d.uuid)),
+                    d.label,
+                    d.uuid,
+                  ),
+            )
+            .where((a) => a.length > 0),
+      );
+
+      albumList = [];
+      albumList.add(allMediaAlbum);
+      albumList.add(allVideosAlbum);
+      albumList.addAll(backupAlbums);
+
+      // request album's cover
+      for (Album album in albumList) {
+        getCover(album, state).catchError(print);
+      }
+
+      if (this.mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
+    } catch (error) {
+      if (this.mounted) {
+        setState(() {
+          loading = false;
+        });
+      }
+      throw error;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final list = [1, 2, 3, 4, 5, 6, 7];
     return StoreConnector<AppState, AppState>(
       onInit: (store) =>
           refresh(store.state).catchError((error) => print(error)),
@@ -40,7 +120,7 @@ class _PhotosState extends State<Photos> {
                   child: CircularProgressIndicator(),
                 )
               : Container(
-                  padding: EdgeInsets.all(16),
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
                   child: GridView.builder(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisSpacing: 16,
@@ -48,27 +128,46 @@ class _PhotosState extends State<Photos> {
                       crossAxisCount: 2,
                       childAspectRatio: 0.8,
                     ),
-                    itemCount: list.length,
+                    itemCount: albumList.length,
                     itemBuilder: (context, index) {
+                      Album album = albumList[index];
                       return Material(
                         child: InkWell(
-                          onTap: () => {},
-                          child: Column(
-                            children: [
-                              Expanded(
-                                flex: 1,
-                                child: Container(
-                                  color: Colors.grey[300],
+                          onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) {
+                                    return PhotoList(album: album);
+                                  },
                                 ),
                               ),
-                              Container(
-                                color: Colors.grey[200],
-                                height: 48,
-                                child: Center(
-                                  child: Text(index.toString()),
+                          child: Container(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  flex: 1,
+                                  child: album.cover != null
+                                      ? Image.file(
+                                          File(album.cover),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Container(
+                                          color: Colors.grey[300],
+                                        ),
                                 ),
-                              ),
-                            ],
+                                Container(
+                                  padding: EdgeInsets.fromLTRB(0, 4, 0, 4),
+                                  width: double.infinity,
+                                  child: Text(album.name),
+                                ),
+                                Container(
+                                  padding: EdgeInsets.fromLTRB(0, 0, 0, 4),
+                                  width: double.infinity,
+                                  child: Text(album.length.toString()),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       );
