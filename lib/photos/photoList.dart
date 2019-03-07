@@ -15,8 +15,16 @@ class PhotoList extends StatefulWidget {
 class _PhotoListState extends State<PhotoList> {
   ScrollController myScrollController = ScrollController();
 
+  /// crossAxisCount in Gird
   int lineCount = 4;
-  getList(Album album) {
+
+  /// mainAxisSpacing and crossAxisSpacing in Grid
+  final double spacing = 4.0;
+
+  ///  height of header
+  final double headerHeight = 32;
+
+  getList(Album album, BuildContext ctx) {
     final items = album.items;
     if (items.length == 0) return [];
     items.sort((a, b) => b.hdate.compareTo(a.hdate));
@@ -26,6 +34,8 @@ class _PhotoListState extends State<PhotoList> {
       items[0].hdate,
       [items[0]],
     ];
+
+    final width = MediaQuery.of(ctx).size.width;
 
     items.forEach((entry) {
       final last = photoMapDates.last;
@@ -37,12 +47,38 @@ class _PhotoListState extends State<PhotoList> {
       }
     });
 
-    return photoMapDates;
+    final List mapHeight = [];
+    double acc = 0;
+    photoMapDates.forEach((line) {
+      if (line is String) {
+        acc += headerHeight;
+        mapHeight.add([acc, line]);
+      } else if (line is List<Entry>) {
+        final int count = (line.length / lineCount).ceil();
+        // (count -1) * spacings + height * count
+        acc += (count - 1) * spacing +
+            (width - spacing * lineCount + spacing) / lineCount * count;
+        mapHeight.last[0] = acc;
+      }
+    });
+
+    return {'photoMapDates': photoMapDates, 'mapHeight': mapHeight};
+  }
+
+  /// getDate via Offset
+  ///
+  /// mapHeight is List of [offset, hdate]
+  Widget getDate(double offset, List mapHeight) {
+    final List current =
+        mapHeight.firstWhere((e) => e[0] >= offset, orElse: () => [0, '']);
+    return Text(current[1]);
   }
 
   @override
   Widget build(BuildContext context) {
-    final list = getList(widget.album);
+    final res = getList(widget.album, context);
+    final List list = res['photoMapDates'];
+    final List mapHeight = res['mapHeight'];
 
     return StoreConnector<AppState, AppState>(
       onInit: (store) => {},
@@ -67,7 +103,8 @@ class _PhotoListState extends State<PhotoList> {
             color: Colors.grey[100],
             child: DraggableScrollbar.semicircle(
               controller: myScrollController,
-              labelTextBuilder: (double offset) => Text("${offset ~/ 100}"),
+              labelTextBuilder: (double offset) => getDate(offset, mapHeight),
+              labelConstraints: BoxConstraints.expand(width: 88, height: 36),
               child: CustomScrollView(
                 key: Key(list.length.toString()),
                 controller: myScrollController,
@@ -77,7 +114,7 @@ class _PhotoListState extends State<PhotoList> {
                     (line) {
                       if (line is String) {
                         return SliverFixedExtentList(
-                          itemExtent: 24,
+                          itemExtent: headerHeight,
                           delegate: SliverChildBuilderDelegate(
                             (context, index) => Container(
                                   padding: EdgeInsets.all(8),
@@ -90,8 +127,8 @@ class _PhotoListState extends State<PhotoList> {
                       return SliverGrid(
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: lineCount,
-                          mainAxisSpacing: 4.0,
-                          crossAxisSpacing: 4.0,
+                          mainAxisSpacing: spacing,
+                          crossAxisSpacing: spacing,
                           childAspectRatio: 1.0,
                         ),
                         delegate: SliverChildBuilderDelegate(

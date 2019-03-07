@@ -245,8 +245,7 @@ class Metadata {
       if (this.datetime != null &&
           !this.datetime.startsWith('0') &&
           this.datetime.split(':').length == 5) {
-        this.hdate = this.datetime.split(' ')[0];
-        this.hdate.replaceAll(':', '-');
+        this.hdate = this.datetime.split(' ')[0].replaceAll(':', '-');
       }
     } catch (err) {
       this.hdate = null;
