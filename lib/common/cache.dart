@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 import 'package:async/async.dart';
 import 'package:synchronized/synchronized.dart';
@@ -131,33 +132,20 @@ class CacheManager {
     return entryPath;
   }
 
-  /// convert callback to Future TODO: add queue to limit concurrent
-  Future getThumb(Entry entry, AppState state) async {
-    Completer c = Completer();
-    _getThumbCallback(entry, state, (error, value) {
-      if (error != null) {
-        c.completeError(error);
-      } else {
-        c.complete(value);
-      }
-    });
-    return c.future;
-  }
-
-  /// convert Future to  callback
-  void _getThumbCallback(Entry entry, AppState state, Function callback) {
-    _getThumb(entry, state)
-        .then((value) => callback(null, value))
-        .catchError((onError) => callback(onError));
-  }
-
-  /// download thumb
-  Future<String> _getThumb(Entry entry, AppState state) async {
+  /// download thumb withLimit
+  ///
+  /// fire cancelToken.cancel() to cancel request
+  Future<String> getThumbWithLimit(
+    Entry entry,
+    AppState state,
+    CancelToken cancelToken,
+  ) async {
     String entryPath = _thumbnailDir() + entry.hash + '&width=200&height=200';
     String transPath = _transDir() + '/' + Uuid().v4();
     File entryFile = File(entryPath);
 
     FileStat res = await entryFile.stat();
+    if (cancelToken.cancelError != null) return null;
 
     // file already downloaded
     if (res.type != FileSystemEntityType.notFound) {
@@ -172,9 +160,12 @@ class CacheManager {
       'width': 200,
       'height': 200,
     };
+
     try {
       // download
-      await state.apis.download(ep, qs, transPath);
+      await state.apis.download(ep, qs, transPath, cancelToken: cancelToken);
+      if (cancelToken.cancelError != null) return null;
+
       // rename
       await File(transPath).rename(entryPath);
     } catch (error) {

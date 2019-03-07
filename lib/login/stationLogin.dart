@@ -72,8 +72,7 @@ stationLogin(BuildContext context, Request request, Station currentDevice,
     UpdateCloudAction(request),
   );
 
-  // station apis, TODO: handle cloud
-
+  // station apis
   String cookie = request.cookie;
   Apis apis = Apis(
       account.token, lanIp, lanToken, account.id, isCloud, deviceSN, cookie);
@@ -156,7 +155,7 @@ deviceLogin(
     return;
   } else {
     // no availiable last device
-    Navigator.push(
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (context) {

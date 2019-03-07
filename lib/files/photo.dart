@@ -128,7 +128,7 @@ class _GridPhotoViewerState extends State<GridPhotoViewer>
 
     // download thumb
     if (_thumbSrc == null) {
-      _thumbSrc = await cm.getThumb(widget.photo, state);
+      _thumbSrc = await cm.getThumbWithLimit(widget.photo, state, null);
     }
     if (this.mounted) {
       setState(() {});

@@ -28,7 +28,7 @@ class _PhotosState extends State<Photos> {
     Entry entry = album.items[0];
 
     final cm = await CacheManager.getInstance();
-    final String thumbSrc = await cm.getThumb(entry, state);
+    final String thumbSrc = await cm.getThumbWithLimit(entry, state, null);
 
     if (this.mounted && thumbSrc != null) {
       album.setCover(thumbSrc);

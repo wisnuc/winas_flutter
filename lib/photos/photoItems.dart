@@ -4,7 +4,7 @@ import 'package:flutter_redux/flutter_redux.dart';
 
 import '../files/photo.dart';
 import '../redux/redux.dart';
-import '../common/cache.dart';
+import '../common/taskManager.dart';
 
 const photoTypes = ['JPEG', 'PNG', 'JPG', 'GIF', 'BMP', 'RAW'];
 
@@ -19,17 +19,19 @@ class _PhotoItemState extends State<PhotoItem> {
   final Entry entry;
   _PhotoItemState(this.entry);
   String thumbSrc;
+  ThumbTask task;
 
-  _getThumb(AppState state) async {
-    // has hash
+  _getThumb(AppState state) {
+    // check hash
     if (entry.hash == null) return;
-
-    final cm = await CacheManager.getInstance();
-    thumbSrc = await cm.getThumb(entry, state);
-
-    if (this.mounted && thumbSrc != null) {
-      setState(() {});
-    }
+    final tm = TaskManager.getInstance();
+    task = tm.createThumbTask(entry, state, (error, value) {
+      if (!error && value is String && this.mounted) {
+        setState(() {
+          thumbSrc = value;
+        });
+      }
+    });
   }
 
   _onTap(BuildContext ctx) {
@@ -39,6 +41,12 @@ class _PhotoItemState extends State<PhotoItem> {
       // is photo
       showPhoto(ctx, entry, thumbSrc);
     }
+  }
+
+  @override
+  void dispose() {
+    task?.abort();
+    super.dispose();
   }
 
   @override

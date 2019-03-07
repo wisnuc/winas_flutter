@@ -5,8 +5,8 @@ import 'package:flutter_redux/flutter_redux.dart';
 import './photo.dart';
 import './detail.dart';
 import '../redux/redux.dart';
-import '../common/cache.dart';
 import '../common/renderIcon.dart';
+import '../common/taskManager.dart';
 
 class FileNavView {
   final Widget _icon;
@@ -211,20 +211,21 @@ class _FileRowState extends State<FileRow> {
   final List actions;
   final bool isGrid;
   final Select select;
+  ThumbTask task;
 
   String _thumbSrc;
 
-  _getThumb(AppState state) async {
-    if (!isGrid ||
-        thumbMagic.indexOf(entry?.metadata?.type) == -1 ||
-        entry.hash == null) return;
-
-    final cm = await CacheManager.getInstance();
-    _thumbSrc = await cm.getThumb(entry, state);
-
-    if (this.mounted && _thumbSrc != null) {
-      setState(() {});
-    }
+  _getThumb(AppState state) {
+    // check hash
+    if (entry.hash == null) return;
+    final tm = TaskManager.getInstance();
+    task = tm.createThumbTask(entry, state, (error, value) {
+      if (!error && value is String && this.mounted) {
+        setState(() {
+          _thumbSrc = value;
+        });
+      }
+    });
   }
 
   _onPressMore(BuildContext ctx) {
@@ -481,6 +482,12 @@ class _FileRowState extends State<FileRow> {
         ),
       ],
     );
+  }
+
+  @override
+  void dispose() {
+    task?.abort();
+    super.dispose();
   }
 
   @override
