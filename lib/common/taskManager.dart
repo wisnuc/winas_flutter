@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
-import 'package:uuid/uuid.dart';
 
 import '../redux/redux.dart';
 import '../common/cache.dart';
@@ -53,13 +52,11 @@ class Task {
 }
 
 class ThumbTask extends Task {
-  final id;
   final AppState state;
   final Entry entry;
   final CancelToken cancelToken = CancelToken();
 
   ThumbTask(
-    this.id,
     this.entry,
     this.state,
     Function onFinished,
@@ -89,7 +86,7 @@ class ThumbTask extends Task {
 
 class TaskManager {
   final List<ThumbTask> thumbTaskQueue = [];
-  final int thumbTaskLimit = 32;
+  final int thumbTaskLimit = 16;
 
   // keep singleton
   static TaskManager _instance;
@@ -104,14 +101,12 @@ class TaskManager {
   TaskManager._();
 
   ThumbTask createThumbTask(Entry entry, AppState state, Function callback) {
-    final id = Uuid().v4();
-
     final Function onFinished = (error, value) {
       callback(error, value);
       schedule();
     };
 
-    final task = ThumbTask(id, entry, state, onFinished);
+    final task = ThumbTask(entry, state, onFinished);
     thumbTaskQueue.add(task);
     schedule();
     return task;
@@ -124,6 +119,14 @@ class TaskManager {
     // calc number of task left to run
     int freeNum =
         thumbTaskLimit - thumbTaskQueue.where((t) => t.isRunning).length;
+
+    // print("""
+    //   queue length:  ${thumbTaskQueue.length}
+    //      freeNum:    $freeNum
+    //      isPending:  ${thumbTaskQueue.where((t) => t.isPending).length}
+    //      isRunning:  ${thumbTaskQueue.where((t) => t.isRunning).length}
+    //      isFinished: ${thumbTaskQueue.where((t) => t.isFinished).length}
+    //      """);
 
     // run pending tasks
     if (freeNum > 0) {

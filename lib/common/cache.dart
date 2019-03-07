@@ -106,7 +106,7 @@ class CacheManager {
   Future<String> getTmpFile(Entry entry, AppState state) async {
     String entryDir = _tmpDir() + entry.uuid.substring(24, 36) + '/';
     String entryPath = entryDir + entry.name;
-    String transPath = _transDir() + '/' + Uuid().v4();
+
     File entryFile = File(entryPath);
 
     FileStat res = await entryFile.stat();
@@ -115,7 +115,7 @@ class CacheManager {
     if (res.type != FileSystemEntityType.notFound) {
       return entryPath;
     }
-
+    String transPath = _transDir() + '/' + Uuid().v4();
     final ep = 'drives/${entry.pdrv}/dirs/${entry.pdir}/entries/${entry.uuid}';
     final qs = {'name': entry.name, 'hash': entry.hash};
     try {
@@ -141,7 +141,6 @@ class CacheManager {
     CancelToken cancelToken,
   ) async {
     String entryPath = _thumbnailDir() + entry.hash + '&width=200&height=200';
-    String transPath = _transDir() + '/' + Uuid().v4();
     File entryFile = File(entryPath);
 
     FileStat res = await entryFile.stat();
@@ -151,6 +150,8 @@ class CacheManager {
     if (res.type != FileSystemEntityType.notFound) {
       return entryPath;
     }
+
+    String transPath = _transDir() + '/' + Uuid().v4();
 
     final ep = 'media/${entry.hash}';
     final qs = {
