@@ -8,8 +8,12 @@ import './login/login.dart';
 import './nav/bottom_navigation.dart';
 import './redux/redux.dart';
 import './transfer/manager.dart';
+import 'package:wifi/wifi.dart';
+
 
 void main() async {
+  String ssid = await Wifi.ssid;
+  print('ssid: $ssid');
   Directory root = await getApplicationDocumentsDirectory();
   String _rootDir = root.path;
 
