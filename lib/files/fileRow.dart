@@ -8,6 +8,25 @@ import '../redux/redux.dart';
 import '../common/renderIcon.dart';
 import '../common/taskManager.dart';
 
+List<String> thumbMagic = [
+  'JPEG',
+  'JPG',
+  'GIF',
+  'PNG',
+  'BMP',
+  'PDF',
+  'RAW',
+  'RM',
+  'RMVB',
+  'WMV',
+  'AVI',
+  'MP4',
+  '3GP',
+  'MKV',
+  'MOV',
+  'FLV'
+];
+
 class FileNavView {
   final Widget _icon;
   final String _title;
@@ -216,11 +235,14 @@ class _FileRowState extends State<FileRow> {
   String _thumbSrc;
 
   _getThumb(AppState state) {
-    // check hash
-    if (entry.hash == null) return;
+    // check hash and file type
+    if (entry.hash == null || !thumbMagic.contains(entry?.metadata?.type)) {
+      return;
+    }
+
     final tm = TaskManager.getInstance();
     task = tm.createThumbTask(entry, state, (error, value) {
-      if (!error && value is String && this.mounted) {
+      if (error == null && value is String && this.mounted) {
         setState(() {
           _thumbSrc = value;
         });

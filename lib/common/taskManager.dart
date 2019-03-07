@@ -7,25 +7,18 @@ import '../common/cache.dart';
 
 enum Status { pending, running, finished }
 
-Future getThumbAsync(
-  Entry entry,
-  AppState state,
-  CancelToken cancelToken,
-) async {
+Future<String> getThumbAsync(
+    Entry entry, AppState state, CancelToken cancelToken) async {
   final cm = await CacheManager.getInstance();
   final String thumbSrc = await cm.getThumbWithLimit(entry, state, cancelToken);
   return thumbSrc;
 }
 
 void getThumbCallback(
-  Entry entry,
-  AppState state,
-  CancelToken cancelToken,
-  Function callback,
-) {
+    Entry entry, AppState state, CancelToken cancelToken, Function callback) {
   getThumbAsync(entry, state, cancelToken)
       .then((value) => callback(null, value))
-      .catchError((error) => callback(error));
+      .catchError((error) => callback(error, null));
 }
 
 class Task {
@@ -78,7 +71,7 @@ class ThumbTask extends Task {
   run() {
     super.run();
     getThumbCallback(entry, state, cancelToken, (err, value) {
-      if (err) {
+      if (err != null) {
         this.error(err);
       } else {
         this.finish(value);
@@ -120,7 +113,7 @@ class TaskManager {
 
     final task = ThumbTask(id, entry, state, onFinished);
     thumbTaskQueue.add(task);
-
+    schedule();
     return task;
   }
 

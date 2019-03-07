@@ -145,7 +145,7 @@ class CacheManager {
     File entryFile = File(entryPath);
 
     FileStat res = await entryFile.stat();
-    if (cancelToken.cancelError != null) return null;
+    if (cancelToken?.cancelError != null) return null;
 
     // file already downloaded
     if (res.type != FileSystemEntityType.notFound) {
@@ -164,12 +164,12 @@ class CacheManager {
     try {
       // download
       await state.apis.download(ep, qs, transPath, cancelToken: cancelToken);
-      if (cancelToken.cancelError != null) return null;
+      if (cancelToken?.cancelError != null) return null;
 
       // rename
       await File(transPath).rename(entryPath);
     } catch (error) {
-      print(error);
+      // print(error);
       return null;
     }
     return entryPath;

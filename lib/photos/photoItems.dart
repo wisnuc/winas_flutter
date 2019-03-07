@@ -26,7 +26,7 @@ class _PhotoItemState extends State<PhotoItem> {
     if (entry.hash == null) return;
     final tm = TaskManager.getInstance();
     task = tm.createThumbTask(entry, state, (error, value) {
-      if (!error && value is String && this.mounted) {
+      if (error == null && value is String && this.mounted) {
         setState(() {
           thumbSrc = value;
         });
