@@ -144,7 +144,7 @@ class CacheManager {
     String entryPath = _thumbnailDir() + entry.hash + '&width=200&height=200';
     File entryFile = File(entryPath);
 
-    FileStat res = await entryFile.stat();
+    FileStat res = entryFile.statSync();
     if (cancelToken?.cancelError != null) return null;
 
     Uint8List thumbData;
@@ -152,7 +152,7 @@ class CacheManager {
     // file already downloaded
     if (res.type != FileSystemEntityType.notFound) {
       try {
-        thumbData = await entryFile.readAsBytes();
+        thumbData = entryFile.readAsBytesSync();
       } catch (error) {
         print(error);
         return null;
@@ -172,16 +172,17 @@ class CacheManager {
     };
 
     try {
+      print('download ${entry.name}');
       // download
       await state.apis.download(ep, qs, transPath, cancelToken: cancelToken);
       if (cancelToken?.cancelError != null) return null;
 
       // rename
-      await File(transPath).rename(entryPath);
+      File(transPath).renameSync(entryPath);
       if (cancelToken?.cancelError != null) return null;
 
       // read data
-      thumbData = await entryFile.readAsBytes();
+      thumbData = entryFile.readAsBytesSync();
     } catch (error) {
       // print(error);
       return null;

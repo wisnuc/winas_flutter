@@ -88,7 +88,7 @@ class ThumbTask extends Task {
 
 class TaskManager {
   final List<ThumbTask> thumbTaskQueue = [];
-  final int thumbTaskLimit = 16;
+  final int thumbTaskLimit = 8;
 
   // keep singleton
   static TaskManager _instance;
@@ -105,7 +105,8 @@ class TaskManager {
   ThumbTask createThumbTask(Entry entry, AppState state, Function callback) {
     final Function onFinished = (error, value) {
       callback(error, value);
-      schedule();
+      // schedule in next event-loop iteration
+      Future.delayed(Duration(seconds: 0)).then((v) => schedule());
     };
 
     final task = ThumbTask(entry, state, onFinished);
