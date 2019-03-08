@@ -5,8 +5,8 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 import 'package:async/async.dart';
+import 'package:synchronized/synchronized.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:synchronized/synchronized.dart' as synchronized;
 
 import '../redux/redux.dart';
 import '../common/utils.dart';
@@ -200,7 +200,7 @@ class TransferManager {
     return list;
   }
 
-  static synchronized.Lock _lock = synchronized.Lock();
+  static Lock _lock = Lock();
 
   Future<void> _save() async {
     await _lock.synchronized(() async {
