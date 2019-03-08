@@ -51,12 +51,19 @@ class Apis {
 
   /// handle data.data response
   void interceptDio() {
-    dio.interceptor.response.onSuccess = (Response response) {
-      if (response.data is Map && response.data['data'] != null) {
-        return response.data['data'];
-      }
-      return response.data;
-    };
+    InterceptorsWrapper interceptorsWrapper = InterceptorsWrapper(
+      onResponse: (Response response) {
+        if (response.data is Map && response.data['data'] != null) {
+          return response.data['data'];
+        }
+        return response.data;
+      },
+    );
+    if (dio.interceptors.length == 0) {
+      dio.interceptors.add(interceptorsWrapper);
+    } else {
+      dio.interceptors[0] = interceptorsWrapper;
+    }
   }
 
   /// request with token
@@ -64,7 +71,7 @@ class Apis {
     assert(token != null);
     if (isCloud ?? true) return command('GET', ep, args);
     dio.options.headers['Authorization'] = 'JWT $lanToken';
-    return dio.get('$lanAdrress/$ep', data: args);
+    return dio.get('$lanAdrress/$ep', queryParameters: args);
   }
 
   /// request with token
@@ -150,7 +157,7 @@ class Apis {
     try {
       final res = await dio.get(
         'http://${this.lanIp}:3001/winasd/info',
-        options: Options(connectTimeout: 1000),
+        options: Options(connectTimeout: 1000, receiveTimeout: 0),
       );
       isLAN = res.data['device']['sn'] == this.deviceSN;
     } catch (error) {
@@ -226,7 +233,7 @@ class Apis {
     return r;
   }
 
-  download(String ep, Map<String, dynamic> qs, String downloadPath,
+  Future download(String ep, Map<String, dynamic> qs, String downloadPath,
       {Function onProgress, CancelToken cancelToken}) async {
     // download via cloud pipe
     if (isCloud ?? true) {
@@ -240,21 +247,23 @@ class Apis {
       };
       dio.options.headers['Authorization'] = token;
       dio.options.headers['cookie'] = cookie;
-      await dio.download(
+      return dio.download(
         url,
         downloadPath,
-        data: qsData,
+        queryParameters: qsData,
         cancelToken: cancelToken,
-        onProgress: (a, b) => onProgress != null ? onProgress(a, b) : null,
+        onReceiveProgress: (a, b) =>
+            onProgress != null ? onProgress(a, b) : null,
       );
     } else {
       dio.options.headers['Authorization'] = 'JWT $lanToken';
-      await dio.download(
+      return dio.download(
         '$lanAdrress/$ep',
         downloadPath,
-        data: qs,
+        queryParameters: qs,
         cancelToken: cancelToken,
-        onProgress: (a, b) => onProgress != null ? onProgress(a, b) : null,
+        onReceiveProgress: (a, b) =>
+            onProgress != null ? onProgress(a, b) : null,
       );
     }
   }

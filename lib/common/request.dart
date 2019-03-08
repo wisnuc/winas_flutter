@@ -29,25 +29,33 @@ class Request {
 
   // handle data.data response
   void interceptDio() {
-    dio.interceptor.response.onSuccess = (Response response) {
-      var res = response.data['data'];
-      // save cloud token not lanToken
-      if (res is Map && res['token'] != null && res['id'] != null) {
-        token = res['token'];
-      }
-      if (response.data['url'] == '/c/v1/station') {
-        assert(response.headers['set-cookie'][0] != null);
-        cookie = response.headers['set-cookie'][0];
-      }
-      if (res != null) return res;
-      return response.data;
-    };
+    InterceptorsWrapper interceptorsWrapper = InterceptorsWrapper(
+      onResponse: (Response response) {
+        var res = response.data['data'];
+        // save cloud token not lanToken
+        if (res is Map && res['token'] != null && res['id'] != null) {
+          token = res['token'];
+        }
+        if (response.data['url'] == '/c/v1/station') {
+          assert(response.headers['set-cookie'][0] != null);
+          cookie = response.headers['set-cookie'][0];
+        }
+        if (res != null) return res;
+        return response.data;
+      },
+    );
+
+    if (dio.interceptors.length == 0) {
+      dio.interceptors.add(interceptorsWrapper);
+    } else {
+      dio.interceptors[0] = interceptorsWrapper;
+    }
   }
 
   aget(String ep, args) {
     return args == null
         ? dio.get('$cloudAddress/$ep')
-        : dio.get('$cloudAddress/$ep', data: args);
+        : dio.get('$cloudAddress/$ep', queryParameters: args);
   }
 
   apost(String ep, args) {
@@ -66,7 +74,7 @@ class Request {
   tget(String ep, args) {
     assert(token != null);
     dio.options.headers['Authorization'] = token;
-    return dio.get('$cloudAddress/$ep', data: args);
+    return dio.get('$cloudAddress/$ep', queryParameters: args);
   }
 
   /// post with token
@@ -252,12 +260,9 @@ class Request {
     interceptDio();
     return dio.put(
       '$cloudAddress/user/avatar',
+      data: imageData,
       options: Options(
         contentType: ContentType.binary,
-        data: imageData,
-        headers: {
-          'Authorization': token,
-        },
       ),
       cancelToken: cancelToken,
     );
