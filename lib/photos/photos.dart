@@ -1,9 +1,11 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:photo_manager/photo_manager.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 
 import './photoList.dart';
+import './devicePhotos.dart';
 import '../redux/redux.dart';
 import '../common/cache.dart';
 
@@ -20,7 +22,10 @@ class Photos extends StatefulWidget {
 
 class _PhotosState extends State<Photos> {
   static bool loading = true;
-  static List<Album> albumList = [];
+
+  /// Album or LocalAlbum
+  static List albumList = [];
+
   static String userUUID;
   ScrollController myScrollController = ScrollController();
 
@@ -30,6 +35,15 @@ class _PhotosState extends State<Photos> {
     final cm = await CacheManager.getInstance();
     final Uint8List thumbData = await cm.getThumbData(entry, state, null);
 
+    if (this.mounted && thumbData != null) {
+      album.setCover(thumbData);
+      setState(() {});
+    }
+  }
+
+  Future getLocalCover(LocalAlbum album) async {
+    AssetEntity entity = album.items[0];
+    final Uint8List thumbData = await entity.thumbDataWithSize(200, 200);
     if (this.mounted && thumbData != null) {
       album.setCover(thumbData);
       setState(() {});
@@ -52,6 +66,9 @@ class _PhotosState extends State<Photos> {
         'order': 'newest',
       });
 
+      List<AssetPathEntity> pathList = await PhotoManager.getAssetPathList();
+      final localAssetList = await pathList[0].assetList;
+
       final List<Entry> allMedia = List.from(
         res.data.map((d) => Entry.fromSearch(d, state.drives)),
       );
@@ -66,6 +83,7 @@ class _PhotosState extends State<Photos> {
         ),
       );
       final allVideosAlbum = Album(allVideos, '所有视频', places);
+      final localAlbum = LocalAlbum(localAssetList, '本机照片');
 
       // find photos in each backup drives, filter: lenth > 0
       final List<Album> backupAlbums = List.from(
@@ -84,11 +102,16 @@ class _PhotosState extends State<Photos> {
       albumList = [];
       albumList.add(allMediaAlbum);
       albumList.add(allVideosAlbum);
+      albumList.add(localAlbum);
       albumList.addAll(backupAlbums);
 
       // request album's cover
-      for (Album album in albumList) {
-        getCover(album, state).catchError(print);
+      for (var album in albumList) {
+        if (album is Album) {
+          getCover(album, state).catchError(print);
+        } else if (album is LocalAlbum) {
+          getLocalCover(album).catchError(print);
+        }
       }
 
       // cache data
@@ -106,6 +129,74 @@ class _PhotosState extends State<Photos> {
       }
       throw error;
     }
+  }
+
+  List<Widget> renderSlivers() {
+    return <Widget>[
+      SliverPadding(
+        padding: EdgeInsets.all(16),
+        sliver: SliverGrid(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 16.0,
+            crossAxisSpacing: 16.0,
+            childAspectRatio: 0.8,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (BuildContext context, int index) {
+              final album = albumList[index];
+              return Container(
+                child: Material(
+                  child: InkWell(
+                    onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) {
+                              if (album is Album) {
+                                return PhotoList(album: album);
+                              } else if (album is LocalAlbum) {
+                                return DevicePhotos(album: album);
+                              }
+                            },
+                          ),
+                        ),
+                    child: Container(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            flex: 1,
+                            child: album.cover != null
+                                ? Image.memory(
+                                    album.cover,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Container(
+                                    color: Colors.grey[300],
+                                  ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.fromLTRB(0, 4, 0, 4),
+                            width: double.infinity,
+                            child: Text(album.name),
+                          ),
+                          Container(
+                            padding: EdgeInsets.fromLTRB(0, 0, 0, 4),
+                            width: double.infinity,
+                            child: Text(album.length.toString()),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+            childCount: albumList.length,
+          ),
+        ),
+      ),
+    ];
   }
 
   @override
@@ -136,73 +227,7 @@ class _PhotosState extends State<Photos> {
                       child: CustomScrollView(
                         controller: myScrollController,
                         physics: AlwaysScrollableScrollPhysics(),
-                        slivers: <Widget>[
-                          SliverPadding(
-                              padding: EdgeInsets.all(16),
-                              sliver: SliverGrid(
-                                gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  mainAxisSpacing: 16.0,
-                                  crossAxisSpacing: 16.0,
-                                  childAspectRatio: 0.8,
-                                ),
-                                delegate: SliverChildBuilderDelegate(
-                                  (BuildContext context, int index) {
-                                    Album album = albumList[index];
-                                    return Container(
-                                      child: Material(
-                                        child: InkWell(
-                                          onTap: () => Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) {
-                                                    return PhotoList(
-                                                        album: album);
-                                                  },
-                                                ),
-                                              ),
-                                          child: Container(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Expanded(
-                                                  flex: 1,
-                                                  child: album.cover != null
-                                                      ? Image.memory(
-                                                          album.cover,
-                                                          fit: BoxFit.cover,
-                                                        )
-                                                      : Container(
-                                                          color:
-                                                              Colors.grey[300],
-                                                        ),
-                                                ),
-                                                Container(
-                                                  padding: EdgeInsets.fromLTRB(
-                                                      0, 4, 0, 4),
-                                                  width: double.infinity,
-                                                  child: Text(album.name),
-                                                ),
-                                                Container(
-                                                  padding: EdgeInsets.fromLTRB(
-                                                      0, 0, 0, 4),
-                                                  width: double.infinity,
-                                                  child: Text(
-                                                      album.length.toString()),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  childCount: albumList.length,
-                                ),
-                              )),
-                        ],
+                        slivers: renderSlivers(),
                       ),
                     ),
                   ),

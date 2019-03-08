@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:redux/redux.dart';
+import 'package:photo_manager/photo_manager.dart';
 
 import '../common/utils.dart';
 import '../common/request.dart';
@@ -406,6 +407,21 @@ class Album {
   // thumbData
   Uint8List cover;
   Album(this.items, this.name, this.places);
+  get length => items.length;
+
+  void setCover(thumbData) {
+    this.cover = thumbData;
+  }
+}
+
+class LocalAlbum {
+  List<AssetEntity> items = [];
+  String name;
+  String places;
+
+  // thumbData
+  Uint8List cover;
+  LocalAlbum(this.items, this.name);
   get length => items.length;
 
   void setCover(thumbData) {

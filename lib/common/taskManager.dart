@@ -106,7 +106,7 @@ class TaskManager {
     final Function onFinished = (error, value) {
       callback(error, value);
       // schedule in next event-loop iteration
-      Future.delayed(Duration(seconds: 0)).then((v) => schedule());
+      Future.delayed(Duration.zero).then((v) => schedule());
     };
 
     final task = ThumbTask(entry, state, onFinished);
