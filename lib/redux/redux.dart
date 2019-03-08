@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:redux/redux.dart';
 
 import '../common/utils.dart';
@@ -402,13 +403,13 @@ class Album {
   String name;
   String places;
 
-  // thumbSrc
-  String cover;
+  // thumbData
+  Uint8List cover;
   Album(this.items, this.name, this.places);
   get length => items.length;
 
-  void setCover(thumbSrc) {
-    this.cover = thumbSrc;
+  void setCover(thumbData) {
+    this.cover = thumbData;
   }
 }
 

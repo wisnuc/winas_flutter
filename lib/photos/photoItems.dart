@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 
@@ -18,7 +18,7 @@ class PhotoItem extends StatefulWidget {
 class _PhotoItemState extends State<PhotoItem> {
   final Entry entry;
   _PhotoItemState(this.entry);
-  String thumbSrc;
+  Uint8List thumbData;
   ThumbTask task;
 
   _getThumb(AppState state) {
@@ -26,9 +26,9 @@ class _PhotoItemState extends State<PhotoItem> {
     if (entry.hash == null) return;
     final tm = TaskManager.getInstance();
     task = tm.createThumbTask(entry, state, (error, value) {
-      if (error == null && value is String && this.mounted) {
+      if (error == null && value is Uint8List && this.mounted) {
         setState(() {
-          thumbSrc = value;
+          thumbData = value;
         });
       }
     });
@@ -39,7 +39,7 @@ class _PhotoItemState extends State<PhotoItem> {
       entry.toggleSelect();
     } else if (photoTypes.contains(entry?.metadata?.type)) {
       // is photo
-      showPhoto(ctx, entry, thumbSrc);
+      showPhoto(ctx, entry, thumbData);
     }
   }
 
@@ -69,12 +69,12 @@ class _PhotoItemState extends State<PhotoItem> {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    child: thumbSrc == null
+                    child: thumbData == null
                         ? Container(color: Colors.grey[300])
                         : Hero(
                             tag: entry.uuid,
-                            child: Image.file(
-                              File(thumbSrc),
+                            child: Image.memory(
+                              thumbData,
                               fit: BoxFit.cover,
                             ),
                           ),

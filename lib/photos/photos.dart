@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
@@ -28,10 +28,10 @@ class _PhotosState extends State<Photos> {
     Entry entry = album.items[0];
 
     final cm = await CacheManager.getInstance();
-    final String thumbSrc = await cm.getThumbWithLimit(entry, state, null);
+    final Uint8List thumbData = await cm.getThumbData(entry, state, null);
 
-    if (this.mounted && thumbSrc != null) {
-      album.setCover(thumbSrc);
+    if (this.mounted && thumbData != null) {
+      album.setCover(thumbData);
       setState(() {});
     }
   }
@@ -170,8 +170,8 @@ class _PhotosState extends State<Photos> {
                                                 Expanded(
                                                   flex: 1,
                                                   child: album.cover != null
-                                                      ? Image.file(
-                                                          File(album.cover),
+                                                      ? Image.memory(
+                                                          album.cover,
                                                           fit: BoxFit.cover,
                                                         )
                                                       : Container(

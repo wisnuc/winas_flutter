@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 
@@ -232,7 +232,7 @@ class _FileRowState extends State<FileRow> {
   final Select select;
   ThumbTask task;
 
-  String _thumbSrc;
+  Uint8List thumbData;
 
   _getThumb(AppState state) {
     // check hash and file type
@@ -242,9 +242,9 @@ class _FileRowState extends State<FileRow> {
 
     final tm = TaskManager.getInstance();
     task = tm.createThumbTask(entry, state, (error, value) {
-      if (error == null && value is String && this.mounted) {
+      if (error == null && value is Uint8List && this.mounted) {
         setState(() {
-          _thumbSrc = value;
+          thumbData = value;
         });
       }
     });
@@ -325,7 +325,7 @@ class _FileRowState extends State<FileRow> {
     if (select.selectMode()) {
       select.toggleSelect(entry);
     } else if (photoMagic.indexOf(entry?.metadata?.type) > -1) {
-      showPhoto(ctx, entry, _thumbSrc);
+      showPhoto(ctx, entry, thumbData);
     } else {
       onPress();
     }
@@ -402,19 +402,19 @@ class _FileRowState extends State<FileRow> {
     );
   }
 
-  Widget renderGrid(BuildContext ctx, String thumbSrc) {
+  Widget renderGrid(BuildContext ctx, Uint8List thumbData) {
     return type == 'file'
         ? Column(
             children: [
               Expanded(
                 flex: 1,
-                child: thumbSrc == null
+                child: thumbData == null
                     ? renderIcon(entry.name, entry.metadata, size: 72.0)
                     // show thumb
                     : Hero(
                         tag: entry.uuid,
-                        child: Image.file(
-                          File(thumbSrc),
+                        child: Image.memory(
+                          thumbData,
                           fit: BoxFit.contain,
                         ),
                       ),
@@ -536,7 +536,7 @@ class _FileRowState extends State<FileRow> {
                           left: 0,
                           right: 0,
                           bottom: 0,
-                          child: renderGrid(context, _thumbSrc),
+                          child: renderGrid(context, thumbData),
                         ),
                         Positioned(
                           top: 0,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 
 import '../redux/redux.dart';
@@ -6,11 +7,12 @@ import '../common/cache.dart';
 
 enum Status { pending, running, finished }
 
-Future<String> getThumbAsync(
+Future<Uint8List> getThumbAsync(
     Entry entry, AppState state, CancelToken cancelToken) async {
   final cm = await CacheManager.getInstance();
-  final String thumbSrc = await cm.getThumbWithLimit(entry, state, cancelToken);
-  return thumbSrc;
+  final Uint8List thumbData = await cm.getThumbData(entry, state, cancelToken);
+
+  return thumbData;
 }
 
 void getThumbCallback(

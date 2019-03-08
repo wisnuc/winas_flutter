@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 
@@ -11,7 +11,7 @@ List<String> photoMagic = ['JPEG', 'GIF', 'PNG', 'BMP'];
 
 List<String> thumbMagic = ['JPEG', 'GIF', 'PNG', 'BMP', 'PDF'];
 
-showPhoto(BuildContext ctx, Entry entry, String thumbSrc) {
+showPhoto(BuildContext ctx, Entry entry, Uint8List thumbData) {
   Navigator.push(
     ctx,
     MaterialPageRoute<void>(
@@ -33,7 +33,7 @@ showPhoto(BuildContext ctx, Entry entry, String thumbSrc) {
           body: SizedBox.expand(
             child: Hero(
               tag: entry.uuid,
-              child: GridPhotoViewer(photo: entry, thumbSrc: thumbSrc),
+              child: GridPhotoViewer(photo: entry, thumbData: thumbData),
             ),
           ),
         );
@@ -43,8 +43,9 @@ showPhoto(BuildContext ctx, Entry entry, String thumbSrc) {
 }
 
 class GridPhotoViewer extends StatefulWidget {
-  const GridPhotoViewer({Key key, this.photo, this.thumbSrc}) : super(key: key);
-  final String thumbSrc;
+  const GridPhotoViewer({Key key, this.photo, this.thumbData})
+      : super(key: key);
+  final Uint8List thumbData;
   final Entry photo;
 
   @override
@@ -66,7 +67,7 @@ class _GridPhotoViewerState extends State<GridPhotoViewer>
     super.initState();
     _controller = AnimationController(vsync: this)
       ..addListener(_handleFlingAnimation);
-    _thumbSrc = widget.thumbSrc;
+    thumbData = widget.thumbData;
   }
 
   @override
@@ -120,15 +121,15 @@ class _GridPhotoViewerState extends State<GridPhotoViewer>
       ..fling(velocity: magnitude / 1000.0);
   }
 
-  String _imgSrc;
-  String _thumbSrc;
+  Uint8List imageData;
+  Uint8List thumbData;
 
   _getPhoto(AppState state) async {
     final cm = await CacheManager.getInstance();
 
     // download thumb
-    if (_thumbSrc == null) {
-      _thumbSrc = await cm.getThumbWithLimit(widget.photo, state, null);
+    if (thumbData == null) {
+      thumbData = await cm.getThumbData(widget.photo, state, null);
     }
     if (this.mounted) {
       setState(() {});
@@ -137,9 +138,9 @@ class _GridPhotoViewerState extends State<GridPhotoViewer>
     }
 
     // download raw photo
-    _imgSrc = await cm.getPhoto(widget.photo, state);
+    imageData = await cm.getPhoto(widget.photo, state);
 
-    if (_imgSrc != null && this.mounted) {
+    if (imageData != null && this.mounted) {
       setState(() {});
     }
   }
@@ -160,10 +161,10 @@ class _GridPhotoViewerState extends State<GridPhotoViewer>
               bottom: 0,
               child: _hiddenThumb
                   ? Container()
-                  : _thumbSrc == null
+                  : thumbData == null
                       ? Center(child: CircularProgressIndicator())
-                      : Image.file(
-                          File(_thumbSrc),
+                      : Image.memory(
+                          thumbData,
                           fit: BoxFit.contain,
                         ),
             ),
@@ -172,7 +173,7 @@ class _GridPhotoViewerState extends State<GridPhotoViewer>
               left: 0,
               right: 0,
               bottom: 0,
-              child: _imgSrc == null
+              child: imageData == null
                   ? Container(color: Colors.transparent)
                   : GestureDetector(
                       onScaleStart: _handleOnScaleStart,
@@ -183,8 +184,8 @@ class _GridPhotoViewerState extends State<GridPhotoViewer>
                           transform: Matrix4.identity()
                             ..translate(_offset.dx, _offset.dy)
                             ..scale(_scale),
-                          child: Image.file(
-                            File(_imgSrc),
+                          child: Image.memory(
+                            imageData,
                             fit: BoxFit.contain,
                           ),
                         ),

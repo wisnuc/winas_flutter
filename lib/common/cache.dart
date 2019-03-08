@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 import 'package:async/async.dart';
@@ -135,7 +136,7 @@ class CacheManager {
   /// download thumb withLimit
   ///
   /// fire cancelToken.cancel() to cancel request
-  Future<String> getThumbWithLimit(
+  Future<Uint8List> getThumbData(
     Entry entry,
     AppState state,
     CancelToken cancelToken,
@@ -146,9 +147,17 @@ class CacheManager {
     FileStat res = await entryFile.stat();
     if (cancelToken?.cancelError != null) return null;
 
+    Uint8List thumbData;
+
     // file already downloaded
     if (res.type != FileSystemEntityType.notFound) {
-      return entryPath;
+      try {
+        thumbData = await entryFile.readAsBytes();
+      } catch (error) {
+        print(error);
+        return null;
+      }
+      return thumbData;
     }
 
     String transPath = _transDir() + '/' + Uuid().v4();
@@ -169,11 +178,15 @@ class CacheManager {
 
       // rename
       await File(transPath).rename(entryPath);
+      if (cancelToken?.cancelError != null) return null;
+
+      // read data
+      thumbData = await entryFile.readAsBytes();
     } catch (error) {
       // print(error);
       return null;
     }
-    return entryPath;
+    return thumbData;
   }
 
   List<Task> tasks = [];
@@ -190,16 +203,24 @@ class CacheManager {
     }
   }
 
-  Future<String> _getPhoto(Entry entry, AppState state) async {
+  Future<Uint8List> _getPhoto(Entry entry, AppState state) async {
     String entryPath = _imageDir() + entry.hash;
     String transPath = _transDir() + '/' + Uuid().v4();
     File entryFile = File(entryPath);
 
     FileStat res = await entryFile.stat();
 
+    Uint8List imageData;
+
     // file already downloaded
     if (res.type != FileSystemEntityType.notFound) {
-      return entryPath;
+      try {
+        imageData = await entryFile.readAsBytes();
+      } catch (error) {
+        print(error);
+        return null;
+      }
+      return imageData;
     }
 
     final ep = 'media/${entry.hash}';
@@ -212,10 +233,13 @@ class CacheManager {
 
       // rename
       await File(transPath).rename(entryPath);
+
+      // read data
+      imageData = await entryFile.readAsBytes();
     } catch (error) {
       print(error);
       return null;
     }
-    return entryPath;
+    return imageData;
   }
 }
