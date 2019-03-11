@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_redux/flutter_redux.dart';
 import 'package:outline_material_icons/outline_material_icons.dart';
 
 import '../user/user.dart';
 import '../files/file.dart';
 import '../redux/redux.dart';
 import '../files/fileRow.dart';
+import '../photos/backup.dart';
 import '../photos/photos.dart';
 import '../files/backupView.dart';
 import '../device/myStation.dart';
@@ -87,6 +89,11 @@ class _BottomNavigationState extends State<BottomNavigation>
   int _currentIndex = 0;
   BottomNavigationBarType _type = BottomNavigationBarType.fixed;
   List<NavigationIconView> _navigationViews;
+  BackupWorker backupWorker;
+  startBackup(AppState state) async {
+    backupWorker = BackupWorker(state.apis);
+    backupWorker.start().catchError(print);
+  }
 
   @override
   void initState() {
@@ -137,6 +144,14 @@ class _BottomNavigationState extends State<BottomNavigation>
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    backupWorker.abort();
+    // Intended for applications with a dark background.
+    // SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final BottomNavigationBar botNavBar = BottomNavigationBar(
       items: _navigationViews
@@ -151,10 +166,16 @@ class _BottomNavigationState extends State<BottomNavigation>
         });
       },
     );
-
-    return Scaffold(
-      body: Center(child: _navigationViews[_currentIndex].view()),
-      bottomNavigationBar: botNavBar,
+    return StoreConnector<AppState, AppState>(
+      onInit: (store) => startBackup(store.state),
+      onDispose: (store) => {},
+      converter: (store) => store.state,
+      builder: (context, state) {
+        return Scaffold(
+          body: Center(child: _navigationViews[_currentIndex].view()),
+          bottomNavigationBar: botNavBar,
+        );
+      },
     );
   }
 }

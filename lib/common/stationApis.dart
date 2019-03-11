@@ -283,7 +283,7 @@ class Apis {
     return writeDir(
       'drives/${args['driveUUID']}/dirs/${args['dirUUID']}/entries',
       FormData.from({
-        args['fileName']: jsonEncode(args['formDataOptions']),
+        args['fileName']: args['file'],
       }),
     );
   }

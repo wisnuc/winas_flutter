@@ -1,12 +1,15 @@
 import 'dart:io';
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 import 'package:async/async.dart';
 import 'package:crypto/crypto.dart';
+import 'package:crypto/src/digest_sink.dart';
 import 'package:device_info/device_info.dart';
 import 'package:synchronized/synchronized.dart';
+import 'package:flutter_redux/flutter_redux.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:photo_manager/photo_manager.dart';
 
@@ -14,136 +17,17 @@ import '../redux/redux.dart';
 import '../common/cache.dart';
 import '../common/stationApis.dart';
 
-enum Status { pending, running, finished }
+enum Status { idle, running, failed, finished }
 
-Future<Uint8List> getThumbAsync(
-    Entry entry, AppState state, CancelToken cancelToken) async {
-  final cm = await CacheManager.getInstance();
-  final Uint8List thumbData = await cm.getThumbData(entry, state, cancelToken);
-
-  return thumbData;
-}
-
-void getThumbCallback(
-    Entry entry, AppState state, CancelToken cancelToken, Function callback) {
-  getThumbAsync(entry, state, cancelToken)
-      .then((value) => callback(null, value))
-      .catchError((error) => callback(error, null));
-}
-
-class Task {
-  Status status = Status.pending;
-
-  final Function onFinished;
-  Task(this.onFinished);
-
-  run() {
-    status = Status.running;
-  }
-
-  abort() {
-    status = Status.finished;
-    this.onFinished('Abort', null);
-  }
-
-  error(error) {
-    status = Status.finished;
-    this.onFinished(error, null);
-  }
-
-  finish(value) {
-    if (this.isFinished) return;
-    status = Status.finished;
-    this.onFinished(null, value);
-  }
-
-  bool get isPending => status == Status.pending;
-  bool get isRunning => status == Status.running;
-  bool get isFinished => status == Status.finished;
-}
-
-class ThumbTask extends Task {
-  final AppState state;
-  final Entry entry;
-  final CancelToken cancelToken = CancelToken();
-
-  ThumbTask(
-    this.entry,
-    this.state,
-    Function onFinished,
-  ) : super(onFinished);
-
-  Future getSrc() async {}
-
-  @override
-  run() {
-    super.run();
-    getThumbCallback(entry, state, cancelToken, (err, value) {
-      if (err != null) {
-        this.error(err);
-      } else {
-        this.finish(value);
-      }
-    });
-  }
-
-  @override
-  abort() {
-    if (this.isFinished) return;
-    cancelToken?.cancel();
-    super.abort();
-  }
-}
-
-class TaskManager {
-  final List<ThumbTask> thumbTaskQueue = [];
-  final int thumbTaskLimit = 8;
-
-  // keep singleton
-  static TaskManager _instance;
-
-  static TaskManager getInstance() {
-    if (_instance == null) {
-      _instance = TaskManager._();
-    }
-    return _instance;
-  }
-
-  TaskManager._();
-
-  ThumbTask createThumbTask(Entry entry, AppState state, Function callback) {
-    final Function onFinished = (error, value) {
-      callback(error, value);
-      // schedule in next event-loop iteration
-      Future.delayed(Duration.zero).then((v) => schedule());
-    };
-
-    final task = ThumbTask(entry, state, onFinished);
-    thumbTaskQueue.add(task);
-    schedule();
-    return task;
-  }
-
-  schedule() {
-    // remove finished
-    thumbTaskQueue.removeWhere((t) => t.isFinished);
-
-    // calc number of task left to run
-    int freeNum =
-        thumbTaskLimit - thumbTaskQueue.where((t) => t.isRunning).length;
-
-    if (freeNum > 0) {
-      thumbTaskQueue.where((t) => t.isPending).take(freeNum).forEach((t) {
-        t.run();
-      });
-    }
-  }
-}
-
-class Backup {
+class BackupWorker {
   Apis apis;
-  Backup(this.apis);
-  String machineId = '';
+  BackupWorker(this.apis);
+  String machineId;
+  String deviceName;
+  CancelToken cancelToken;
+  Status status = Status.idle;
+  int total = 0;
+  int finished = 0;
 
   /// get all local photos and videos
   Future<List<AssetEntity>> getAssetList() async {
@@ -159,23 +43,49 @@ class Backup {
     return file.readAsBytes();
   }
 
-  /// calc sha256 of file
-  Future<String> hash(List<int> data) async {
-    final digest = sha256.convert(data);
-    return digest.toString();
+  /// calc sha256 of file, callback version
+  hash(File file, Function callback) {
+    final ds = DigestSink();
+    ByteConversionSink value = sha256.startChunkedConversion(ds);
+
+    Stream<List<int>> inputStream = file.openRead();
+
+    inputStream.listen((List<int> bytes) {
+      value.add(bytes);
+    }, onDone: () {
+      value.close();
+      Digest digest = ds.value;
+      callback(null, digest.toString());
+    }, onError: (e) {
+      callback(e, null);
+    });
+  }
+
+  /// async version of hash file
+  hashAsync(File file) async {
+    Completer c = Completer();
+    hash(file, (error, value) {
+      if (error != null) {
+        c.completeError(error);
+      } else {
+        c.complete(value);
+      }
+    });
+    return c.future;
   }
 
   Future getMachineId() async {
     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-    String model;
     if (Platform.isIOS) {
       IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
-      model = iosInfo.name;
+      deviceName = iosInfo.name;
+      machineId = iosInfo.identifierForVendor;
     } else {
       AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+      deviceName = androidInfo.model;
+      machineId = androidInfo.androidId;
     }
-
-    return '';
+    print('deviceName:$deviceName\n machineId:$machineId');
   }
 
   Future<Drive> getBackupDrive() async {
@@ -185,12 +95,43 @@ class Backup {
       res.data.map((drive) => Drive.fromMap(drive)),
     );
 
-    Drive backupDrive = drives.firstWhere((d) => d.client.id == machineId);
+    Drive backupDrive = drives.firstWhere(
+      (d) => d?.client?.id == machineId,
+      orElse: () => null,
+    );
+
+    return backupDrive;
+  }
+
+  Future<Entry> getPhotosDir(Drive backupDrive) async {
+    final uuid = backupDrive.uuid;
+    final listNav = await apis.req('listNavDir', {
+      'driveUUID': uuid,
+      'dirUUID': uuid,
+    });
+    final currentNode = Node(
+      name: 'Backup',
+      driveUUID: uuid,
+      dirUUID: uuid,
+      tag: 'backup',
+      location: 'backup',
+    );
+    List<Entry> rawEntries = List.from(listNav.data['entries']
+        .map((entry) => Entry.mixNode(entry, currentNode)));
+
+    final photosDir =
+        rawEntries.firstWhere((e) => e.name == '照片', orElse: () => null);
+    return photosDir;
+  }
+
+  Future<Entry> getDir() async {
+    Drive backupDrive = await getBackupDrive();
+
     if (backupDrive == null) {
       // create backupDrive
       final args = {
         'op': 'backup',
-        'label': machineId,
+        'label': deviceName,
         'client': {
           'id': machineId,
           'status': 'Idle',
@@ -201,19 +142,83 @@ class Backup {
       };
 
       await apis.req('createDrives', args);
+
+      // retry get backupDrive
+      backupDrive = await getBackupDrive();
     }
 
-    return backupDrive;
+    assert(backupDrive is Drive);
+
+    Entry photosDir = await getPhotosDir(backupDrive);
+
+    if (photosDir == null) {
+      // make backup root directory
+      await apis.req('mkdir', {
+        'dirname': '照片',
+        'dirUUID': backupDrive.uuid,
+        'driveUUID': backupDrive.uuid,
+      });
+
+      // retry getPhotosDir
+      photosDir = await getPhotosDir(backupDrive);
+    }
+
+    return photosDir;
   }
 
-  /// upload file
-  upload() async {
-    final args = {
-      'driveUUID': 'driveUUID',
-      'dirUUID': 'driveUUID',
-      'fileName': 'driveUUID',
-      'formDataOptions': {},
+  /// upload single photo to target dir
+  Future upload(Entry dir, File photo) async {
+    final fileName = photo.path.split('/').last;
+    final sha256Value = await hashAsync(photo);
+    final FileStat stat = await photo.stat();
+
+    final formDataOptions = {
+      'op': 'newfile',
+      'size': stat.size,
+      'sha256': sha256Value,
+      'bctime': stat.modified.millisecondsSinceEpoch,
+      'bmtime': stat.modified.millisecondsSinceEpoch,
     };
-    await apis.upload(args);
+    final args = {
+      'driveUUID': dir.pdrv,
+      'dirUUID': dir.uuid,
+      'fileName': fileName,
+      'file': UploadFileInfo(photo, jsonEncode(formDataOptions)),
+    };
+
+    print(photo.path);
+
+    print(args);
+    cancelToken = CancelToken();
+    await apis.upload(args, cancelToken: cancelToken);
+  }
+
+  Future<void> start() async {
+    status = Status.running;
+    await getMachineId();
+
+    final Entry entry = await getDir();
+
+    assert(entry is Entry);
+    List<AssetEntity> assetList = await getAssetList();
+    total = assetList.length;
+
+    for (AssetEntity entity in assetList) {
+      if (status == Status.running) {
+        File file = await entity.file;
+        await upload(entry, file);
+        print('backup photo: ${file.path}');
+        finished += 1;
+      }
+    }
+
+    status = Status.finished;
+  }
+
+  void abort() {
+    if (status != Status.finished) {
+      cancelToken?.cancel();
+      status = Status.failed;
+    }
   }
 }
