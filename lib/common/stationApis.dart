@@ -172,6 +172,15 @@ class Apis {
           {'metadata': 'true'},
         );
         break;
+
+      case 'drives':
+        r = tget('drives', null);
+        break;
+
+      case 'createDrives':
+        r = tpost('drives', args);
+        break;
+
       case 'space':
         r = tget('boot/space', null);
         break;
@@ -257,5 +266,25 @@ class Apis {
         onProgress: (a, b) => onProgress != null ? onProgress(a, b) : null,
       );
     }
+  }
+
+  // let formDataOptions = {
+  //   op: 'newfile',
+  //   size: p.end - p.start + 1,
+  //   sha256: p.sha,
+  //   bctime: stat.birthtime.getTime(),
+  //   bmtime: stat.mtime.getTime()
+  // }
+
+  upload(Map<String, dynamic> args,
+      {Function onProgress, CancelToken cancelToken}) async {
+    // return Future.delayed(Duration(seconds: 1));
+
+    return writeDir(
+      'drives/${args['driveUUID']}/dirs/${args['dirUUID']}/entries',
+      FormData.from({
+        args['fileName']: jsonEncode(args['formDataOptions']),
+      }),
+    );
   }
 }
