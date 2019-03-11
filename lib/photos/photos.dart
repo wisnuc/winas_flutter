@@ -67,7 +67,8 @@ class _PhotosState extends State<Photos> {
       });
 
       List<AssetPathEntity> pathList = await PhotoManager.getAssetPathList();
-      final localAssetList = await pathList[0].assetList;
+      List<AssetEntity> localAssetList = await pathList[0].assetList;
+      localAssetList = List.from(localAssetList.reversed);
 
       final List<Entry> allMedia = List.from(
         res.data.map((d) => Entry.fromSearch(d, state.drives)),
