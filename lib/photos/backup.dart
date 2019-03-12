@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
+import 'dart:isolate';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
@@ -18,6 +19,24 @@ import '../common/cache.dart';
 import '../common/stationApis.dart';
 
 enum Status { idle, running, failed, finished }
+
+/// Hash file in Isolate
+void isolateHash(SendPort sendPort) {
+  final port = ReceivePort();
+
+  // send current sendPort to caller
+  sendPort.send(port.sendPort);
+
+  // listen message from caller
+  port.listen((message) {
+    final filePath = message[0] as String;
+    final answerSend = message[1] as SendPort;
+    File file = File(filePath);
+    List<int> bytes = file.readAsBytesSync();
+    final digest = sha256.convert(bytes);
+    answerSend.send(digest.toString());
+  });
+}
 
 class BackupWorker {
   Apis apis;
@@ -183,16 +202,33 @@ class BackupWorker {
     return photosDir;
   }
 
+  Future<String> hashViaIsolate(String filePath) async {
+    final response = ReceivePort();
+    await Isolate.spawn(isolateHash, response.sendPort);
+
+    // sendPort from isolateHash
+    final sendPort = await response.first as SendPort;
+    final answer = ReceivePort();
+
+    // send filePath and sendPort(to get answer) to isolateHash
+    sendPort.send([filePath, answer.sendPort]);
+    final res = await answer.first as String;
+    return res;
+  }
+
   /// upload single photo to target dir
   Future upload(Entry dir, File photo) async {
     final fileName = photo.path.split('/').last;
     List<int> bytes = await photo.readAsBytes();
     final time = DateTime.now().millisecondsSinceEpoch;
     print('${photo.path} hash start');
-    final sha256Value = await hashWithThrottle(photo, bytes);
+    // final sha256Value = await hashWithThrottle(photo, bytes);
+    final sha256Value = await hashViaIsolate(photo.path);
+
     print(
         '${photo.path} hash finished ${DateTime.now().millisecondsSinceEpoch - time}');
 
+    if (status != Status.running) return;
     final FileStat stat = await photo.stat();
 
     final formDataOptions = {
@@ -209,9 +245,6 @@ class BackupWorker {
       'file': UploadFileInfo.fromBytes(bytes, jsonEncode(formDataOptions)),
     };
 
-    print(photo.path);
-
-    print(args);
     cancelToken = CancelToken();
     await apis.upload(args, cancelToken: cancelToken);
   }
@@ -229,6 +262,7 @@ class BackupWorker {
     for (AssetEntity entity in assetList) {
       if (status == Status.running) {
         File file = await entity.file;
+
         await upload(entry, file);
         print('backup photo: ${file.path}');
         finished += 1;
