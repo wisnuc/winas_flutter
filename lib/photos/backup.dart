@@ -12,8 +12,6 @@ import '../common/stationApis.dart';
 
 enum Status { idle, running, failed, finished }
 
-/// Hash file in Isolate
-
 /// upload single photo to target dir in Isolate
 void isolateUpload(SendPort sendPort) {
   final port = ReceivePort();
@@ -61,9 +59,7 @@ void isolateUpload(SendPort sendPort) {
       'file': UploadFileInfo.fromBytes(bytes, jsonEncode(formDataOptions)),
     };
 
-    CancelToken cancelToken = CancelToken();
-
-    apis.upload(args, cancelToken, (error, value) {
+    apis.upload(args, (error, value) {
       if (error != null) {
         answerSend.send(error.toString());
       } else {

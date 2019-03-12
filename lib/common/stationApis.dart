@@ -281,8 +281,9 @@ class Apis {
     );
   }
 
-  upload(Map<String, dynamic> args, cancelToken, callback) {
-    uploadAsync(args, cancelToken: cancelToken)
+  upload(Map<String, dynamic> args, callback,
+      {Function onProgress, CancelToken cancelToken}) {
+    uploadAsync(args, cancelToken: cancelToken, onProgress: onProgress)
         .then((value) => callback(null, value))
         .catchError((error) => callback(error, null));
   }
