@@ -43,6 +43,22 @@ class BackupWorker {
     return file.readAsBytes();
   }
 
+  /// hash file with throttle
+  Future<String> hashWithThrottle(File file, List<int> bytes) async {
+    final chunkSize = 1024;
+    final ds = DigestSink();
+    ByteConversionSink value = sha256.startChunkedConversion(ds);
+    print('size ${bytes.length}');
+    for (int i = 0; i < bytes.length; i += chunkSize) {
+      await Future.delayed(Duration.zero);
+      final end = i + chunkSize <= bytes.length ? i + chunkSize : bytes.length;
+      value.add(bytes.sublist(i, end));
+    }
+    value.close();
+    Digest digest = ds.value;
+    return digest.toString();
+  }
+
   /// calc sha256 of file, callback version
   hash(File file, Function callback) {
     final ds = DigestSink();
@@ -51,6 +67,7 @@ class BackupWorker {
     Stream<List<int>> inputStream = file.openRead();
 
     inputStream.listen((List<int> bytes) {
+      print('value.add ${bytes.length}');
       value.add(bytes);
     }, onDone: () {
       value.close();
@@ -169,7 +186,13 @@ class BackupWorker {
   /// upload single photo to target dir
   Future upload(Entry dir, File photo) async {
     final fileName = photo.path.split('/').last;
-    final sha256Value = await hashAsync(photo);
+    List<int> bytes = await photo.readAsBytes();
+    final time = DateTime.now().millisecondsSinceEpoch;
+    print('${photo.path} hash start');
+    final sha256Value = await hashWithThrottle(photo, bytes);
+    print(
+        '${photo.path} hash finished ${DateTime.now().millisecondsSinceEpoch - time}');
+
     final FileStat stat = await photo.stat();
 
     final formDataOptions = {
@@ -183,7 +206,7 @@ class BackupWorker {
       'driveUUID': dir.pdrv,
       'dirUUID': dir.uuid,
       'fileName': fileName,
-      'file': UploadFileInfo(photo, jsonEncode(formDataOptions)),
+      'file': UploadFileInfo.fromBytes(bytes, jsonEncode(formDataOptions)),
     };
 
     print(photo.path);
