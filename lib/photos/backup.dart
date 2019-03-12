@@ -38,6 +38,66 @@ void isolateHash(SendPort sendPort) {
   });
 }
 
+/// upload single photo to target dir in Isolate
+void isolateUpload(SendPort sendPort) {
+  final port = ReceivePort();
+
+  // send current sendPort to caller
+  sendPort.send(port.sendPort);
+
+  // listen message from caller
+  port.listen((message) {
+    final entryJson = message[0] as String;
+    final filePath = message[1] as String;
+    final apisJson = message[2] as String;
+    final isCloud = message[3] as bool;
+    final answerSend = message[4] as SendPort;
+
+    final dir = Entry.fromMap(jsonDecode(entryJson));
+    final photo = File(filePath);
+    final apis = Apis.fromMap(jsonDecode(apisJson));
+
+    // set network status
+    apis.isCloud = isCloud;
+
+    // Entry dir, File photo
+    final fileName = photo.path.split('/').last;
+    List<int> bytes = photo.readAsBytesSync();
+    final time = DateTime.now().millisecondsSinceEpoch;
+    print('${photo.path} hash start');
+    final digest = sha256.convert(bytes);
+    final sha256Value = digest.toString();
+    print(
+        '${photo.path} hash finished ${DateTime.now().millisecondsSinceEpoch - time}');
+
+    final FileStat stat = photo.statSync();
+
+    final formDataOptions = {
+      'op': 'newfile',
+      'size': stat.size,
+      'sha256': sha256Value,
+      'bctime': stat.modified.millisecondsSinceEpoch,
+      'bmtime': stat.modified.millisecondsSinceEpoch,
+    };
+    final args = {
+      'driveUUID': dir.pdrv,
+      'dirUUID': dir.uuid,
+      'fileName': fileName,
+      'file': UploadFileInfo.fromBytes(bytes, jsonEncode(formDataOptions)),
+    };
+
+    CancelToken cancelToken = CancelToken();
+
+    apis.upload(args, cancelToken, (error, value) {
+      if (error != null) {
+        answerSend.send([error.toString(), null]);
+      } else {
+        answerSend.send([null, value]);
+      }
+    });
+  });
+}
+
 class BackupWorker {
   Apis apis;
   BackupWorker(this.apis);
@@ -216,6 +276,32 @@ class BackupWorker {
     return res;
   }
 
+  Future<void> uploadViaIsolate(Entry dir, File photo) async {
+    final response = ReceivePort();
+
+    await Isolate.spawn(isolateUpload, response.sendPort);
+
+    // sendPort from isolateHash
+    final sendPort = await response.first as SendPort;
+    final answer = ReceivePort();
+
+    // send filePath and sendPort(to get answer) to isolateHash
+    // final entryJson = message[0] as String;
+    // final filePath = message[1] as String;
+    // final apisJson = message[2] as String;
+    // final isCloud = message[3] as bool;
+    // final answerSend = message[4] as SendPort;
+    sendPort.send([
+      dir.toString(),
+      photo.path,
+      apis.toString(),
+      apis.isCloud,
+      answer.sendPort
+    ]);
+    final res = await answer.first as List;
+    if (res[0] != null) throw res[0];
+  }
+
   /// upload single photo to target dir
   Future upload(Entry dir, File photo) async {
     final fileName = photo.path.split('/').last;
@@ -246,7 +332,7 @@ class BackupWorker {
     };
 
     cancelToken = CancelToken();
-    await apis.upload(args, cancelToken: cancelToken);
+    // await apis.upload(args, cancelToken: cancelToken);
   }
 
   Future<void> start() async {
@@ -263,7 +349,7 @@ class BackupWorker {
       if (status == Status.running) {
         File file = await entity.file;
 
-        await upload(entry, file);
+        await uploadViaIsolate(entry, file);
         print('backup photo: ${file.path}');
         finished += 1;
       }

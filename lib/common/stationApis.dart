@@ -68,19 +68,17 @@ class Apis {
   }
 
   /// request with token
-  tpost(String ep, dynamic args) {
+  tpost(String ep, dynamic args, {CancelToken cancelToken}) {
     assert(token != null);
-    if (isCloud ?? true) return command('POST', ep, args);
+    if (isCloud ?? true)
+      return command('POST', ep, args, cancelToken: cancelToken);
     dio.options.headers['Authorization'] = 'JWT $lanToken';
-    return dio.post('$lanAdrress/$ep', data: args);
+    return dio.post('$lanAdrress/$ep', data: args, cancelToken: cancelToken);
   }
 
   /// request via cloud
-  command(
-    String verb,
-    String ep,
-    dynamic data, // qs, body or formdata
-  ) {
+  command(String verb, String ep, dynamic data, // qs, body or formdata
+      {CancelToken cancelToken}) {
     assert(token != null);
     assert(cookie != null);
     bool isFormData = data is FormData;
@@ -99,23 +97,27 @@ class Apis {
       };
       final qsData = Uri.encodeQueryComponent(jsonEncode(qs));
       final newUrl = '$url2?data=$qsData';
-      return dio.post(newUrl, data: data);
+      return dio.post(newUrl, data: data, cancelToken: cancelToken);
     }
 
     // normal pipe-json
-    return dio.post(url, data: {
-      'verb': verb,
-      'urlPath': '/$ep',
-      'body': isGet ? null : data,
-      'params': isGet ? data : null,
-    });
+    return dio.post(
+      url,
+      data: {
+        'verb': verb,
+        'urlPath': '/$ep',
+        'body': isGet ? null : data,
+        'params': isGet ? data : null,
+      },
+      cancelToken: cancelToken,
+    );
   }
 
   ///  handle formdata
-  writeDir(String ep, FormData formData) {
+  writeDir(String ep, FormData formData, {CancelToken cancelToken}) {
     return (isCloud ?? true)
-        ? command('POST', ep, formData)
-        : tpost(ep, formData);
+        ? command('POST', ep, formData, cancelToken: cancelToken)
+        : tpost(ep, formData, cancelToken: cancelToken);
   }
 
   Future<bool> isMobile() async {
@@ -268,23 +270,20 @@ class Apis {
     }
   }
 
-  // let formDataOptions = {
-  //   op: 'newfile',
-  //   size: p.end - p.start + 1,
-  //   sha256: p.sha,
-  //   bctime: stat.birthtime.getTime(),
-  //   bmtime: stat.mtime.getTime()
-  // }
-
-  upload(Map<String, dynamic> args,
+  Future uploadAsync(Map<String, dynamic> args,
       {Function onProgress, CancelToken cancelToken}) async {
-    // return Future.delayed(Duration(seconds: 1));
-
     return writeDir(
       'drives/${args['driveUUID']}/dirs/${args['dirUUID']}/entries',
       FormData.from({
         args['fileName']: args['file'],
       }),
+      cancelToken: cancelToken,
     );
+  }
+
+  upload(Map<String, dynamic> args, cancelToken, callback) {
+    uploadAsync(args, cancelToken: cancelToken)
+        .then((value) => callback(null, value))
+        .catchError((error) => callback(error, null));
   }
 }
