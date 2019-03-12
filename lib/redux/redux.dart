@@ -298,7 +298,7 @@ class Entry {
     this.hmtime = prettyDate(this.mtime);
     this.location = m['location'];
     this.pdir = m['pdir'];
-    this.pdir = m['pdrv'];
+    this.pdrv = m['pdrv'];
     this.metadata = (m['metadata'] == 'null' || m['metadata'] == null)
         ? null
         : Metadata.fromMap(m['metadata'] is String
