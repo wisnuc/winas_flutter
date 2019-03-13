@@ -237,7 +237,7 @@ class Apis {
     return r;
   }
 
-  download(String ep, Map<String, dynamic> qs, String downloadPath,
+  Future download(String ep, Map<String, dynamic> qs, String downloadPath,
       {Function onProgress, CancelToken cancelToken}) async {
     // download via cloud pipe
     if (isCloud ?? true) {

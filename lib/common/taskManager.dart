@@ -78,10 +78,11 @@ class ThumbTask extends Task {
     });
   }
 
+  /// only abort pending task
   @override
   abort() {
-    if (this.isFinished) return;
-    cancelToken?.cancel();
+    if (this.isFinished || this.isRunning) return;
+    // cancelToken?.cancel();
     super.abort();
   }
 }
@@ -110,7 +111,7 @@ class TaskManager {
     };
 
     final task = ThumbTask(entry, state, onFinished);
-    thumbTaskQueue.add(task);
+    thumbTaskQueue.insert(0, task);
     schedule();
     return task;
   }

@@ -107,7 +107,6 @@ class _LoginPageState extends State<LoginPage> {
         });
       } else {
         print(data);
-
         showSnackBar(ctx, '微信登录失败');
       }
     });
