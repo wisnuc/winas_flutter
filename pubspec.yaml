@@ -29,7 +29,6 @@ dependencies:
   uuid: 2.0.0-rc1
   url_launcher: 4.2.0+3
 
-
   shared_preferences: 0.4.3
   outline_material_icons: 0.1.0
   async: 2.0.8
@@ -37,8 +36,6 @@ dependencies:
   device_info: 0.3.0
 
   fluwx: 0.5.7
-
-  flutter_blue: 0.4.2
   
   image_picker: 0.4.12+1
   image_cropper: 1.0.0
@@ -62,6 +59,11 @@ dependencies:
   # to use draggable-scrollbar with sliver list
   draggable_scrollbar:
     git: https://github.com/juncaixinchi/flutter-draggable-scrollbar.git
+
+  # flutter_blue: 0.4.2
+  # fix BLE connection bug
+  flutter_blue:
+    git: https://github.com/juncaixinchi/flutter_blue.git
 
 dev_dependencies:
   flutter_test:
