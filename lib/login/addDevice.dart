@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
@@ -14,6 +15,7 @@ class AddDevice extends StatefulWidget {
 class _AddDeviceState extends State<AddDevice> {
   Request request = Request();
   StreamSubscription<ScanResult> scanSubscription;
+  StreamSubscription<BluetoothDeviceState> deviceConnection;
   ScrollController myScrollController = ScrollController();
   @override
   void initState() {
@@ -25,14 +27,18 @@ class _AddDeviceState extends State<AddDevice> {
   void dispose() {
     super.dispose();
     scanSubscription.cancel();
+
+    /// Disconnect from device
+    deviceConnection.cancel();
   }
 
   List<ScanResult> results = [];
 
   startBLESearch() async {
     FlutterBlue flutterBlue = FlutterBlue.instance;
+    scanSubscription?.cancel();
     scanSubscription = flutterBlue.scan().listen((scanResult) {
-      if (!scanResult.device.name.startsWith('Wisnuc-')) return;
+      if (!scanResult.device.name.startsWith('W')) return;
       final id = scanResult.device.id;
       int index = results.indexWhere((res) => res.device.id == id);
       if (index > -1) return;
@@ -46,9 +52,28 @@ class _AddDeviceState extends State<AddDevice> {
     });
   }
 
+  connect(ScanResult scanResult) {
+    final device = scanResult.device;
+    FlutterBlue flutterBlue = FlutterBlue.instance;
+    deviceConnection?.cancel();
+    deviceConnection =
+        flutterBlue.connect(device, autoConnect: false).listen((s) async {
+      print(s);
+      if (s == BluetoothDeviceState.connected) {
+        // device is connected, do something
+        List<BluetoothService> services = await device.discoverServices();
+        services.forEach((service) {
+          // do something with service
+          print(service);
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Material(
+    return Container(
+      color: Colors.white,
       child: DraggableScrollbar.semicircle(
         controller: myScrollController,
         child: CustomScrollView(
@@ -63,8 +88,12 @@ class _AddDeviceState extends State<AddDevice> {
               backgroundColor: Colors.white,
               brightness: Brightness.light,
               iconTheme: IconThemeData(color: Colors.black38),
-
+              // title: Text(
+              //   '发现设备2',
+              //   style: TextStyle(color: Colors.black87),
+              // ),
               flexibleSpace: FlexibleSpaceBar(
+                titlePadding: EdgeInsetsDirectional.only(start: 16, bottom: 16),
                 title: Text(
                   '发现设备',
                   style: TextStyle(color: Colors.black87),
@@ -80,7 +109,9 @@ class _AddDeviceState extends State<AddDevice> {
                   ScanResult scanResult = results[index];
                   return Material(
                     child: InkWell(
-                      onTap: () => {},
+                      onTap: () {
+                        connect(scanResult);
+                      },
                       child: Container(
                         height: 64,
                         padding: EdgeInsets.all(16),
