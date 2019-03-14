@@ -30,14 +30,21 @@ class _AssetItemState extends State<AssetItem> {
     getThumbData();
   }
 
+  // TODO: open photo
+  onTap(BuildContext context) {}
   @override
   Widget build(BuildContext context) {
     return Container(
-      child: thumbData == null
-          ? Container(
-              color: Colors.grey[200],
-            )
-          : Image.memory(thumbData, fit: BoxFit.cover),
+      child: Material(
+        child: InkWell(
+          onTap: () => onTap(context),
+          child: thumbData == null
+              ? Container(
+                  color: Colors.grey[200],
+                )
+              : Image.memory(thumbData, fit: BoxFit.cover),
+        ),
+      ),
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:fluwx/fluwx.dart' as fluwx;
 import 'package:flutter_redux/flutter_redux.dart';
 
 import './registry.dart';
+import './addDevice.dart';
 import './stationLogin.dart';
 import './accountLogin.dart';
 import '../redux/redux.dart';
@@ -140,6 +141,19 @@ class _LoginPageState extends State<LoginPage> {
                 );
               },
             ),
+            FlatButton(
+              child: Text("BLE"),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) {
+                      return AddDevice();
+                    },
+                  ),
+                );
+              },
+            )
           ],
         ),
         body: StoreConnector<AppState, Function>(
