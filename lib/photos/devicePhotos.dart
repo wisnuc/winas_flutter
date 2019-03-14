@@ -4,6 +4,7 @@ import 'package:flutter_redux/flutter_redux.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 
+import './backup.dart';
 import '../redux/redux.dart';
 
 class AssetItem extends StatefulWidget {
@@ -42,8 +43,9 @@ class _AssetItemState extends State<AssetItem> {
 }
 
 class DevicePhotos extends StatefulWidget {
-  DevicePhotos({Key key, this.album}) : super(key: key);
+  DevicePhotos({Key key, this.album, this.backupWorker}) : super(key: key);
   final LocalAlbum album;
+  final BackupWorker backupWorker;
   @override
   _DevicePhotosState createState() => _DevicePhotosState();
 }
@@ -63,11 +65,11 @@ class _DevicePhotosState extends State<DevicePhotos> {
   @override
   Widget build(BuildContext context) {
     final list = widget.album.items;
-    return StoreConnector<AppState, AppState>(
+    return StoreConnector<AppState, dynamic>(
       onInit: (store) => {},
       onDispose: (store) => {},
-      converter: (store) => store.state,
-      builder: (ctx, state) {
+      converter: (store) => store,
+      builder: (ctx, store) {
         return Scaffold(
           appBar: AppBar(
             title: Text(

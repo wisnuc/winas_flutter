@@ -345,7 +345,7 @@ class Entry {
     this.pdrv = drive.uuid;
     this.location = drive.type ?? drive.tag;
 
-    this.hdate = this.metadata?.hdate ?? prettyDate(this.mtime, date: true);
+    this.hdate = this.metadata?.hdate ?? prettyDate(this.mtime, showDay: true);
   }
 
   Entry.mixNode(Map m, Node n) {
@@ -530,20 +530,24 @@ class EntrySort {
 
 class Config {
   bool gridView = false;
+  bool autoBackup;
 
-  Config({this.gridView});
+  Config({this.gridView = false, this.autoBackup});
   Config.combine(Config oldConfig, Config newConfig) {
     this.gridView = newConfig.gridView ?? oldConfig.gridView;
+    this.autoBackup = newConfig.autoBackup ?? oldConfig.autoBackup;
   }
 
   Config.fromMap(Map m) {
     this.gridView = m['gridView'];
+    this.autoBackup = m['autoBackup'];
   }
 
   @override
   String toString() {
     Map<String, dynamic> m = {
       'gridView': gridView,
+      'autoBackup': autoBackup,
     };
     return jsonEncode(m);
   }

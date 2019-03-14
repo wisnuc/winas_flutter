@@ -90,9 +90,14 @@ class _BottomNavigationState extends State<BottomNavigation>
   BottomNavigationBarType _type = BottomNavigationBarType.fixed;
   List<NavigationIconView> _navigationViews;
   BackupWorker backupWorker;
-  startBackup(AppState state) async {
+
+  startBackup(AppState state) {
     backupWorker = BackupWorker(state.apis);
-    backupWorker.start().catchError(print);
+
+    // start autoBackup
+    if (state.config.autoBackup == true) {
+      backupWorker.start();
+    }
   }
 
   @override
@@ -118,10 +123,7 @@ class _BottomNavigationState extends State<BottomNavigation>
         icon: Icon(OMIcons.photoLibrary),
         title: '相簿',
         nav: 'photos',
-        // view: () => Center(
-        //       child: Text('相簿'),
-        //     ),
-        view: () => Photos(),
+        view: () => Photos(backupWorker: backupWorker),
         color: Colors.indigo,
       ),
       NavigationIconView(
@@ -146,9 +148,7 @@ class _BottomNavigationState extends State<BottomNavigation>
   @override
   void dispose() {
     super.dispose();
-    backupWorker.abort();
-    // Intended for applications with a dark background.
-    // SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
+    backupWorker?.abort();
   }
 
   @override

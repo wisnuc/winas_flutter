@@ -184,7 +184,7 @@ class CacheManager {
       // read data
       thumbData = await entryFile.readAsBytes();
     } catch (error) {
-      // print(error);
+      print(error);
       return null;
     }
     return thumbData;

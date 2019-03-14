@@ -147,10 +147,11 @@ class _DetailState extends State<Detail> {
                         // cancel network monitor
                         store.state.apis.monitorCancel();
 
-                        // remove account, apis, device
+                        // remove account, apis, device, reset config
                         store.dispatch(LoginAction(null));
                         store.dispatch(UpdateApisAction(null));
                         store.dispatch(DeviceLoginAction(null));
+                        store.dispatch(UpdateConfigAction(Config()));
                       },
                   builder: (context, logout) {
                     return actionButton(

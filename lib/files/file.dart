@@ -446,7 +446,10 @@ class _FilesState extends State<Files> {
           StoreConnector<AppState, VoidCallback>(
             converter: (store) {
               return () => store.dispatch(UpdateConfigAction(
-                    Config(gridView: !store.state.config.gridView),
+                    Config.combine(
+                      store.state.config,
+                      Config(gridView: !store.state.config.gridView),
+                    ),
                   ));
             },
             builder: (context, callback) {
@@ -619,7 +622,10 @@ class _FilesState extends State<Files> {
         StoreConnector<AppState, VoidCallback>(
           converter: (store) {
             return () => store.dispatch(UpdateConfigAction(
-                  Config(gridView: !store.state.config.gridView),
+                  Config.combine(
+                    store.state.config,
+                    Config(gridView: !store.state.config.gridView),
+                  ),
                 ));
           },
           builder: (context, callback) {

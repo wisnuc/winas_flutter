@@ -4,6 +4,7 @@ import 'package:photo_manager/photo_manager.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 
+import './backup.dart';
 import './photoList.dart';
 import './devicePhotos.dart';
 import '../redux/redux.dart';
@@ -14,8 +15,8 @@ const mediaTypes =
 const videoTypes = 'RM.RMVB.WMV.AVI.MP4.3GP.MKV.MOV.FLV';
 
 class Photos extends StatefulWidget {
-  Photos({Key key}) : super(key: key);
-
+  Photos({Key key, this.backupWorker}) : super(key: key);
+  final BackupWorker backupWorker;
   @override
   _PhotosState createState() => new _PhotosState();
 }
@@ -132,6 +133,24 @@ class _PhotosState extends State<Photos> {
     }
   }
 
+  /// refresh per second
+  Future autoRefresh({bool isFirst = false}) async {
+    await Future.delayed(
+        isFirst ? Duration(milliseconds: 100) : Duration(seconds: 1));
+    if (this.mounted) {
+      if (!loading) {
+        setState(() {});
+      }
+      autoRefresh();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    autoRefresh(isFirst: true).catchError(print);
+  }
+
   List<Widget> renderSlivers() {
     return <Widget>[
       SliverPadding(
@@ -146,6 +165,8 @@ class _PhotosState extends State<Photos> {
           delegate: SliverChildBuilderDelegate(
             (BuildContext context, int index) {
               final album = albumList[index];
+              final worker = widget.backupWorker;
+              bool isBackuping = worker.isRunning && (album is LocalAlbum);
               return Container(
                 child: Material(
                   child: InkWell(
@@ -156,7 +177,10 @@ class _PhotosState extends State<Photos> {
                               if (album is Album) {
                                 return PhotoList(album: album);
                               } else if (album is LocalAlbum) {
-                                return DevicePhotos(album: album);
+                                return DevicePhotos(
+                                  album: album,
+                                  backupWorker: widget.backupWorker,
+                                );
                               }
                             },
                           ),
@@ -179,12 +203,18 @@ class _PhotosState extends State<Photos> {
                           Container(
                             padding: EdgeInsets.fromLTRB(0, 4, 0, 4),
                             width: double.infinity,
-                            child: Text(album.name),
+                            child: Text(
+                              isBackuping ? album.name + '-备份中' : album.name,
+                            ),
                           ),
                           Container(
                             padding: EdgeInsets.fromLTRB(0, 0, 0, 4),
                             width: double.infinity,
-                            child: Text(album.length.toString()),
+                            child: Text(
+                              isBackuping
+                                  ? worker.progress
+                                  : album.length.toString(),
+                            ),
                           ),
                         ],
                       ),
@@ -202,12 +232,12 @@ class _PhotosState extends State<Photos> {
 
   @override
   Widget build(BuildContext context) {
-    return StoreConnector<AppState, AppState>(
-      onInit: (store) =>
-          refresh(store.state, false).catchError((error) => print(error)),
+    return StoreConnector<AppState, dynamic>(
+      onInit: (store) => refresh(store.state, false).catchError(print),
       onDispose: (store) => {},
-      converter: (store) => store.state,
-      builder: (context, state) {
+      converter: (store) => store,
+      builder: (context, store) {
+        AppState state = store.state;
         return Scaffold(
           appBar: AppBar(
             elevation: 2.0, // shadow
@@ -215,6 +245,25 @@ class _PhotosState extends State<Photos> {
             backgroundColor: Colors.white,
             iconTheme: IconThemeData(color: Colors.black38),
             title: Text('相簿', style: TextStyle(color: Colors.black87)),
+            actions: <Widget>[
+              Switch(
+                activeColor: Colors.teal,
+                value: state.config.autoBackup == true,
+                onChanged: (value) {
+                  store.dispatch(UpdateConfigAction(
+                    Config(
+                      gridView: state.config.gridView,
+                      autoBackup: value,
+                    ),
+                  ));
+                  if (value == true) {
+                    widget.backupWorker.start();
+                  } else {
+                    widget.backupWorker.abort();
+                  }
+                },
+              )
+            ],
           ),
           body: loading
               ? Center(

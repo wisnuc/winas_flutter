@@ -29,7 +29,6 @@ dependencies:
   uuid: 2.0.0-rc1
   url_launcher: 4.2.0+3
 
-
   shared_preferences: 0.4.3
   outline_material_icons: 0.1.0
   async: 2.0.8
