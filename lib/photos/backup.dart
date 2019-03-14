@@ -292,7 +292,7 @@ class BackupWorker {
   /// Nexus 6P/照片/2019-02_03
   /// Nexus 6P/照片/2019-03
 
-  Future<List> getRemoteDirs(Entry rootDir) async {
+  Future<List<RemoteList>> getRemoteDirs(Entry rootDir) async {
     final res = await apis.req(
       'listNavDir',
       {'driveUUID': rootDir.pdrv, 'dirUUID': rootDir.uuid},
@@ -404,6 +404,41 @@ class BackupWorker {
     return hash;
   }
 
+  Future<void> uploadSingle(
+      AssetEntity entity, List<RemoteList> remoteDirs, Entry rootDir) async {
+    final time = DateTime.now().millisecondsSinceEpoch;
+
+    File file = await entity.file;
+
+    String filePath = file.path;
+    String name = filePath.split('/').last;
+    String id = entity.id;
+    final stat = await file.stat();
+    int mtime = stat.modified.millisecondsSinceEpoch;
+    print(
+        'before hash: $name, size: ${stat.size} ${DateTime.now().millisecondsSinceEpoch - time}');
+    String hash = await getHash('$id+$mtime', filePath);
+    print('after hash ${DateTime.now().millisecondsSinceEpoch - time}');
+    final photoEntry = PhotoEntry(id, name, hash, stat.size, mtime);
+
+    final targetDir = await getTargetDir(remoteDirs, photoEntry, rootDir);
+
+    // already backuped, continue next
+    if (targetDir == null) {
+      finished += 1;
+      print('backup ignore: ${file.path}');
+      return;
+    }
+    print(
+        'before upload: $name, size: ${stat.size} ${DateTime.now().millisecondsSinceEpoch - time}');
+    // upload photo
+    await uploadViaIsolate(targetDir, filePath, hash);
+
+    print(
+        'backup success: ${file.path} in ${DateTime.now().millisecondsSinceEpoch - time} ms');
+    finished += 1;
+  }
+
   Future<void> startAsync() async {
     status = Status.running;
     await getMachineId();
@@ -417,37 +452,11 @@ class BackupWorker {
 
     for (AssetEntity entity in assetList) {
       if (status == Status.running) {
-        final time = DateTime.now().millisecondsSinceEpoch;
-
-        File file = await entity.file;
-
-        String filePath = file.path;
-        String name = filePath.split('/').last;
-        String id = entity.id;
-        final stat = await file.stat();
-        int mtime = stat.modified.millisecondsSinceEpoch;
-        print(
-            'before hash: $name, size: ${stat.size} ${DateTime.now().millisecondsSinceEpoch - time}');
-        String hash = await getHash('$id+$mtime', filePath);
-        print('after hash ${DateTime.now().millisecondsSinceEpoch - time}');
-        final photoEntry = PhotoEntry(id, name, hash, stat.size, mtime);
-
-        final targetDir = await getTargetDir(remoteDirs, photoEntry, rootDir);
-
-        // already backuped, continue next
-        if (targetDir == null) {
-          finished += 1;
-          print('backup ignore: ${file.path}');
-          continue;
+        try {
+          await uploadSingle(entity, remoteDirs, rootDir);
+        } catch (e) {
+          print(e);
         }
-        print(
-            'before upload: $name, size: ${stat.size} ${DateTime.now().millisecondsSinceEpoch - time}');
-        // upload photo
-        await uploadViaIsolate(targetDir, filePath, hash);
-
-        print(
-            'backup success: ${file.path} in ${DateTime.now().millisecondsSinceEpoch - time} ms');
-        finished += 1;
       }
     }
 
