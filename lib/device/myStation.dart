@@ -147,6 +147,8 @@ class _MyStationState extends State<MyStation> {
                 100)
             .round();
 
+    countTotal = countTotal == 0 ? 1 : countTotal;
+
     int videoSize = max(videoRaw / countTotal, 3.0).ceil();
     int imageSize = max(imageRaw / countTotal, 3.0).ceil();
     int audioSize = max(audioRaw / countTotal, 3.0).ceil();

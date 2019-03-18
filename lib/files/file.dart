@@ -810,7 +810,7 @@ class _FilesState extends State<Files> {
                   right: 0,
                   bottom: 0,
                   child: RefreshIndicator(
-                    onRefresh: () => refresh(state),
+                    onRefresh: loading ? null : () => refresh(state),
                     child: _error != null
                         ? Center(
                             child: Column(
@@ -847,84 +847,70 @@ class _FilesState extends State<Files> {
                               ],
                             ),
                           )
-                        : entries.length == 0 && !loading
-                            ? Center(
-                                child: Text('空文件夹'),
-                              )
-                            : Container(
-                                color: Colors.grey[200],
-                                child: DraggableScrollbar.semicircle(
-                                  controller: myScrollController,
-                                  child: CustomScrollView(
-                                    key: Key(entries.length.toString()),
-                                    controller: myScrollController,
-                                    physics: AlwaysScrollableScrollPhysics(),
-                                    slivers: <Widget>[
-                                      // file nav view
-                                      SliverFixedExtentList(
-                                        itemExtent: 96.0,
-                                        delegate: SliverChildBuilderDelegate(
-                                          (BuildContext context, int index) {
-                                            return Container(
-                                              color: Colors.grey[200],
-                                              height: 96,
-                                              child: Row(
-                                                children: widget.fileNavViews
-                                                    .map<Widget>((FileNavView
-                                                            fileNavView) =>
+                        : Container(
+                            color: Colors.grey[200],
+                            child: DraggableScrollbar.semicircle(
+                              controller: myScrollController,
+                              child: CustomScrollView(
+                                key: Key(entries.length.toString()),
+                                controller: myScrollController,
+                                physics: AlwaysScrollableScrollPhysics(),
+                                slivers: <Widget>[
+                                  // file nav view
+                                  SliverFixedExtentList(
+                                    itemExtent: 96.0,
+                                    delegate: SliverChildBuilderDelegate(
+                                      (BuildContext context, int index) {
+                                        return Container(
+                                          color: Colors.grey[200],
+                                          height: 96,
+                                          child: Row(
+                                            children: widget.fileNavViews
+                                                .map<Widget>(
+                                                    (FileNavView fileNavView) =>
                                                         fileNavView
                                                             .navButton(context))
-                                                    .toList(),
-                                              ),
-                                            );
-                                          },
-                                          childCount: 1,
-                                        ),
-                                      ),
-                                      // dir title
-                                      dirTitle(),
-                                      // dir Grid or Row view
-                                      state.config.gridView
-                                          ? dirGrid(state)
-                                          : dirRow(state),
-                                      // file title
-                                      fileTitle(),
-                                      // file Grid or Row view
-                                      state.config.gridView
-                                          ? fileGrid(state)
-                                          : fileRow(state),
-                                      SliverFixedExtentList(
-                                        itemExtent: 24,
-                                        delegate: SliverChildBuilderDelegate(
-                                          (context, index) => Container(),
-                                          childCount: 1,
-                                        ),
-                                      ),
-                                    ],
+                                                .toList(),
+                                          ),
+                                        );
+                                      },
+                                      childCount: 1,
+                                    ),
                                   ),
-                                ),
+
+                                  // List is empty, or show dir title
+                                  entries.length == 0
+                                      ? SliverFillRemaining(
+                                          child: Center(child: Text('空文件夹')),
+                                        )
+                                      : dirTitle(),
+
+                                  // dir Grid or Row view
+                                  state.config.gridView
+                                      ? dirGrid(state)
+                                      : dirRow(state),
+
+                                  // file title
+                                  fileTitle(),
+
+                                  // file Grid or Row view
+                                  state.config.gridView
+                                      ? fileGrid(state)
+                                      : fileRow(state),
+
+                                  SliverFixedExtentList(
+                                    itemExtent: 24,
+                                    delegate: SliverChildBuilderDelegate(
+                                      (context, index) => Container(),
+                                      childCount: 1,
+                                    ),
+                                  ),
+                                ],
                               ),
+                            ),
+                          ),
                   ),
                 ),
-
-                // FileNav
-                loading
-                    ? Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          color: Colors.grey[200],
-                          height: 96,
-                          child: Row(
-                            children: widget.fileNavViews
-                                .map<Widget>((FileNavView fileNavView) =>
-                                    fileNavView.navButton(context))
-                                .toList(),
-                          ),
-                        ),
-                      )
-                    : Container(),
 
                 // CircularProgressIndicator
                 loading
