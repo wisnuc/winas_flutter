@@ -3,6 +3,7 @@ import 'package:flutter_redux/flutter_redux.dart';
 
 import '../redux/redux.dart';
 import './stationLogin.dart';
+import './scanBleDevice.dart';
 import '../common/utils.dart';
 import '../common/request.dart';
 
@@ -104,7 +105,16 @@ class _StationListState extends State<StationList> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(48),
               ),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) {
+                      return ScanBleDevice();
+                    },
+                  ),
+                );
+              },
               child: Row(
                 children: <Widget>[
                   Icon(Icons.add, color: Colors.white),
@@ -120,30 +130,30 @@ class _StationListState extends State<StationList> {
             ),
           ),
           Container(height: 24),
-          Container(
-            height: 56,
-            width: double.infinity,
-            child: RaisedButton(
-              color: Colors.white,
-              elevation: 1.0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(48),
-              ),
-              onPressed: () {},
-              child: Row(
-                children: <Widget>[
-                  Icon(Icons.add, color: pColor),
-                  Expanded(child: Container()),
-                  Text(
-                    '扫一扫，添加他人设备',
-                    style: TextStyle(color: pColor, fontSize: 16),
-                  ),
-                  Expanded(child: Container()),
-                  Container(width: 24),
-                ],
-              ),
-            ),
-          ),
+          // Container(
+          //   height: 56,
+          //   width: double.infinity,
+          //   child: RaisedButton(
+          //     color: Colors.white,
+          //     elevation: 1.0,
+          //     shape: RoundedRectangleBorder(
+          //       borderRadius: BorderRadius.circular(48),
+          //     ),
+          //     onPressed: () {},
+          //     child: Row(
+          //       children: <Widget>[
+          //         Icon(Icons.add, color: pColor),
+          //         Expanded(child: Container()),
+          //         Text(
+          //           '扫一扫，添加他人设备',
+          //           style: TextStyle(color: pColor, fontSize: 16),
+          //         ),
+          //         Expanded(child: Container()),
+          //         Container(width: 24),
+          //       ],
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );
