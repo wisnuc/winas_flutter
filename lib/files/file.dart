@@ -823,11 +823,14 @@ class _FilesState extends State<Files> {
                                     height: 72,
                                     // padding: EdgeInsets.all(16),
                                     decoration: BoxDecoration(
-                                      color: Colors.grey[300],
+                                      color: Colors.grey[400],
                                       borderRadius: BorderRadius.circular(36),
                                     ),
-                                    child: Icon(Winas.logo,
-                                        color: Colors.grey[50], size: 84),
+                                    child: Icon(
+                                      Winas.logo,
+                                      color: Colors.grey[50],
+                                      size: 84,
+                                    ),
                                   ),
                                 ),
                                 Text(
@@ -880,10 +883,38 @@ class _FilesState extends State<Files> {
 
                                   // List is empty
                                   SliverFixedExtentList(
-                                    itemExtent: 216,
+                                    itemExtent:
+                                        MediaQuery.of(context).size.height -
+                                            320,
                                     delegate: SliverChildBuilderDelegate(
                                       (BuildContext context, int index) {
-                                        return Center(child: Text('空文件夹'));
+                                        return Column(
+                                          children: <Widget>[
+                                            Expanded(
+                                                flex: 1, child: Container()),
+                                            Container(
+                                              padding: EdgeInsets.all(16),
+                                              child: Container(
+                                                width: 72,
+                                                height: 72,
+                                                // padding: EdgeInsets.all(16),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey[400],
+                                                  borderRadius:
+                                                      BorderRadius.circular(36),
+                                                ),
+                                                child: Icon(Winas.logo,
+                                                    color: Colors.grey[200],
+                                                    size: 84),
+                                              ),
+                                            ),
+                                            Text('您还未上传任何文件'),
+                                            Expanded(
+                                              flex: 2,
+                                              child: Container(),
+                                            ),
+                                          ],
+                                        );
                                       },
                                       childCount:
                                           entries.length == 0 && !loading
@@ -966,8 +997,17 @@ class _FilesState extends State<Files> {
                             child: Text('出错啦！'),
                           )
                         : entries.length == 0
-                            ? Center(
-                                child: Text('空文件夹'),
+                            ? Column(
+                                children: <Widget>[
+                                  Expanded(flex: 2, child: Container()),
+                                  Icon(Icons.folder_open,
+                                      color: Colors.grey[300], size: 84),
+                                  Text(
+                                    '空文件夹',
+                                    style: TextStyle(color: Colors.black38),
+                                  ),
+                                  Expanded(flex: 3, child: Container()),
+                                ],
                               )
                             : Container(
                                 color: Colors.grey[200],

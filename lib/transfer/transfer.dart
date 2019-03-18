@@ -329,26 +329,43 @@ class _TransferState extends State<Transfer> {
           body: Container(
             child: loading
                 ? Center(child: CircularProgressIndicator())
-                : Container(
-                    color: Colors.grey[200],
-                    child: DraggableScrollbar.semicircle(
-                      controller: myScrollController,
-                      child: CustomScrollView(
-                        controller: myScrollController,
-                        physics: AlwaysScrollableScrollPhysics(),
-                        slivers: <Widget>[
-                          SliverFixedExtentList(
-                            itemExtent: 72,
-                            delegate: SliverChildBuilderDelegate(
-                              (BuildContext ctx, int index) =>
-                                  renderRow(ctx, list, index, state),
-                              childCount: list.length,
-                            ),
-                          )
+                : list.length == 0
+                    ? Column(
+                        children: <Widget>[
+                          Expanded(flex: 1, child: Container()),
+                          Icon(
+                            Icons.web_asset,
+                            color: Colors.grey[300],
+                            size: 84,
+                          ),
+                          Container(height: 16),
+                          Text('当前无传输任务'),
+                          Expanded(
+                            flex: 2,
+                            child: Container(),
+                          ),
                         ],
+                      )
+                    : Container(
+                        color: Colors.grey[200],
+                        child: DraggableScrollbar.semicircle(
+                          controller: myScrollController,
+                          child: CustomScrollView(
+                            controller: myScrollController,
+                            physics: AlwaysScrollableScrollPhysics(),
+                            slivers: <Widget>[
+                              SliverFixedExtentList(
+                                itemExtent: 72,
+                                delegate: SliverChildBuilderDelegate(
+                                  (BuildContext ctx, int index) =>
+                                      renderRow(ctx, list, index, state),
+                                  childCount: list.length,
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
           ),
         );
       },
