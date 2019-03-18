@@ -75,12 +75,23 @@ class _StationListState extends State<StationList> {
     }
   }
 
-  renderPadding(double height) {
+  SliverFixedExtentList renderPadding(double height) {
     return SliverFixedExtentList(
       itemExtent: 16,
       delegate: SliverChildBuilderDelegate(
         (context, index) => Container(height: height),
         childCount: 1,
+      ),
+    );
+  }
+
+  void startScanBLEDevice() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) {
+          return ScanBleDevice(request: widget.request);
+        },
       ),
     );
   }
@@ -109,8 +120,9 @@ class _StationListState extends State<StationList> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
+                    fullscreenDialog: true,
                     builder: (context) {
-                      return ScanBleDevice();
+                      return ScanBleDevice(request: widget.request);
                     },
                   ),
                 );
@@ -300,6 +312,18 @@ class _StationListState extends State<StationList> {
     ];
   }
 
+  Widget refreshButton() {
+    return IconButton(
+      icon: Icon(Icons.refresh, color: Colors.black38),
+      onPressed: () {
+        setState(() {
+          loading = true;
+        });
+        refresh();
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return StoreConnector<AppState, Function>(
@@ -338,17 +362,18 @@ class _StationListState extends State<StationList> {
                 ? <Widget>[
                     IconButton(
                       icon: Icon(Icons.add, color: Colors.black38),
-                      onPressed: () {
-                        return;
-                      },
-                    )
+                      onPressed: () => startScanBLEDevice(),
+                    ),
+                    refreshButton(),
                   ]
-                : [],
+                : [
+                    refreshButton(),
+                  ],
           ),
           body: Builder(
             builder: (BuildContext c) => loading
                 ? Center(child: CircularProgressIndicator())
-                : stationList != null && stationList.length == 0
+                : stationList?.length == 0
                     ? renderNoDevice()
                     : RefreshIndicator(
                         onRefresh: refresh,

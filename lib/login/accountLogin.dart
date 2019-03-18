@@ -58,9 +58,14 @@ class _LoginState extends State<Login> {
         autofocus: true,
         decoration: InputDecoration(
             labelText: "手机号",
+            labelStyle: TextStyle(
+              fontSize: 21,
+              color: Colors.white,
+              height: 0.8,
+            ),
             prefixIcon: Icon(Icons.person, color: Colors.white),
             errorText: _error),
-        style: TextStyle(fontSize: 24),
+        style: TextStyle(fontSize: 24, color: Colors.white),
         maxLength: 11,
         keyboardType: TextInputType.number,
       );
@@ -75,9 +80,14 @@ class _LoginState extends State<Login> {
       focusNode: myFocusNode,
       decoration: InputDecoration(
           labelText: "密码",
+          labelStyle: TextStyle(
+            fontSize: 21,
+            color: Colors.white,
+            height: 0.8,
+          ),
           prefixIcon: Icon(Icons.lock, color: Colors.white),
           errorText: _error),
-      style: TextStyle(fontSize: 24),
+      style: TextStyle(fontSize: 24, color: Colors.white),
       obscureText: true,
     );
   }
@@ -99,6 +109,7 @@ class _LoginState extends State<Login> {
         final res = await request.req('checkUser', {'phone': _phoneNumber});
         userExist = res.data['userExist'];
       } catch (error) {
+        print(error);
         Navigator.pop(context);
         showSnackBar(context, '校验手机号失败');
         return;
@@ -145,7 +156,7 @@ class _LoginState extends State<Login> {
       try {
         res = await request.req('token', args);
       } catch (error) {
-        print(error.response.data);
+        print(error?.response?.data);
         if (error is DioError && error.response.data['code'] == 60008) {
           Navigator.pop(context);
           setState(() {

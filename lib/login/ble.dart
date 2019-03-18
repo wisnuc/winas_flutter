@@ -16,6 +16,7 @@ const CLOUD_SERVICE_WRITE = '80000002-0182-406c-9221-0a6680bd0943';
 /// get photo's current wifi's ssid
 Future<String> getWifiSSID() async {
   String ssid = await Wifi.ssid;
+  if (ssid == '<unknown ssid>') throw 'Get Wifi SSID Failed';
   return ssid;
 }
 
@@ -103,6 +104,11 @@ void writeData(
         callback(e, null);
       }
       callback(null, res);
+    }
+  }).catchError((error) {
+    if (!fired) {
+      fired = true;
+      callback(error, null);
     }
   });
 

@@ -118,6 +118,27 @@ class Request {
     return isLAN;
   }
 
+  /// get winasd/info
+  Future winasdInfo(String ip) async {
+    final res = await dio.get(
+      'http://$ip:3001/winasd/info',
+      options: Options(connectTimeout: 10000),
+    );
+    print('winasdInfo res $res');
+    return res.data;
+  }
+
+  /// device Bind
+  Future deviceBind(String ip, String encrypted) async {
+    final res = await dio.post(
+      'http://$ip:3001/winasd/bind',
+      data: {'encrypted': encrypted},
+      options: Options(connectTimeout: 10000),
+    );
+    print('deviceBind res $res');
+    return res.data;
+  }
+
   Future req(String name, Map<String, dynamic> args) {
     Future r;
     interceptDio();
@@ -155,6 +176,10 @@ class Request {
           'username': args['username'],
           'password': args['password']
         });
+        break;
+
+      case 'cloudBind':
+        r = tpost('station', null);
         break;
 
       case 'wechat':

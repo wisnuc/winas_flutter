@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 
@@ -9,13 +10,13 @@ import '../common/utils.dart';
 import '../common/request.dart';
 
 class ScanBleDevice extends StatefulWidget {
-  ScanBleDevice({Key key}) : super(key: key);
+  ScanBleDevice({Key key, this.request}) : super(key: key);
+  final Request request;
   @override
   _ScanBleDeviceState createState() => _ScanBleDeviceState();
 }
 
 class _ScanBleDeviceState extends State<ScanBleDevice> {
-  Request request = Request();
   StreamSubscription<ScanResult> scanSubscription;
   StreamSubscription<BluetoothDeviceState> deviceConnection;
   ScrollController myScrollController = ScrollController();
@@ -40,12 +41,18 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
     FlutterBlue flutterBlue = FlutterBlue.instance;
     scanSubscription?.cancel();
     scanSubscription = flutterBlue.scan().listen((scanResult) {
-      if (scanResult.device.name.length == 0) return;
-      // if (!scanResult.device.name.startsWith('W')) return;
+      // if (scanResult.device.name.length == 0) return;
+      if (!scanResult.device.name.startsWith('Wisnuc')) return;
       final id = scanResult.device.id;
       int index = results.indexWhere((res) => res.device.id == id);
       if (index > -1) return;
+
       results.add(scanResult);
+
+      // for (var i = 0; i < 100; i++) {
+      //   results.add(scanResult);
+      // }
+
       print('get device >>>>>>>>>>>');
       print(id);
       print(scanResult.device.name);
@@ -72,16 +79,16 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
     // cancel previous BLE device connection
     deviceConnection?.cancel();
     print('connecting ${scanResult.device.name} ...');
-    showLoading(context);
+
     deviceConnection = flutterBlue
         .connect(device, timeout: Duration(seconds: 60), autoConnect: false)
         .listen((s) {
       print(s);
 
-      Navigator.pop(context);
       if (s == BluetoothDeviceState.connected) {
         callback(null, device);
       } else {
+        // TODO: fix Disconnected after connected
         callback('Disconnected', null);
       }
     });
@@ -102,7 +109,30 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
 
   @override
   Widget build(BuildContext context) {
+    bool noResult = results.length == 0;
+
     return Scaffold(
+      appBar: AppBar(
+        elevation: 0.0, // no shadow
+        backgroundColor: Colors.white,
+        brightness: Brightness.light,
+        iconTheme: IconThemeData(color: Colors.black38),
+        title: Text(
+          '发现设备',
+          style: TextStyle(color: Colors.black87),
+        ),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: () {
+              setState(() {
+                results.clear();
+              });
+              startBLESearch();
+            },
+          )
+        ],
+      ),
       body: Builder(builder: (BuildContext ctx) {
         return Container(
           color: Colors.white,
@@ -112,42 +142,29 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
               controller: myScrollController,
               physics: AlwaysScrollableScrollPhysics(),
               slivers: <Widget>[
-                // AppBar，包含一个导航栏
-                SliverAppBar(
-                  pinned: true,
-                  expandedHeight: 128.0,
-                  elevation: 0.0, // no shadow
-                  backgroundColor: Colors.white,
-                  brightness: Brightness.light,
-                  iconTheme: IconThemeData(color: Colors.black38),
-                  // title: Text(
-                  //   '发现设备2',
-                  //   style: TextStyle(color: Colors.black87),
-                  // ),
-                  flexibleSpace: FlexibleSpaceBar(
-                    titlePadding:
-                        EdgeInsetsDirectional.only(start: 16, bottom: 16),
-                    title: Text(
-                      '发现设备',
-                      style: TextStyle(color: Colors.black87),
-                    ),
-                  ),
-                ),
-
                 // List
                 SliverFixedExtentList(
-                  itemExtent: 48.0,
+                  itemExtent: noResult ? 256 : 64,
                   delegate: SliverChildBuilderDelegate(
                     (BuildContext context, int index) {
+                      // no result, show loading
+                      if (noResult) {
+                        return Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      }
+
                       ScanResult scanResult = results[index];
                       return Material(
                         child: InkWell(
                           onTap: () async {
                             BluetoothDevice device;
+                            showLoading(context);
                             try {
                               device = await connectAsync(scanResult);
                             } catch (e) {
                               print(e);
+                              Navigator.pop(context);
                               showSnackBar(ctx, '连接设备失败');
                               return;
                             }
@@ -156,20 +173,24 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
                               await reqAuth(device);
                             } catch (e) {
                               print(e);
+                              Navigator.pop(context);
                               showSnackBar(ctx, '请求设备验证失败');
                               return;
                             }
-
+                            Navigator.pop(context);
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    ConfigDevice(device: device),
+                                builder: (context) => ConfigDevice(
+                                      device: device,
+                                      request: widget.request,
+                                    ),
                               ),
                             );
                           },
                           child: Container(
                             height: 64,
+                            color: Colors.white,
                             padding: EdgeInsets.all(16),
                             child: Row(
                               children: <Widget>[
@@ -192,7 +213,7 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
                         ),
                       );
                     },
-                    childCount: results.length,
+                    childCount: noResult ? 1 : results.length,
                   ),
                 ),
               ],

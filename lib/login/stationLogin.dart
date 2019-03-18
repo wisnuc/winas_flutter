@@ -158,6 +158,7 @@ deviceLogin(
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
+        settings: RouteSettings(name: 'stationList'),
         builder: (context) {
           return StationList(
             request: request,

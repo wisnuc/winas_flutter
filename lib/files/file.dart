@@ -810,7 +810,7 @@ class _FilesState extends State<Files> {
                   right: 0,
                   bottom: 0,
                   child: RefreshIndicator(
-                    onRefresh: loading ? null : () => refresh(state),
+                    onRefresh: loading ? () async {} : () => refresh(state),
                     child: _error != null
                         ? Center(
                             child: Column(
@@ -878,12 +878,22 @@ class _FilesState extends State<Files> {
                                     ),
                                   ),
 
-                                  // List is empty, or show dir title
-                                  entries.length == 0
-                                      ? SliverFillRemaining(
-                                          child: Center(child: Text('空文件夹')),
-                                        )
-                                      : dirTitle(),
+                                  // List is empty
+                                  SliverFixedExtentList(
+                                    itemExtent: 216,
+                                    delegate: SliverChildBuilderDelegate(
+                                      (BuildContext context, int index) {
+                                        return Center(child: Text('空文件夹'));
+                                      },
+                                      childCount:
+                                          entries.length == 0 && !loading
+                                              ? 1
+                                              : 0,
+                                    ),
+                                  ),
+
+                                  // show dir title
+                                  dirTitle(),
 
                                   // dir Grid or Row view
                                   state.config.gridView
