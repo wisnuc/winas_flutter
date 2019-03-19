@@ -1,8 +1,10 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 
-import './photoItems.dart';
+import './photoItem.dart';
+import './photoViewer.dart';
 import '../redux/redux.dart';
 
 class PhotoList extends StatefulWidget {
@@ -24,12 +26,12 @@ class _PhotoListState extends State<PhotoList> {
   ///  height of header
   final double headerHeight = 32;
 
+  /// calc photoMapDates and mapHeight from given album
   getList(Album album, BuildContext ctx) {
     final items = album.items;
     if (items.length == 0) return [];
-    items.sort((a, b) => b.hdate.compareTo(a.hdate));
 
-    /// String headers '2019-03-06' or List of Entry
+    /// String headers '2019-03-06' or List of Entry, init with first item
     final List photoMapDates = [
       items[0].hdate,
       [items[0]],
@@ -47,6 +49,9 @@ class _PhotoListState extends State<PhotoList> {
       }
     });
 
+    // remove the duplicated item
+    photoMapDates[1].removeAt(0);
+
     final List mapHeight = [];
     double acc = 0;
     photoMapDates.forEach((line) {
@@ -63,6 +68,21 @@ class _PhotoListState extends State<PhotoList> {
     });
 
     return {'photoMapDates': photoMapDates, 'mapHeight': mapHeight};
+  }
+
+  void showPhoto(BuildContext ctx, Entry entry, Uint8List thumbData) {
+    Navigator.push(
+      ctx,
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) {
+          return PhotoViewer(
+            photo: entry,
+            list: widget.album.items,
+            thumbData: thumbData,
+          );
+        },
+      ),
+    );
   }
 
   /// getDate via Offset
@@ -135,6 +155,7 @@ class _PhotoListState extends State<PhotoList> {
                           (BuildContext context, int index) {
                             return PhotoItem(
                               item: line[index],
+                              showPhoto: showPhoto,
                             );
                           },
                           childCount: line.length,

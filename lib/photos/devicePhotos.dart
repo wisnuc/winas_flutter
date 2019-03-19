@@ -32,6 +32,7 @@ class _AssetItemState extends State<AssetItem> {
 
   // TODO: open photo
   onTap(BuildContext context) {}
+
   @override
   Widget build(BuildContext context) {
     return Container(

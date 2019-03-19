@@ -75,6 +75,8 @@ class _PhotosState extends State<Photos> {
         res.data.map((d) => Entry.fromSearch(d, state.drives)),
       );
 
+      // sort allMedia
+      allMedia.sort((a, b) => b.hdate.compareTo(a.hdate));
       final allMediaAlbum = Album(allMedia, '所有照片', places);
 
       final videoArray = videoTypes.split('.');
@@ -84,6 +86,7 @@ class _PhotosState extends State<Photos> {
           (entry) => videoArray.contains(entry?.metadata?.type),
         ),
       );
+
       final allVideosAlbum = Album(allVideos, '所有视频', places);
       final localAlbum = LocalAlbum(localAssetList, '本机照片');
 

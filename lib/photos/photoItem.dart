@@ -2,15 +2,15 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 
-import '../files/photo.dart';
 import '../redux/redux.dart';
 import '../common/taskManager.dart';
 
 const photoTypes = ['JPEG', 'PNG', 'JPG', 'GIF', 'BMP', 'RAW'];
 
 class PhotoItem extends StatefulWidget {
-  PhotoItem({Key key, this.item}) : super(key: key);
+  PhotoItem({Key key, this.item, this.showPhoto}) : super(key: key);
   final Entry item;
+  final Function showPhoto;
   @override
   _PhotoItemState createState() => _PhotoItemState(item);
 }
@@ -39,7 +39,7 @@ class _PhotoItemState extends State<PhotoItem> {
       entry.toggleSelect();
     } else if (photoTypes.contains(entry?.metadata?.type)) {
       // is photo
-      showPhoto(ctx, entry, thumbData);
+      widget.showPhoto(ctx, entry, thumbData);
     }
   }
 
@@ -71,6 +71,10 @@ class _PhotoItemState extends State<PhotoItem> {
                     bottom: 0,
                     child: thumbData == null
                         ? Container(color: Colors.grey[300])
+                        // : Image.memory(
+                        //     thumbData,
+                        //     fit: BoxFit.cover,
+                        //   ),
                         : Hero(
                             tag: entry.uuid,
                             child: Image.memory(
