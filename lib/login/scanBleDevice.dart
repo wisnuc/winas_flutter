@@ -107,6 +107,25 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
     return c.future;
   }
 
+  getStatus(ScanResult scanResult) {
+    final manufacturerData = scanResult.advertisementData.manufacturerData;
+    final value = manufacturerData[65535][0];
+    String status = '';
+    switch (value) {
+      case 0:
+        status = '待配置';
+        break;
+
+      case 1:
+        status = '已绑定';
+        break;
+
+      default:
+        status = '设备异常';
+    }
+    return status;
+  }
+
   @override
   Widget build(BuildContext context) {
     bool noResult = results.length == 0;
@@ -153,11 +172,14 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
                           child: CircularProgressIndicator(),
                         );
                       }
-
                       ScanResult scanResult = results[index];
+                      final status = getStatus(scanResult);
+
                       return Material(
                         child: InkWell(
                           onTap: () async {
+                            if (status != '待配置') return;
+
                             BluetoothDevice device;
                             showLoading(context);
                             try {
@@ -203,7 +225,7 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
                                   child: Container(),
                                 ),
                                 Text(
-                                  '待配置',
+                                  status,
                                   style: TextStyle(color: Colors.black54),
                                 ),
                                 Icon(Icons.chevron_right),

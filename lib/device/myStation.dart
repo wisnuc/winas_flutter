@@ -5,10 +5,10 @@ import 'package:flutter_redux/flutter_redux.dart';
 import './network.dart';
 import './deviceInfo.dart';
 import './newDeviceName.dart';
-
 import '../redux/redux.dart';
 import '../common/utils.dart';
 import '../login/stationList.dart';
+import '../login/scanBleDevice.dart';
 
 class StorageDetail extends StatelessWidget {
   StorageDetail(this.usageData);
@@ -220,7 +220,16 @@ class _MyStationState extends State<MyStation> {
       Builder(
         builder: (ctx) => IconButton(
               icon: Icon(Icons.add),
-              onPressed: () => {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) {
+                      return ScanBleDevice(request: state.cloud);
+                    },
+                  ),
+                );
+              },
             ),
       ),
       // rename device
