@@ -82,7 +82,9 @@ String twoDigits(int n) {
 }
 
 /// Provide pretty printed date time, result:
+///
 /// date == false: 2019-03-06 17:46
+///
 /// date == true: 2019-03-06
 String prettyDate(int time, {bool showDay: false, bool showMonth: false}) {
   if (time == null) return '';

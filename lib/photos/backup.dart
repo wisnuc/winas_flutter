@@ -1,12 +1,11 @@
 import 'dart:io';
 import 'dart:async';
-import 'dart:convert';
 import 'dart:isolate';
 import 'package:dio/dio.dart';
-import 'package:crypto/crypto.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import './isolate.dart';
 import '../redux/redux.dart';
 import '../common/utils.dart';
 import '../common/stationApis.dart';
@@ -29,6 +28,7 @@ class PhotoEntry {
   }
 }
 
+/// List of PhotoEntry from station
 class RemoteList {
   Entry entry;
   List<Entry> items;
@@ -44,94 +44,6 @@ class RemoteList {
   fakeAdd() {
     length += 1;
   }
-}
-
-void isolateHash(SendPort sendPort) {
-  final port = ReceivePort();
-  // send current sendPort to caller
-  sendPort.send(port.sendPort);
-
-  // listen message from caller
-  port.listen((message) {
-    final filePath = message[0] as String;
-    final answerSend = message[1] as SendPort;
-    File file = File(filePath);
-    List<int> bytes = file.readAsBytesSync();
-    final digest = sha256.convert(bytes);
-    answerSend.send(digest.toString());
-    port.close();
-  });
-}
-
-Future<String> hashViaIsolate(String filePath) async {
-  final response = ReceivePort();
-  await Isolate.spawn(isolateHash, response.sendPort);
-
-  // sendPort from isolateHash
-  final sendPort = await response.first as SendPort;
-  final answer = ReceivePort();
-
-  // send filePath and sendPort(to get answer) to isolateHash
-  sendPort.send([filePath, answer.sendPort]);
-  final res = await answer.first as String;
-  return res;
-}
-
-/// upload single photo to target dir in Isolate
-void isolateUpload(SendPort sendPort) {
-  final port = ReceivePort();
-
-  // send current sendPort to caller
-  sendPort.send(port.sendPort);
-
-  // listen message from caller
-  port.listen((message) {
-    final entryJson = message[0] as String;
-    final filePath = message[1] as String;
-    final sha256Value = message[2] as String;
-    final apisJson = message[3] as String;
-    final isCloud = message[4] as bool;
-    final answerSend = message[5] as SendPort;
-
-    final dir = Entry.fromMap(jsonDecode(entryJson));
-
-    final photo = File(filePath);
-    final apis = Apis.fromMap(jsonDecode(apisJson));
-
-    // set network status
-    apis.isCloud = isCloud;
-
-    // Entry dir, File photo
-    final fileName = photo.path.split('/').last;
-    List<int> bytes = photo.readAsBytesSync();
-
-    final FileStat stat = photo.statSync();
-
-    final formDataOptions = {
-      'op': 'newfile',
-      'size': stat.size,
-      'sha256': sha256Value,
-      'bctime': stat.modified.millisecondsSinceEpoch,
-      'bmtime': stat.modified.millisecondsSinceEpoch,
-    };
-
-    final args = {
-      'driveUUID': dir.pdrv,
-      'dirUUID': dir.uuid,
-      'fileName': fileName,
-      'file': UploadFileInfo.fromBytes(bytes, jsonEncode(formDataOptions)),
-    };
-
-    apis.upload(args, (error, value) {
-      if (error != null) {
-        answerSend.send(error.toString());
-      } else {
-        answerSend.send(null);
-      }
-    });
-
-    port.close();
-  });
 }
 
 class BackupWorker {
@@ -384,6 +296,7 @@ class BackupWorker {
     String hash = prefs.getString(id);
     if (hash == null) {
       hash = await hashViaIsolate(filePath);
+      if (hash == null) throw 'hash error';
     }
     await prefs.setString(id, hash);
     return hash;
@@ -416,6 +329,7 @@ class BackupWorker {
     }
     print(
         'before upload: $name, size: ${stat.size} ${DateTime.now().millisecondsSinceEpoch - time}');
+
     // upload photo
     await uploadViaIsolate(targetDir, filePath, hash);
 
