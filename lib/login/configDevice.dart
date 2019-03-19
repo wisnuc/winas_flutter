@@ -22,9 +22,12 @@ enum Status {
 }
 
 class ConfigDevice extends StatefulWidget {
-  ConfigDevice({Key key, this.device, this.request}) : super(key: key);
+  ConfigDevice({Key key, this.device, this.request, this.action})
+      : super(key: key);
+  final Action action;
   final Request request;
   final BluetoothDevice device;
+
   @override
   _ConfigDeviceState createState() => _ConfigDeviceState();
 }
@@ -32,6 +35,9 @@ class ConfigDevice extends StatefulWidget {
 class _ConfigDeviceState extends State<ConfigDevice> {
   String selected;
   String token;
+
+  /// sn of current device
+  String deviceSN;
 
   /// The wifi ssid which current phone connected.
   String ssid;
@@ -72,19 +78,16 @@ class _ConfigDeviceState extends State<ConfigDevice> {
     final device = widget.device;
     final wifiCommand =
         '{"action":"addAndActive", "seq": 123, "token": "$token", "body":{"ssid":"$ssid", "pwd":"$wifiPwd"}}';
-    final wifiRes = await connectWifi(device, wifiCommand);
+    final wifiRes = await withTimeout(connectWifi(device, wifiCommand), 10);
     print('wifiRes: $wifiRes');
     final ip = wifiRes['data']['address'];
     return ip;
   }
 
-  Future<void> startBind(String ip, String token, store) async {
-    print('startBind: $ip, $token');
-
+  /// try connect to device via ip
+  Future<void> connectDevice(String ip, String token, store) async {
     final request = widget.request;
-    String deviceSN;
 
-    // try connect to device via ip
     try {
       final infoRes = await request.winasdInfo(ip);
       deviceSN = infoRes['device']['sn'] as String;
@@ -96,18 +99,23 @@ class _ConfigDeviceState extends State<ConfigDevice> {
       });
       return;
     }
+    // switch by Action, bind device or login device directly
+    if (widget.action == Action.bind) {
+      bindDevice(ip, token, store).catchError(print);
+    } else if (widget.action == Action.wifi) {
+      loginDevice(ip, token, store);
+    }
+  }
 
-    // start to bind device
+  /// start to bind device
+  Future<void> bindDevice(String ip, String token, store) async {
+    final request = widget.request;
+
     setState(() {
       status = Status.binding;
     });
 
-    // await Future.delayed(Duration(seconds: 2));
-
     try {
-      // // TODO: fake failed
-      // throw 'Bind Failed';
-
       final res = await request.req('cloudBind', null);
       final encrypted = res.data['encrypted'] as String;
       final bindRes = await request.deviceBind(ip, encrypted);
@@ -118,12 +126,16 @@ class _ConfigDeviceState extends State<ConfigDevice> {
       });
       return;
     }
+    loginDevice(ip, token, store).catchError(print);
+  }
 
+  /// try login to device
+  Future<void> loginDevice(String ip, String token, store) async {
+    final request = widget.request;
     setState(() {
       status = Status.logging;
     });
 
-    // try login to device
     try {
       final result = await reqStationList(request);
       final stationList = result['stationList'] as List;
@@ -186,10 +198,11 @@ class _ConfigDeviceState extends State<ConfigDevice> {
             throw 'set wifi Failed';
           }
 
+          // connect to device via ip
           setState(() {
             status = Status.connecting;
           });
-          startBind(ip, token, store).catchError(print);
+          connectDevice(ip, token, store).catchError(print);
           Navigator.pop(ctx);
         } catch (e) {
           print(e);
@@ -385,7 +398,7 @@ class _ConfigDeviceState extends State<ConfigDevice> {
 
       case Status.connectFailed:
         text = '连接失败';
-        buttonLabel = '重试';
+        buttonLabel = '返回';
         break;
 
       case Status.binding:
@@ -394,7 +407,7 @@ class _ConfigDeviceState extends State<ConfigDevice> {
 
       case Status.bindFailed:
         text = '绑定失败';
-        buttonLabel = '重试';
+        buttonLabel = '返回';
         break;
 
       case Status.logging:
@@ -403,7 +416,7 @@ class _ConfigDeviceState extends State<ConfigDevice> {
 
       case Status.loginFailed:
         text = '登录失败';
-        buttonLabel = '重试';
+        buttonLabel = '返回';
         break;
 
       default:
@@ -445,8 +458,6 @@ class _ConfigDeviceState extends State<ConfigDevice> {
                     borderRadius: BorderRadius.circular(48),
                   ),
                   onPressed: () {
-                    // handle retry
-
                     // return to list
                     Navigator.popUntil(ctx, ModalRoute.withName('stationList'));
                   },

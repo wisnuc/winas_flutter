@@ -13,6 +13,13 @@ const CLOUD_SERVICE = '80000000-0182-406c-9221-0a6680bd0943';
 const CLOUD_SERVICE_INDICATE = '80000001-0182-406c-9221-0a6680bd0943';
 const CLOUD_SERVICE_WRITE = '80000002-0182-406c-9221-0a6680bd0943';
 
+/// action of ble device
+///
+/// wifi: settting wifi
+///
+/// bind: bind new device
+enum Action { wifi, bind }
+
 /// get photo's current wifi's ssid
 Future<String> getWifiSSID() async {
   String ssid = await Wifi.ssid;
@@ -136,4 +143,10 @@ Future writeDataAsync(
     }
   });
   return c.future;
+}
+
+/// add a simple timeout
+Future withTimeout(Future future, int seconds) async {
+  final timeout = Future.delayed(Duration(seconds: seconds));
+  await Future.any([timeout, future]);
 }

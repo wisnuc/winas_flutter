@@ -10,8 +10,9 @@ import '../common/utils.dart';
 import '../common/request.dart';
 
 class ScanBleDevice extends StatefulWidget {
-  ScanBleDevice({Key key, this.request}) : super(key: key);
+  ScanBleDevice({Key key, this.request, this.action}) : super(key: key);
   final Request request;
+  final Action action;
   @override
   _ScanBleDeviceState createState() => _ScanBleDeviceState();
 }
@@ -107,7 +108,7 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
     return c.future;
   }
 
-  getStatus(ScanResult scanResult) {
+  parseResult(ScanResult scanResult) {
     final manufacturerData = scanResult.advertisementData.manufacturerData;
     final value = manufacturerData[65535][0];
     String status = '';
@@ -123,7 +124,11 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
       default:
         status = '设备异常';
     }
-    return status;
+    bool enabled = widget.action == Action.wifi || value == 0;
+    return {
+      'status': status,
+      'enabled': enabled,
+    };
   }
 
   @override
@@ -133,11 +138,11 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0.0, // no shadow
-        backgroundColor: Colors.white,
         brightness: Brightness.light,
+        backgroundColor: Colors.grey[50],
         iconTheme: IconThemeData(color: Colors.black38),
         title: Text(
-          '发现设备',
+          '蓝牙扫描设备',
           style: TextStyle(color: Colors.black87),
         ),
         actions: <Widget>[
@@ -154,7 +159,7 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
       ),
       body: Builder(builder: (BuildContext ctx) {
         return Container(
-          color: Colors.white,
+          color: Colors.grey[50],
           child: DraggableScrollbar.semicircle(
             controller: myScrollController,
             child: CustomScrollView(
@@ -173,12 +178,14 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
                         );
                       }
                       ScanResult scanResult = results[index];
-                      final status = getStatus(scanResult);
+                      final res = parseResult(scanResult);
+                      final status = res['status'];
+                      final enabled = res['enabled'];
 
                       return Material(
                         child: InkWell(
                           onTap: () async {
-                            if (status != '待配置') return;
+                            if (!enabled) return;
 
                             BluetoothDevice device;
                             showLoading(context);
@@ -206,13 +213,13 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
                                 builder: (context) => ConfigDevice(
                                       device: device,
                                       request: widget.request,
+                                      action: widget.action,
                                     ),
                               ),
                             );
                           },
                           child: Container(
                             height: 64,
-                            color: Colors.white,
                             padding: EdgeInsets.all(16),
                             child: Row(
                               children: <Widget>[

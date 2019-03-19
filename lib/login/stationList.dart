@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 
+import './ble.dart';
 import '../redux/redux.dart';
 import './stationLogin.dart';
 import './scanBleDevice.dart';
@@ -85,12 +86,13 @@ class _StationListState extends State<StationList> {
     );
   }
 
-  void startScanBLEDevice() {
+  void startScanBLEDevice(Action action) {
     Navigator.push(
       context,
       MaterialPageRoute(
+        fullscreenDialog: true,
         builder: (context) {
-          return ScanBleDevice(request: widget.request);
+          return ScanBleDevice(request: widget.request, action: action);
         },
       ),
     );
@@ -117,15 +119,7 @@ class _StationListState extends State<StationList> {
                 borderRadius: BorderRadius.circular(48),
               ),
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    fullscreenDialog: true,
-                    builder: (context) {
-                      return ScanBleDevice(request: widget.request);
-                    },
-                  ),
-                );
+                startScanBLEDevice(Action.bind);
               },
               child: Row(
                 children: <Widget>[
@@ -361,9 +355,10 @@ class _StationListState extends State<StationList> {
                     stationList.length > 0
                 ? <Widget>[
                     IconButton(
-                      icon: Icon(Icons.add, color: Colors.black38),
-                      onPressed: () => startScanBLEDevice(),
-                    ),
+                        icon: Icon(Icons.bluetooth, color: Colors.black38),
+                        onPressed: () {
+                          startScanBLEDevice(Action.wifi);
+                        }),
                     refreshButton(),
                   ]
                 : [
