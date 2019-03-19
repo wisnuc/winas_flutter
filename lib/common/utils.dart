@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:device_info/device_info.dart';
 
 /// showSnackBar, require BuildContext to find Scaffold
 void showSnackBar(BuildContext ctx, String message) {
@@ -141,4 +143,34 @@ Widget actionButton(String title, Function action, Widget rightItem) {
       ),
     ),
   );
+}
+
+Future getMachineId() async {
+  DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+  String deviceName;
+  String machineId;
+  if (Platform.isIOS) {
+    IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+    deviceName = iosInfo.name;
+    machineId = iosInfo.identifierForVendor;
+  } else {
+    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+    deviceName = androidInfo.model;
+    machineId = androidInfo.androidId;
+  }
+  return {
+    'deviceName': deviceName,
+    'machineId': machineId,
+  };
+}
+
+Future<String> getClientId() async {
+  String clientId;
+  try {
+    final idRes = await getMachineId();
+    clientId = idRes['machineId'];
+  } catch (e) {
+    clientId = 'default_mobile_clientId';
+  }
+  return clientId;
 }

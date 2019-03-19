@@ -55,6 +55,8 @@ class _WeChatState extends State<WeChat> {
       return;
     }
 
+    String clientId = await getClientId();
+
     await fluwx.sendAuth(
       openId: "wx99b54eb728323fe8",
       scope: "snsapi_userinfo",
@@ -68,7 +70,7 @@ class _WeChatState extends State<WeChat> {
       code = data?.code;
       if (code != null) {
         final args = {
-          'clientId': 'flutter_Test',
+          'clientId': clientId,
           'code': code,
         };
 

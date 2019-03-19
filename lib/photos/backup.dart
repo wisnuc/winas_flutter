@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'dart:isolate';
 import 'package:dio/dio.dart';
 import 'package:crypto/crypto.dart';
-import 'package:device_info/device_info.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -152,20 +151,6 @@ class BackupWorker {
     List<AssetEntity> localAssetList = await pathList[0].assetList;
     localAssetList = List.from(localAssetList.reversed);
     return localAssetList;
-  }
-
-  Future getMachineId() async {
-    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-    if (Platform.isIOS) {
-      IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
-      deviceName = iosInfo.name;
-      machineId = iosInfo.identifierForVendor;
-    } else {
-      AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-      deviceName = androidInfo.model;
-      machineId = androidInfo.androidId;
-    }
-    print('deviceName:$deviceName\n machineId:$machineId');
   }
 
   Future<Drive> getBackupDrive() async {
@@ -441,7 +426,9 @@ class BackupWorker {
 
   Future<void> startAsync() async {
     status = Status.running;
-    await getMachineId();
+    final data = await getMachineId();
+    deviceName = data['deviceName'];
+    machineId = data['machineId'];
     final Entry rootDir = await getDir();
     final Entry entry = await getDir();
 

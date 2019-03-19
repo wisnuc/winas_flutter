@@ -141,8 +141,9 @@ class _LoginState extends State<Login> {
         return;
       }
 
+      String clientId = await getClientId();
       final args = {
-        'clientId': 'flutter_Test',
+        'clientId': clientId,
         'username': _phoneNumber,
         'password': _password
       };

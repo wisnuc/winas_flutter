@@ -66,6 +66,8 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
+    String clientId = await getClientId();
+
     await fluwx.sendAuth(
       openId: "wxb137485b7b2ce4f0",
       scope: "snsapi_userinfo",
@@ -79,7 +81,7 @@ class _LoginPageState extends State<LoginPage> {
       code = data?.code;
       if (code != null) {
         final args = {
-          'clientId': 'flutter_Test',
+          'clientId': clientId,
           'code': code,
         };
         tokenRes = null;

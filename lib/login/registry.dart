@@ -177,6 +177,8 @@ class _RegistryState extends State<Registry> {
         return;
       }
 
+      String clientId = await getClientId();
+
       // register with _code, _phoneNumber, _ticket
       _loading(context);
       try {
@@ -184,7 +186,7 @@ class _RegistryState extends State<Registry> {
           'code': _code,
           'phone': _phoneNumber,
           "ticket": _ticket,
-          'clientId': 'flutter_Test',
+          'clientId': clientId,
           "password": _password,
         });
       } catch (error) {
@@ -268,10 +270,11 @@ class _RegistryState extends State<Registry> {
         // get token
         var res;
         try {
+          String clientId = await getClientId();
           res = await request.req('smsToken', {
             'code': _code,
             'phone': _phoneNumber,
-            'clientId': 'flutter_Test',
+            'clientId': clientId,
           });
         } catch (err) {
           print(err);
@@ -328,12 +331,13 @@ class _RegistryState extends State<Registry> {
       _loading(context);
 
       try {
+        String clientId = await getClientId();
         // registry
         await request.req('registry', {
           'code': _code,
           'phone': _phoneNumber,
           "ticket": _ticket,
-          'clientId': 'flutter_Test',
+          'clientId': clientId,
           "password": _password,
         });
 
