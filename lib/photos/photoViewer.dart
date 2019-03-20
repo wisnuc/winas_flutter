@@ -59,26 +59,23 @@ class _PhotoViewerState extends State<PhotoViewer> {
         backgroundColor: Color.fromARGB((opacity * 255).round(), 255, 255, 255),
         iconTheme: IconThemeData(color: Colors.black38),
       ),
-      body: PageView(
+      body: PageView.builder(
         controller:
             PageController(initialPage: widget.list.indexOf(currentItem)),
-        children: List.from(
-          widget.list
-              .map(
-                (photo) => Container(
-                      child: Hero(
-                        tag: photo.uuid,
-                        child: GridPhoto(
-                          updateOpacity: updateOpacity,
-                          photo: photo,
-                          thumbData:
-                              photo == widget.photo ? widget.thumbData : null,
-                        ),
-                      ),
-                    ),
-              )
-              .toList(),
-        ),
+        itemBuilder: (context, position) {
+          final photo = widget.list[position];
+          return Container(
+            child: Hero(
+              tag: photo.uuid,
+              child: GridPhoto(
+                updateOpacity: updateOpacity,
+                photo: photo,
+                thumbData: photo == widget.photo ? widget.thumbData : null,
+              ),
+            ),
+          );
+        },
+        itemCount: widget.list.length,
         onPageChanged: (int index) {
           print('current index $index');
           if (mounted) {
@@ -107,11 +104,11 @@ class _GridPhotoState extends State<GridPhoto>
     with SingleTickerProviderStateMixin {
   AnimationController _controller;
   Animation<Offset> _flingAnimation;
+  Animation<double> _scaleAnimation;
   Offset _offset = Offset.zero;
   double _scale = 1.0;
   Offset _normalizedOffset;
   double _previousScale;
-  bool _hiddenThumb = false;
 
   @override
   void initState() {
@@ -139,8 +136,17 @@ class _GridPhotoState extends State<GridPhoto>
   void _handleFlingAnimation() {
     setState(() {
       _offset = _flingAnimation.value;
+      _scale = _scaleAnimation.value;
     });
   }
+
+  double opacity = 1;
+
+  updateOpacity() {
+    widget.updateOpacity(opacity);
+  }
+
+  Offset prevPosition;
 
   void _handleOnScaleStart(ScaleStartDetails details) {
     print('_handleOnScaleStart');
@@ -148,7 +154,6 @@ class _GridPhotoState extends State<GridPhoto>
     prevPosition = details.focalPoint;
     updateOpacity();
     setState(() {
-      _hiddenThumb = true;
       _previousScale = _scale;
       _normalizedOffset = (details.focalPoint - _offset) / _scale;
       // The fling animation stops if an input gesture starts.
@@ -157,8 +162,8 @@ class _GridPhotoState extends State<GridPhoto>
   }
 
   void _handleOnScaleUpdate(ScaleUpdateDetails details) {
-    print('_handleOnScaleUpdate');
-    if (_scale == 1.0) {
+    print('_handleOnScaleUpdate ${details.scale}');
+    if (_scale == 1.0 && details.scale == 1.0) {
       final rate = 255;
 
       Offset delta = details.focalPoint - prevPosition;
@@ -186,81 +191,28 @@ class _GridPhotoState extends State<GridPhoto>
       Navigator.pop(context);
       return;
     }
+    _scaleAnimation =
+        _controller.drive(Tween<double>(begin: _scale, end: _scale));
+    final double magnitude = details.velocity.pixelsPerSecond.distance;
 
     if (_scale == 1.0) {
-      _offset = Offset(0, 0);
+      // return to center
+      _flingAnimation =
+          _controller.drive(Tween<Offset>(begin: _offset, end: Offset(0, 0)));
+    } else {
+      // fling after move
+      if (magnitude < _kMinFlingVelocity) return;
+      final Offset direction = details.velocity.pixelsPerSecond / magnitude;
+      final double distance = (Offset.zero & context.size).shortestSide;
+      _flingAnimation = _controller.drive(Tween<Offset>(
+          begin: _offset, end: _clampOffset(_offset + direction * distance)));
     }
     opacity = 1.0;
     updateOpacity();
 
-    final double magnitude = details.velocity.pixelsPerSecond.distance;
-    if (magnitude < _kMinFlingVelocity) return;
-    final Offset direction = details.velocity.pixelsPerSecond / magnitude;
-    final double distance = (Offset.zero & context.size).shortestSide;
-    _flingAnimation = _controller.drive(Tween<Offset>(
-        begin: _offset, end: _clampOffset(_offset + direction * distance)));
     _controller
       ..value = 0.0
       ..fling(velocity: magnitude / 1000.0);
-  }
-
-  void _handleonDoubleTap() {
-    Offset focalPoint = Offset(context.size.width / 2, context.size.height / 2);
-    double scale = 2;
-    setState(() {
-      _hiddenThumb = true;
-      _scale = (_scale * scale).clamp(1.0, 4.0);
-      // // Ensure that image location under the focal point stays in the same place despite scaling.
-      _offset = _clampOffset(focalPoint - focalPoint * _scale);
-    });
-  }
-
-  double opacity = 1;
-
-  updateOpacity() {
-    widget.updateOpacity(opacity);
-  }
-
-  Offset prevPosition;
-  void onDragStart(DragStartDetails details) {
-    opacity = 1;
-    prevPosition = details.globalPosition;
-    updateOpacity();
-    setState(() {
-      _hiddenThumb = true;
-      _controller.stop();
-    });
-  }
-
-  void onDragUpdate(DragUpdateDetails details) {
-    final rate = 255;
-
-    Offset delta = details.globalPosition - prevPosition;
-    prevPosition = details.globalPosition;
-    print(delta);
-    print(details.delta);
-
-    _offset += delta;
-
-    opacity = (1 - _offset.dy / rate).clamp(0.0, 1.0);
-
-    updateOpacity();
-    setState(() {});
-  }
-
-  void onDragEnd(DragEndDetails event) {
-    // final dy = event.velocity.pixelsPerSecond.dy;
-    if (opacity <= 0.5) {
-      Navigator.pop(context);
-      return;
-    }
-
-    if (_scale == 1.0) {
-      _offset = Offset(0, 0);
-    }
-    opacity = 1.0;
-    updateOpacity();
-    setState(() {});
   }
 
   Uint8List imageData;
@@ -289,6 +241,40 @@ class _GridPhotoState extends State<GridPhoto>
     }
   }
 
+  int lastTapTime = 0;
+
+  /// milliseconds of double tap's delay
+  final timeDelay = 300;
+
+  /// scale rate when double tap
+  final scaleRate = 2.0;
+
+  handleTapUp(TapUpDetails event) {
+    final tapTime = DateTime.now().millisecondsSinceEpoch;
+    if (tapTime - lastTapTime < timeDelay) {
+      double scaleEnd;
+      Offset offsetEnd;
+      if (_scale == 1.0) {
+        scaleEnd = 4.0;
+        offsetEnd = event.globalPosition * scaleEnd / -2;
+      } else {
+        scaleEnd = 1.0;
+        offsetEnd = Offset(0, 0);
+      }
+
+      _flingAnimation =
+          _controller.drive(Tween<Offset>(begin: _offset, end: offsetEnd));
+
+      _scaleAnimation =
+          _controller.drive(Tween<double>(begin: _scale, end: scaleEnd));
+
+      _controller
+        ..value = 0.0
+        ..fling(velocity: 1.0);
+    }
+    lastTapTime = tapTime;
+  }
+
   @override
   Widget build(BuildContext context) {
     return StoreConnector<AppState, AppState>(
@@ -297,55 +283,68 @@ class _GridPhotoState extends State<GridPhoto>
       converter: (store) => store.state,
       builder: (context, state) {
         return Container(
-          color: Color.fromARGB((opacity * 255).round(), 255, 255, 255),
-          // color: Colors.transparent,
-          child: Stack(
-            children: <Widget>[
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: _hiddenThumb
-                    ? Container()
-                    : thumbData == null
-                        ? Center(child: CircularProgressIndicator())
-                        : Image.memory(
-                            thumbData,
-                            fit: BoxFit.contain,
-                          ),
-              ),
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: imageData == null
-                    ? Center(child: CircularProgressIndicator())
-                    : GestureDetector(
-                        onScaleStart: _handleOnScaleStart,
-                        onScaleUpdate: _handleOnScaleUpdate,
-                        onScaleEnd: _handleOnScaleEnd,
-                        // onDoubleTap: _handleonDoubleTap,
-                        // onVerticalDragStart: onDragStart,
-                        // onVerticalDragUpdate: onDragUpdate,
-                        // onVerticalDragEnd: onDragEnd,
-                        child: ClipRect(
-                          child: Transform(
-                            transform: Matrix4.identity()
-                              ..translate(_offset.dx, _offset.dy)
-                              ..scale(_scale),
-                            child: Image.memory(
-                              imageData,
-                              fit: BoxFit.contain,
+            color: Color.fromARGB((opacity * 255).round(), 255, 255, 255),
+            child: Stack(
+              children: <Widget>[
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: thumbData == null
+                      ? Center(child: CircularProgressIndicator())
+                      : GestureDetector(
+                          onScaleStart: _handleOnScaleStart,
+                          onScaleUpdate: _handleOnScaleUpdate,
+                          onScaleEnd: _handleOnScaleEnd,
+                          // onDoubleTap: _handleonDoubleTap,
+                          onTapUp: handleTapUp,
+                          child: ClipRect(
+                            child: Transform(
+                              transform: Matrix4.identity()
+                                ..translate(_offset.dx, _offset.dy)
+                                ..scale(_scale),
+                              child: Image.memory(
+                                thumbData,
+                                fit: BoxFit.contain,
+                                gaplessPlayback: true,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-              ),
-            ],
-          ),
-        );
+                ),
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: thumbData == null && imageData == null
+                      ? Center(child: CircularProgressIndicator())
+                      : GestureDetector(
+                          onScaleStart: _handleOnScaleStart,
+                          onScaleUpdate: _handleOnScaleUpdate,
+                          onScaleEnd: _handleOnScaleEnd,
+                          // onDoubleTap: _handleonDoubleTap,
+                          onTapUp: handleTapUp,
+                          child: ClipRect(
+                            child: Transform(
+                              transform: Matrix4.identity()
+                                ..translate(_offset.dx, _offset.dy)
+                                ..scale(_scale),
+                              child: Image.memory(
+                                imageData ?? thumbData,
+                                fit: BoxFit.contain,
+                                gaplessPlayback: true,
+                              ),
+                            ),
+                          ),
+                        ),
+                ),
+                imageData == null
+                    ? Center(child: CircularProgressIndicator())
+                    : Container(),
+              ],
+            ));
       },
     );
   }
