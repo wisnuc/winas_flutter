@@ -8,9 +8,11 @@ import '../common/taskManager.dart';
 const photoTypes = ['JPEG', 'PNG', 'JPG', 'GIF', 'BMP', 'RAW'];
 
 class PhotoItem extends StatefulWidget {
-  PhotoItem({Key key, this.item, this.showPhoto}) : super(key: key);
+  PhotoItem({Key key, this.item, this.showPhoto, this.cellSize})
+      : super(key: key);
   final Entry item;
   final Function showPhoto;
+  final double cellSize;
   @override
   _PhotoItemState createState() => _PhotoItemState(item);
 }
@@ -70,17 +72,28 @@ class _PhotoItemState extends State<PhotoItem> {
                     right: 0,
                     bottom: 0,
                     child: thumbData == null
-                        ? Container(color: Colors.grey[300])
-                        // : Image.memory(
-                        //     thumbData,
-                        //     fit: BoxFit.cover,
-                        //   ),
+                        ? Container()
                         : Hero(
                             tag: entry.uuid,
-                            child: Image.memory(
-                              thumbData,
-                              fit: BoxFit.cover,
+                            child: Opacity(
+                              opacity: 1,
+                              child: Image.memory(
+                                thumbData,
+                                fit: BoxFit.contain,
+                              ),
                             ),
+                          ),
+                  ),
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: thumbData == null
+                        ? Container(color: Colors.grey[300])
+                        : Image.memory(
+                            thumbData,
+                            fit: BoxFit.cover,
                           ),
                   ),
                   Positioned(

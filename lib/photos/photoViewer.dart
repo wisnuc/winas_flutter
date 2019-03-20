@@ -32,58 +32,72 @@ class _PhotoViewerState extends State<PhotoViewer> {
     super.initState();
   }
 
+  double opacity = 1.0;
+  updateOpacity(double value) {
+    setState(() {
+      opacity = value.clamp(0.0, 1.0);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     print('currentItem ${currentItem.uuid}');
     return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            currentItem.name,
-            style: TextStyle(
-              color: Colors.black87,
-              fontWeight: FontWeight.normal,
-            ),
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        title: Text(
+          currentItem.name,
+          style: TextStyle(
+            color: Color.fromARGB((opacity * 255 * 0.87).round(), 0, 0, 0),
+            fontWeight: FontWeight.normal,
           ),
-          elevation: 2.0,
-          brightness: Brightness.light,
-          backgroundColor: Colors.white,
-          iconTheme: IconThemeData(color: Colors.black38),
         ),
-        body: PageView(
-          controller:
-              PageController(initialPage: widget.list.indexOf(currentItem)),
-          children: List.from(
-            widget.list
-                .map(
-                  (photo) => SizedBox.expand(
-                        child: Hero(
-                          tag: photo.uuid,
-                          child: GridPhoto(
-                            photo: photo,
-                            thumbData:
-                                photo == widget.photo ? widget.thumbData : null,
-                          ),
+        elevation: 0.0,
+        brightness: Brightness.light,
+        bottomOpacity: opacity,
+        toolbarOpacity: opacity,
+        backgroundColor: Color.fromARGB((opacity * 255).round(), 255, 255, 255),
+        iconTheme: IconThemeData(color: Colors.black38),
+      ),
+      body: PageView(
+        controller:
+            PageController(initialPage: widget.list.indexOf(currentItem)),
+        children: List.from(
+          widget.list
+              .map(
+                (photo) => Container(
+                      child: Hero(
+                        tag: photo.uuid,
+                        child: GridPhoto(
+                          updateOpacity: updateOpacity,
+                          photo: photo,
+                          thumbData:
+                              photo == widget.photo ? widget.thumbData : null,
                         ),
                       ),
-                )
-                .toList(),
-          ),
-          onPageChanged: (int index) {
-            print('current index $index');
-            if (mounted) {
-              setState(() {
-                currentItem = widget.list[index];
-              });
-            }
-          },
-        ));
+                    ),
+              )
+              .toList(),
+        ),
+        onPageChanged: (int index) {
+          print('current index $index');
+          if (mounted) {
+            setState(() {
+              currentItem = widget.list[index];
+            });
+          }
+        },
+      ),
+    );
   }
 }
 
 class GridPhoto extends StatefulWidget {
-  const GridPhoto({Key key, this.photo, this.thumbData}) : super(key: key);
+  const GridPhoto({Key key, this.photo, this.thumbData, this.updateOpacity})
+      : super(key: key);
   final Uint8List thumbData;
   final Entry photo;
+  final Function updateOpacity;
 
   @override
   _GridPhotoState createState() => _GridPhotoState();
@@ -129,6 +143,10 @@ class _GridPhotoState extends State<GridPhoto>
   }
 
   void _handleOnScaleStart(ScaleStartDetails details) {
+    print('_handleOnScaleStart');
+    opacity = 1;
+    prevPosition = details.focalPoint;
+    updateOpacity();
     setState(() {
       _hiddenThumb = true;
       _previousScale = _scale;
@@ -139,14 +157,42 @@ class _GridPhotoState extends State<GridPhoto>
   }
 
   void _handleOnScaleUpdate(ScaleUpdateDetails details) {
-    setState(() {
-      _scale = (_previousScale * details.scale).clamp(1.0, 4.0);
-      // Ensure that image location under the focal point stays in the same place despite scaling.
-      _offset = _clampOffset(details.focalPoint - _normalizedOffset * _scale);
-    });
+    print('_handleOnScaleUpdate');
+    if (_scale == 1.0) {
+      final rate = 255;
+
+      Offset delta = details.focalPoint - prevPosition;
+      prevPosition = details.focalPoint;
+      print(delta);
+      print(details.focalPoint);
+
+      _offset += delta;
+
+      opacity = (1 - _offset.dy / rate).clamp(0.0, 1.0);
+
+      updateOpacity();
+      setState(() {});
+    } else {
+      setState(() {
+        _scale = (_previousScale * details.scale).clamp(1.0, 4.0);
+        // Ensure that image location under the focal point stays in the same place despite scaling.
+        _offset = _clampOffset(details.focalPoint - _normalizedOffset * _scale);
+      });
+    }
   }
 
   void _handleOnScaleEnd(ScaleEndDetails details) {
+    if (opacity <= 0.5) {
+      Navigator.pop(context);
+      return;
+    }
+
+    if (_scale == 1.0) {
+      _offset = Offset(0, 0);
+    }
+    opacity = 1.0;
+    updateOpacity();
+
     final double magnitude = details.velocity.pixelsPerSecond.distance;
     if (magnitude < _kMinFlingVelocity) return;
     final Offset direction = details.velocity.pixelsPerSecond / magnitude;
@@ -156,6 +202,65 @@ class _GridPhotoState extends State<GridPhoto>
     _controller
       ..value = 0.0
       ..fling(velocity: magnitude / 1000.0);
+  }
+
+  void _handleonDoubleTap() {
+    Offset focalPoint = Offset(context.size.width / 2, context.size.height / 2);
+    double scale = 2;
+    setState(() {
+      _hiddenThumb = true;
+      _scale = (_scale * scale).clamp(1.0, 4.0);
+      // // Ensure that image location under the focal point stays in the same place despite scaling.
+      _offset = _clampOffset(focalPoint - focalPoint * _scale);
+    });
+  }
+
+  double opacity = 1;
+
+  updateOpacity() {
+    widget.updateOpacity(opacity);
+  }
+
+  Offset prevPosition;
+  void onDragStart(DragStartDetails details) {
+    opacity = 1;
+    prevPosition = details.globalPosition;
+    updateOpacity();
+    setState(() {
+      _hiddenThumb = true;
+      _controller.stop();
+    });
+  }
+
+  void onDragUpdate(DragUpdateDetails details) {
+    final rate = 255;
+
+    Offset delta = details.globalPosition - prevPosition;
+    prevPosition = details.globalPosition;
+    print(delta);
+    print(details.delta);
+
+    _offset += delta;
+
+    opacity = (1 - _offset.dy / rate).clamp(0.0, 1.0);
+
+    updateOpacity();
+    setState(() {});
+  }
+
+  void onDragEnd(DragEndDetails event) {
+    // final dy = event.velocity.pixelsPerSecond.dy;
+    if (opacity <= 0.5) {
+      Navigator.pop(context);
+      return;
+    }
+
+    if (_scale == 1.0) {
+      _offset = Offset(0, 0);
+    }
+    opacity = 1.0;
+    updateOpacity();
+    setState(() {});
   }
 
   Uint8List imageData;
@@ -169,6 +274,7 @@ class _GridPhotoState extends State<GridPhoto>
       thumbData = await cm.getThumbData(widget.photo, state, null);
     }
     if (this.mounted) {
+      print('thumbData updated');
       setState(() {});
     } else {
       return;
@@ -178,6 +284,7 @@ class _GridPhotoState extends State<GridPhoto>
     imageData = await cm.getPhoto(widget.photo, state);
 
     if (imageData != null && this.mounted) {
+      print('imageData updated');
       setState(() {});
     }
   }
@@ -189,56 +296,55 @@ class _GridPhotoState extends State<GridPhoto>
       onDispose: (store) => {},
       converter: (store) => store.state,
       builder: (context, state) {
-        return Stack(
-          children: <Widget>[
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: _hiddenThumb
-                  ? Container()
-                  : thumbData == null
-                      ? Center(child: CircularProgressIndicator())
-                      : Image.memory(
-                          thumbData,
-                          fit: BoxFit.contain,
-                        ),
-            ),
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: imageData == null
-                  ? Container(color: Colors.transparent)
-                  : GestureDetector(
-                      onScaleStart: _handleOnScaleStart,
-                      onScaleUpdate: _handleOnScaleUpdate,
-                      onScaleEnd: _handleOnScaleEnd,
-                      child: ClipRect(
-                        child: Transform(
-                          transform: Matrix4.identity()
-                            ..translate(_offset.dx, _offset.dy)
-                            ..scale(_scale),
-                          child: Image.memory(
-                            imageData,
+        return Container(
+          color: Color.fromARGB((opacity * 255).round(), 255, 255, 255),
+          // color: Colors.transparent,
+          child: Stack(
+            children: <Widget>[
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: _hiddenThumb
+                    ? Container()
+                    : thumbData == null
+                        ? Center(child: CircularProgressIndicator())
+                        : Image.memory(
+                            thumbData,
                             fit: BoxFit.contain,
+                          ),
+              ),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: imageData == null
+                    ? Center(child: CircularProgressIndicator())
+                    : GestureDetector(
+                        onScaleStart: _handleOnScaleStart,
+                        onScaleUpdate: _handleOnScaleUpdate,
+                        onScaleEnd: _handleOnScaleEnd,
+                        // onDoubleTap: _handleonDoubleTap,
+                        // onVerticalDragStart: onDragStart,
+                        // onVerticalDragUpdate: onDragUpdate,
+                        // onVerticalDragEnd: onDragEnd,
+                        child: ClipRect(
+                          child: Transform(
+                            transform: Matrix4.identity()
+                              ..translate(_offset.dx, _offset.dy)
+                              ..scale(_scale),
+                            child: Image.memory(
+                              imageData,
+                              fit: BoxFit.contain,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-            ),
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: imageData == null
-                  ? Center(child: CircularProgressIndicator())
-                  : Container(color: Colors.transparent),
-            ),
-          ],
+              ),
+            ],
+          ),
         );
       },
     );

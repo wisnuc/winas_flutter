@@ -72,7 +72,8 @@ class _PhotosState extends State<Photos> {
       localAssetList = List.from(localAssetList.reversed);
 
       final List<Entry> allMedia = List.from(
-        res.data.map((d) => Entry.fromSearch(d, state.drives)),
+        res.data.map((d) => Entry.fromSearch(d, state.drives)).where(
+            (d) => d?.metadata?.height != null && d?.metadata?.width != null),
       );
 
       // sort allMedia

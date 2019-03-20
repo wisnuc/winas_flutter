@@ -239,9 +239,15 @@ class Metadata {
   String type;
   String datetime;
   String hdate;
+  int height;
+  int width;
+
   Metadata.fromMap(Map m) {
     this.type = m['type'];
     this.datetime = m['date'];
+    this.height = m['h'];
+    this.width = m['w'];
+
     try {
       // only allow format: "2017:06:17 17:31:18", Res: 2017-06-17
       if (this.datetime != null &&

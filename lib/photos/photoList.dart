@@ -6,6 +6,7 @@ import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import './photoItem.dart';
 import './photoViewer.dart';
 import '../redux/redux.dart';
+import '../common/utils.dart';
 
 class PhotoList extends StatefulWidget {
   final Album album;
@@ -54,26 +55,30 @@ class _PhotoListState extends State<PhotoList> {
 
     final List mapHeight = [];
     double acc = 0;
+    final cellSize = width - spacing * lineCount + spacing;
     photoMapDates.forEach((line) {
       if (line is String) {
         acc += headerHeight;
         mapHeight.add([acc, line]);
       } else if (line is List<Entry>) {
         final int count = (line.length / lineCount).ceil();
-        // (count -1) * spacings + height * count
-        acc += (count - 1) * spacing +
-            (width - spacing * lineCount + spacing) / lineCount * count;
+        // (count -1) * spacings + cellSize * count
+        acc += (count - 1) * spacing + cellSize / lineCount * count;
         mapHeight.last[0] = acc;
       }
     });
 
-    return {'photoMapDates': photoMapDates, 'mapHeight': mapHeight};
+    return {
+      'photoMapDates': photoMapDates,
+      'mapHeight': mapHeight,
+      'cellSize': cellSize
+    };
   }
 
   void showPhoto(BuildContext ctx, Entry entry, Uint8List thumbData) {
     Navigator.push(
       ctx,
-      MaterialPageRoute<void>(
+      TransparentPageRoute(
         builder: (BuildContext context) {
           return PhotoViewer(
             photo: entry,
@@ -99,6 +104,7 @@ class _PhotoListState extends State<PhotoList> {
     final res = getList(widget.album, context);
     final List list = res['photoMapDates'];
     final List mapHeight = res['mapHeight'];
+    final double cellSize = res['cellSize'];
 
     return StoreConnector<AppState, AppState>(
       onInit: (store) => {},
@@ -156,6 +162,7 @@ class _PhotoListState extends State<PhotoList> {
                             return PhotoItem(
                               item: line[index],
                               showPhoto: showPhoto,
+                              cellSize: cellSize,
                             );
                           },
                           childCount: line.length,

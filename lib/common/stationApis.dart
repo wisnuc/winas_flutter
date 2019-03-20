@@ -260,6 +260,7 @@ class Apis {
       );
     } else {
       dio.options.headers['Authorization'] = 'JWT $lanToken';
+
       await dio.download(
         '$lanAdrress/$ep',
         downloadPath,
