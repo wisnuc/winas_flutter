@@ -54,6 +54,9 @@ class _PhotoItemState extends State<PhotoItem> {
   @override
   Widget build(BuildContext context) {
     final entry = widget.item;
+    final h = entry.metadata.height;
+    final w = entry.metadata.width;
+    final ratio = h > w ? h / w : w / h;
     return StoreConnector<AppState, AppState>(
       onInit: (store) => _getThumb(store.state),
       onDispose: (store) => {},
@@ -75,11 +78,13 @@ class _PhotoItemState extends State<PhotoItem> {
                         ? Container()
                         : Hero(
                             tag: entry.uuid,
-                            child: Opacity(
-                              opacity: 1,
-                              child: Image.memory(
-                                thumbData,
-                                fit: BoxFit.contain,
+                            child: ClipRect(
+                              child: Transform.scale(
+                                scale: ratio,
+                                child: Image.memory(
+                                  thumbData,
+                                  fit: BoxFit.contain,
+                                ),
                               ),
                             ),
                           ),
