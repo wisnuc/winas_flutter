@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:outline_material_icons/outline_material_icons.dart';
 
@@ -100,6 +101,12 @@ class _BottomNavigationState extends State<BottomNavigation>
     }
   }
 
+  checkIntent() async {
+    final platform = const MethodChannel('app.channel.shared.data');
+    String filePath = await platform.invokeMethod("getSharedFile");
+    print('filePath: $filePath');
+  }
+
   @override
   void initState() {
     super.initState();
@@ -143,6 +150,8 @@ class _BottomNavigationState extends State<BottomNavigation>
         color: Colors.deepOrange,
       ),
     ];
+
+    checkIntent();
   }
 
   @override
