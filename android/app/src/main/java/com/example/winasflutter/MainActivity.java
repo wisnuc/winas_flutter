@@ -1,11 +1,10 @@
 package com.wisnuc.winas;
 
-import android.content.Intent;
-import android.os.Bundle;
 import android.net.Uri;
-import android.util.Log;
+import android.os.Bundle;
+import android.content.Intent;
 
-import java.net.URI;
+import java.io.File;
 import java.nio.ByteBuffer;
 
 import io.flutter.app.FlutterActivity;
@@ -60,28 +59,22 @@ public class MainActivity extends FlutterActivity {
   @Override
   protected void onNewIntent(Intent intent) {
     super.onNewIntent(intent);
-    // getIntent() should always return the most recent
-    // setIntent(intent);
-
     String action = intent.getAction();
     String type = intent.getType();
     if (Intent.ACTION_SEND.equals(action) && type != null) {
-      // handleSendData(intent);
       Uri uri = (Uri) intent.getExtras().get("android.intent.extra.STREAM");
-      String path = uri.getPath();
-      System.out.println("onNewIntent>>>>>>>>>>>>>>>>>>");
-      System.out.println(path);
+      System.out.println("init Intent>>>>>>>>>>>>>>>>>>");
+      System.out.println(uri);
       if (channelEvents != null) {
-        channelEvents.success(path);
+        channelEvents.success(uri.toString());
       }
     }
   }
 
   void handleSendData(Intent intent) {
     Uri uri = (Uri) intent.getExtras().get("android.intent.extra.STREAM");
-    String path = uri.getPath();
-    System.out.println("onNewIntent>>>>>>>>>>>>>>>>>>");
-    System.out.println(path);
-    sharedFile = path;
+    System.out.println("new Intent>>>>>>>>>>>>>>>>>>");
+    System.out.println(uri);
+    sharedFile = uri.toString();
   }
 }

@@ -13,6 +13,7 @@ import './xcopyDialog.dart';
 import '../redux/redux.dart';
 import '../common/cache.dart';
 import '../common/utils.dart';
+import '../common/intent.dart';
 import '../transfer/manager.dart';
 import '../icons/winas_icons.dart';
 
@@ -164,6 +165,17 @@ class _FilesState extends State<Files> {
         List.from(listNav.data['path'].map((path) => DirPath.fromMap(path)));
 
     parseEntries(rawEntries, rawPath);
+
+    // handle intent
+    // node: Node(tag: 'home')
+    if (widget.node.tag == 'home') {
+      String filePath = await Intent.initIntent;
+      print(filePath);
+      if (filePath != null) {
+        final cm = TransferManager.getInstance();
+        cm.newUploadSharedFile(filePath, state);
+      }
+    }
     return;
   }
 

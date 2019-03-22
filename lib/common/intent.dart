@@ -15,7 +15,14 @@ class Intent {
   }
 
   static Future<String> get initIntent async {
-    final String filePath = await initChannel.invokeMethod('getSharedFile');
+    String filePath;
+    try {
+      filePath = await initChannel.invokeMethod('getSharedFile');
+    } catch (e) {
+      print(e);
+      filePath = null;
+    }
+
     return filePath;
   }
 }

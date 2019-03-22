@@ -10,6 +10,13 @@ import 'package:path_provider/path_provider.dart';
 
 import '../redux/redux.dart';
 import '../common/utils.dart';
+import '../common/isolate.dart';
+
+enum TransType {
+  shared,
+  upload,
+  download,
+}
 
 class Task {
   final AsyncMemoizer lock = AsyncMemoizer();
@@ -20,6 +27,7 @@ class Task {
 class TransferItem {
   String uuid;
   Entry entry;
+  TransType transType;
   String speed = '';
   int finishedTime = -1;
   int startTime = -1;
@@ -34,7 +42,7 @@ class TransferItem {
   /// status of TransferItem: init, working, paused, finished, failed;
   String status = 'init';
 
-  TransferItem({this.entry})
+  TransferItem({this.entry, this.transType, this.filePath})
       : this.uuid = Uuid().v4(),
         this.previousTime = DateTime.now().millisecondsSinceEpoch;
 
@@ -256,8 +264,98 @@ class TransferManager {
 
   /// creat a new download task
   newDownload(Entry entry, AppState state) {
-    TransferItem item = TransferItem(entry: entry);
+    TransferItem item = TransferItem(
+      entry: entry,
+      transType: TransType.download,
+    );
     transferList.add(item);
     _downloadFile(item, state).catchError((onError) => item.fail());
+  }
+
+  Future<Entry> getTargetDir(
+      AppState state, Drive drive, String dirname) async {
+    final uuid = drive.uuid;
+    final listNav = await state.apis.req('listNavDir', {
+      'driveUUID': uuid,
+      'dirUUID': uuid,
+    });
+
+    final currentNode = Node(
+      name: 'Backup',
+      driveUUID: uuid,
+      dirUUID: uuid,
+      tag: 'backup',
+      location: 'backup',
+    );
+
+    List<Entry> rawEntries = List.from(listNav.data['entries']
+        .map((entry) => Entry.mixNode(entry, currentNode)));
+
+    final photosDir =
+        rawEntries.firstWhere((e) => e.name == dirname, orElse: () => null);
+    return photosDir;
+  }
+
+  Future<void> uploadSharedFile(TransferItem item, AppState state) async {
+    final filePath = item.filePath;
+    item.start(null, () => {});
+    try {
+      await _save();
+
+      // get target dir
+      final targetDirName = '来自手机的文件';
+
+      final Drive drive =
+          state.drives.firstWhere((d) => d.tag == 'home', orElse: () => null);
+      Entry targetDir = await getTargetDir(state, drive, targetDirName);
+
+      if (targetDir == null) {
+        // make backup root directory
+        await state.apis.req('mkdir', {
+          'dirname': targetDirName,
+          'dirUUID': drive.uuid,
+          'driveUUID': drive.uuid,
+        });
+
+        // retry getPhotosDir
+        targetDir = await getTargetDir(state, drive, targetDirName);
+      }
+
+      // hash
+      final hash = await hashViaIsolate(filePath);
+
+      // download
+      await uploadViaIsolate(state.apis, targetDir, filePath, hash);
+
+      item.finish();
+
+      await _save();
+    } catch (error) {
+      print(error);
+      // DioErrorType.CANCEL is not error
+      if (error is! DioError || (error?.type != DioErrorType.CANCEL)) {
+        item.fail();
+      }
+    }
+  }
+
+  /// creat a new upload task. handle shared file from other app
+  newUploadSharedFile(String filePath, AppState state) {
+    File(filePath)
+      ..stat().then(
+        (stat) {
+          print('newUploadSharedFile $stat');
+          if (stat.type != FileSystemEntityType.notFound) {
+            String name = filePath.split('/').last;
+            TransferItem item = TransferItem(
+              entry: Entry(name: name, size: stat.size),
+              transType: TransType.shared,
+              filePath: filePath,
+            );
+            transferList.add(item);
+            uploadSharedFile(item, state).catchError((onError) => item.fail());
+          }
+        },
+      ).catchError(print);
   }
 }

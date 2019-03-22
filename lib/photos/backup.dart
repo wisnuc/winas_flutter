@@ -1,13 +1,12 @@
 import 'dart:io';
 import 'dart:async';
-import 'dart:isolate';
 import 'package:dio/dio.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import './isolate.dart';
 import '../redux/redux.dart';
 import '../common/utils.dart';
+import '../common/isolate.dart';
 import '../common/stationApis.dart';
 
 enum Status { idle, running, failed, finished }
@@ -52,7 +51,9 @@ class BackupWorker {
   String machineId;
   String deviceName;
   CancelToken cancelToken;
-  Isolate currentWork;
+
+  CancelIsolate cancelUpload;
+  CancelIsolate cancelHash;
   Status status = Status.idle;
   int total = 0;
   int finished = 0;
@@ -141,36 +142,6 @@ class BackupWorker {
     }
 
     return photosDir;
-  }
-
-  Future<void> uploadViaIsolate(Entry dir, String filePath, String hash) async {
-    final response = ReceivePort();
-
-    currentWork = await Isolate.spawn(isolateUpload, response.sendPort);
-
-    // sendPort from isolateHash
-    final sendPort = await response.first as SendPort;
-    final answer = ReceivePort();
-
-    // send filePath and sendPort(to get answer) to isolateHash
-    // Object in params need to convert to String
-    // final entryJson = message[0] as String;
-    // final filePath = message[1] as String;
-    // final hash = message[2] as String;
-    // final apisJson = message[3] as String;
-    // final isCloud = message[4] as bool;
-    // final answerSend = message[5] as SendPort;
-
-    sendPort.send([
-      dir.toString(),
-      filePath,
-      hash,
-      apis.toString(),
-      apis.isCloud,
-      answer.sendPort
-    ]);
-    final error = await answer.first;
-    if (error != null) throw error;
   }
 
   /// Get backup directory's content
@@ -295,7 +266,8 @@ class BackupWorker {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String hash = prefs.getString(id);
     if (hash == null) {
-      hash = await hashViaIsolate(filePath);
+      cancelHash = CancelIsolate();
+      hash = await hashViaIsolate(filePath, cancelIsolate: cancelHash);
       if (hash == null) throw 'hash error';
     }
     await prefs.setString(id, hash);
@@ -315,6 +287,7 @@ class BackupWorker {
     int mtime = stat.modified.millisecondsSinceEpoch;
     print(
         'before hash: $name, size: ${stat.size} ${DateTime.now().millisecondsSinceEpoch - time}');
+
     String hash = await getHash('$id+$mtime', filePath);
     print('after hash ${DateTime.now().millisecondsSinceEpoch - time}');
     final photoEntry = PhotoEntry(id, name, hash, stat.size, mtime);
@@ -329,9 +302,11 @@ class BackupWorker {
     }
     print(
         'before upload: $name, size: ${stat.size} ${DateTime.now().millisecondsSinceEpoch - time}');
-
+// update cancelIsolate
+    cancelUpload = CancelIsolate();
     // upload photo
-    await uploadViaIsolate(targetDir, filePath, hash);
+    await uploadViaIsolate(apis, targetDir, filePath, hash,
+        cancelIsolate: cancelUpload);
 
     print(
         'backup success: ${file.path} in ${DateTime.now().millisecondsSinceEpoch - time} ms');
@@ -372,7 +347,8 @@ class BackupWorker {
   void abort() {
     if (status != Status.finished) {
       try {
-        currentWork?.kill();
+        cancelUpload?.cancel();
+        cancelHash?.cancel();
       } catch (e) {
         print(e);
       }

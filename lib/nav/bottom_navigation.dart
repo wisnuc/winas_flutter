@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:outline_material_icons/outline_material_icons.dart';
@@ -5,10 +6,11 @@ import 'package:outline_material_icons/outline_material_icons.dart';
 import '../user/user.dart';
 import '../files/file.dart';
 import '../redux/redux.dart';
-import '../common/intent.dart';
 import '../files/fileRow.dart';
 import '../photos/backup.dart';
+import '../common/intent.dart';
 import '../photos/photos.dart';
+import '../transfer/manager.dart';
 import '../files/backupView.dart';
 import '../device/myStation.dart';
 import '../transfer/transfer.dart';
@@ -91,14 +93,27 @@ class _BottomNavigationState extends State<BottomNavigation>
   BottomNavigationBarType _type = BottomNavigationBarType.fixed;
   List<NavigationIconView> _navigationViews;
   BackupWorker backupWorker;
+  StreamSubscription<String> intentListener;
 
-  startBackup(AppState state) {
+  /// init works onStart:
+  /// 1. autoBackup
+  /// 2. add intent Listener
+  initWorks(AppState state) {
     backupWorker = BackupWorker(state.apis);
 
     // start autoBackup
     if (state.config.autoBackup == true) {
       backupWorker.start();
     }
+
+    // add listener of new intent
+    intentListener = Intent.listenToOnNewIntent().listen((filePath) {
+      print('newIntent: $filePath');
+      if (filePath != null) {
+        final cm = TransferManager.getInstance();
+        cm.newUploadSharedFile(filePath, state);
+      }
+    });
   }
 
   @override
@@ -136,25 +151,21 @@ class _BottomNavigationState extends State<BottomNavigation>
         color: Colors.deepPurple,
       ),
       NavigationIconView(
-        activeIcon: const Icon(Icons.person),
-        icon: const Icon(Icons.person_outline),
+        activeIcon: Icon(Icons.person),
+        icon: Icon(Icons.person_outline),
         title: '我的',
         nav: 'user',
         view: () => AccountInfo(),
         color: Colors.deepOrange,
       ),
     ];
-
-    Intent.initIntent.then((path) => print('initIntent: $path'));
-    Intent.listenToOnNewIntent().listen((path) {
-      print('newIntent: $path');
-    });
   }
 
   @override
   void dispose() {
     super.dispose();
     backupWorker?.abort();
+    intentListener?.cancel();
   }
 
   @override
@@ -173,7 +184,7 @@ class _BottomNavigationState extends State<BottomNavigation>
       },
     );
     return StoreConnector<AppState, AppState>(
-      onInit: (store) => startBackup(store.state),
+      onInit: (store) => initWorks(store.state),
       onDispose: (store) => {},
       converter: (store) => store.state,
       builder: (context, state) {
