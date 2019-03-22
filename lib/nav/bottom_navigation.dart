@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:outline_material_icons/outline_material_icons.dart';
 
 import '../user/user.dart';
 import '../files/file.dart';
 import '../redux/redux.dart';
+import '../common/intent.dart';
 import '../files/fileRow.dart';
 import '../photos/backup.dart';
 import '../photos/photos.dart';
@@ -101,12 +101,6 @@ class _BottomNavigationState extends State<BottomNavigation>
     }
   }
 
-  checkIntent() async {
-    final platform = const MethodChannel('app.channel.shared.data');
-    String filePath = await platform.invokeMethod("getSharedFile");
-    print('filePath: $filePath');
-  }
-
   @override
   void initState() {
     super.initState();
@@ -151,7 +145,10 @@ class _BottomNavigationState extends State<BottomNavigation>
       ),
     ];
 
-    checkIntent();
+    Intent.initIntent.then((path) => print('initIntent: $path'));
+    Intent.listenToOnNewIntent().listen((path) {
+      print('newIntent: $path');
+    });
   }
 
   @override
