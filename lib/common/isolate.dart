@@ -120,7 +120,6 @@ void isolateUpload(SendPort sendPort) {
 
     final FileStat stat = file.statSync();
 
-    // TODO: handle diff of backup or upload sharedFile
     final formDataOptions = {
       'op': 'newfile',
       'size': stat.size,

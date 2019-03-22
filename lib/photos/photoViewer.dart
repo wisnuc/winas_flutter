@@ -1,5 +1,7 @@
 import 'dart:typed_data';
+import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 
 import '../redux/redux.dart';
@@ -7,9 +9,7 @@ import '../common/cache.dart';
 
 const double _kMinFlingVelocity = 800.0;
 
-List<String> photoMagic = ['JPEG', 'GIF', 'PNG', 'BMP'];
-
-List<String> thumbMagic = ['JPEG', 'GIF', 'PNG', 'BMP', 'PDF'];
+const videoTypes = 'RM.RMVB.WMV.AVI.MP4.3GP.MKV.MOV.FLV';
 
 class PhotoViewer extends StatefulWidget {
   const PhotoViewer({Key key, this.photo, this.thumbData, this.list})
@@ -26,6 +26,7 @@ class _PhotoViewerState extends State<PhotoViewer> {
   /// current photo, default: widget.photo
   Entry currentItem;
   ScrollController myScrollController = ScrollController();
+
   @override
   void initState() {
     currentItem = widget.photo;
@@ -109,7 +110,9 @@ class _GridPhotoState extends State<GridPhoto>
   double _scale = 1.0;
   Offset _normalizedOffset;
   double _previousScale;
-
+  VideoPlayerController videoPlayerController;
+  ChewieController chewieController;
+  Widget playerWidget;
   @override
   void initState() {
     super.initState();
@@ -121,6 +124,8 @@ class _GridPhotoState extends State<GridPhoto>
   @override
   void dispose() {
     _controller.dispose();
+    videoPlayerController.dispose();
+    chewieController.dispose();
     super.dispose();
   }
 
@@ -232,12 +237,30 @@ class _GridPhotoState extends State<GridPhoto>
       return;
     }
 
-    // download raw photo
-    imageData = await cm.getPhoto(widget.photo, state);
+    if (videoTypes.split('.').contains(widget.photo.metadata.type)) {
+      // preview video
 
-    if (imageData != null && this.mounted) {
-      print('imageData updated');
-      setState(() {});
+      videoPlayerController = VideoPlayerController.network(
+          'https://www.sample-videos.com/video123/mp4/720/big_buck_bunny_720p_20mb.mp4');
+
+      chewieController = ChewieController(
+        videoPlayerController: videoPlayerController,
+        aspectRatio: 3 / 2,
+        autoPlay: false,
+        looping: true,
+      );
+
+      playerWidget = Chewie(
+        controller: chewieController,
+      );
+    } else {
+      // download raw photo
+      imageData = await cm.getPhoto(widget.photo, state);
+
+      if (imageData != null && this.mounted) {
+        print('imageData updated');
+        setState(() {});
+      }
     }
   }
 
@@ -320,27 +343,29 @@ class _GridPhotoState extends State<GridPhoto>
                   bottom: 0,
                   child: thumbData == null && imageData == null
                       ? Center(child: CircularProgressIndicator())
-                      : GestureDetector(
-                          onScaleStart: _handleOnScaleStart,
-                          onScaleUpdate: _handleOnScaleUpdate,
-                          onScaleEnd: _handleOnScaleEnd,
-                          // onDoubleTap: _handleonDoubleTap,
-                          onTapUp: handleTapUp,
-                          child: ClipRect(
-                            child: Transform(
-                              transform: Matrix4.identity()
-                                ..translate(_offset.dx, _offset.dy)
-                                ..scale(_scale),
-                              child: Image.memory(
-                                imageData ?? thumbData,
-                                fit: BoxFit.contain,
-                                gaplessPlayback: true,
+                      : playerWidget != null
+                          ? playerWidget
+                          : GestureDetector(
+                              onScaleStart: _handleOnScaleStart,
+                              onScaleUpdate: _handleOnScaleUpdate,
+                              onScaleEnd: _handleOnScaleEnd,
+                              // onDoubleTap: _handleonDoubleTap,
+                              onTapUp: handleTapUp,
+                              child: ClipRect(
+                                child: Transform(
+                                  transform: Matrix4.identity()
+                                    ..translate(_offset.dx, _offset.dy)
+                                    ..scale(_scale),
+                                  child: Image.memory(
+                                    imageData ?? thumbData,
+                                    fit: BoxFit.contain,
+                                    gaplessPlayback: true,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
                 ),
-                imageData == null
+                imageData == null && playerWidget == null
                     ? Center(child: CircularProgressIndicator())
                     : Container(),
               ],

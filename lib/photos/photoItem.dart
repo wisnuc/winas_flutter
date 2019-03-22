@@ -5,7 +5,7 @@ import 'package:flutter_redux/flutter_redux.dart';
 import '../redux/redux.dart';
 import '../common/taskManager.dart';
 
-const photoTypes = ['JPEG', 'PNG', 'JPG', 'GIF', 'BMP', 'RAW'];
+const photoTypes = ['JPEG', 'PNG', 'JPG', 'GIF', 'BMP', 'RAW', 'MP4', 'MOV'];
 
 class PhotoItem extends StatefulWidget {
   PhotoItem({Key key, this.item, this.showPhoto, this.cellSize})
@@ -39,10 +39,14 @@ class _PhotoItemState extends State<PhotoItem> {
   _onTap(BuildContext ctx) {
     if (entry.selected) {
       entry.toggleSelect();
-    } else if (photoTypes.contains(entry?.metadata?.type)) {
-      // is photo
+    } else {
       widget.showPhoto(ctx, entry, thumbData);
     }
+
+    // else if (photoTypes.contains(entry?.metadata?.type)) {
+    //   // is photo
+    //   widget.showPhoto(ctx, entry, thumbData);
+    // }
   }
 
   @override
