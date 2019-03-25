@@ -105,7 +105,8 @@ Widget ellipsisText(String text, {TextStyle style}) {
     child: Text(
       text ?? '',
       textAlign: TextAlign.end,
-      overflow: TextOverflow.ellipsis,
+      overflow: TextOverflow.fade,
+      softWrap: false,
       maxLines: 1,
       style: style,
     ),
@@ -145,6 +146,11 @@ Widget actionButton(String title, Function action, Widget rightItem) {
       ),
     ),
   );
+}
+
+/// actionButton as Sliver
+Widget sliverActionButton(String title, Function action, Widget rightItem) {
+  return SliverToBoxAdapter(child: actionButton(title, action, rightItem));
 }
 
 Future getMachineId() async {

@@ -24,6 +24,7 @@ class _NetworkState extends State<Network> {
     try {
       final res = await state.apis.req('winasInfo', null);
       info = Info.fromMap(res.data);
+      print('info: $info');
       if (this.mounted) {
         setState(() {
           loading = false;
@@ -54,17 +55,17 @@ class _NetworkState extends State<Network> {
               backgroundColor: Colors.white10,
               brightness: Brightness.light,
               iconTheme: IconThemeData(color: Colors.black38),
-              actions: <Widget>[
-                Builder(builder: (ctx) {
-                  return FlatButton(
-                    child: Text(
-                      '切换Wi-Fi',
-                      style: TextStyle(color: Colors.black54),
-                    ),
-                    onPressed: () {},
-                  );
-                })
-              ],
+              // actions: <Widget>[
+              //   Builder(builder: (ctx) {
+              //     return FlatButton(
+              //       child: Text(
+              //         '切换Wi-Fi',
+              //         style: TextStyle(color: Colors.black54),
+              //       ),
+              //       onPressed: () {},
+              //     );
+              //   })
+              // ],
             ),
             body: loading
                 ? Container(
@@ -96,9 +97,14 @@ class _NetworkState extends State<Network> {
                             _ellipsisText(info.interfaceName),
                           ),
                           actionButton(
-                            'IP地址',
+                            '局域网IP地址',
                             () => {},
                             _ellipsisText(info.address),
+                          ),
+                          actionButton(
+                            '网卡带宽',
+                            () => {},
+                            _ellipsisText(info.bandwidth),
                           ),
                         ],
                       ),

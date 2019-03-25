@@ -302,129 +302,143 @@ class _MyStationState extends State<MyStation> {
               ? Center(
                   child: CircularProgressIndicator(),
                 )
-              : Column(
+              : ListView(
                   children: <Widget>[
-                    Container(
-                      height: 60,
-                      padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-                      child: Row(
-                        children: <Widget>[
-                          Expanded(
-                            flex: 10,
-                            child: Text(
-                              state.device.deviceName,
-                              style: TextStyle(fontSize: 28),
-                              textAlign: TextAlign.start,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                          ),
-                          Expanded(
-                            child: Container(),
-                            flex: 1,
-                          ),
-                          Text(
-                            usage,
-                            style:
-                                TextStyle(fontSize: 14, color: Colors.black54),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(6),
-                        ),
-                        child: Container(
-                          height: 24,
-                          child: Row(
-                            children: usageData
-                                .map((u) => Expanded(
-                                      flex: u['flex'],
-                                      child: Container(
-                                        color: u['color'],
-                                        margin: EdgeInsets.fromLTRB(0, 0, 3, 0),
-                                      ),
-                                    ))
-                                .toList(),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      height: 32,
-                      padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
-                      child: Row(
-                          children: usageData
-                              .where((d) => d['title'] != null)
-                              .map((u) => Row(
-                                    children: <Widget>[
-                                      Container(
-                                        height: 12,
-                                        width: 12,
-                                        decoration: BoxDecoration(
-                                          color: u['color'],
-                                          borderRadius: BorderRadius.all(
-                                            const Radius.circular(3),
-                                          ),
-                                        ),
-                                        margin: EdgeInsets.fromLTRB(0, 8, 8, 8),
-                                      ),
-                                      Text(
-                                        u['title'],
-                                      ),
-                                      Container(width: 8),
-                                    ],
-                                  ))
-                              .toList()),
-                    ),
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) {
-                                  return StorageDetail(usageData);
-                                },
-                                fullscreenDialog: true,
-                              ),
-                            ),
-                        child: Container(
-                          height: 64,
+                    Column(
+                      children: <Widget>[
+                        Container(
+                          height: 60,
                           padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
                           child: Row(
                             children: <Widget>[
-                              Text(
-                                '设备运行健康，存储详情查看',
-                                style: TextStyle(fontSize: 14),
+                              Expanded(
+                                flex: 10,
+                                child: Text(
+                                  state.device.deviceName,
+                                  style: TextStyle(fontSize: 28),
+                                  textAlign: TextAlign.start,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              ),
+                              Expanded(
+                                child: Container(),
+                                flex: 1,
                               ),
                             ],
                           ),
                         ),
-                      ),
-                    ),
-                    actionButton(
-                      '设备网络',
-                      () => Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) {
-                              return Network();
-                            }),
+                        Container(
+                          padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.all(
+                              Radius.circular(6),
+                            ),
+                            child: Container(
+                              height: 24,
+                              child: Row(
+                                children: usageData
+                                    .map((u) => Expanded(
+                                          flex: u['flex'],
+                                          child: Container(
+                                            color: u['color'],
+                                            margin: EdgeInsets.fromLTRB(0, 0,
+                                                u == usageData.last ? 0 : 3, 0),
+                                          ),
+                                        ))
+                                    .toList(),
+                              ),
+                            ),
                           ),
-                      null,
-                    ),
-                    actionButton(
-                      '关于本机',
-                      () => Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) {
-                              return DeviceInfo();
-                            }),
+                        ),
+                        Container(
+                          height: 32,
+                          padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
+                          child: Row(
+                              children: usageData
+                                  .where((d) => d['title'] != null)
+                                  .map((u) => Row(
+                                        children: <Widget>[
+                                          Container(
+                                            height: 12,
+                                            width: 12,
+                                            decoration: BoxDecoration(
+                                              color: u['color'],
+                                              borderRadius: BorderRadius.all(
+                                                const Radius.circular(3),
+                                              ),
+                                            ),
+                                            margin:
+                                                EdgeInsets.fromLTRB(0, 8, 8, 8),
+                                          ),
+                                          Text(
+                                            u['title'],
+                                          ),
+                                          Container(width: 8),
+                                        ],
+                                      ))
+                                  .toList()),
+                        ),
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) {
+                                      return StorageDetail(usageData);
+                                    },
+                                    fullscreenDialog: true,
+                                  ),
+                                ),
+                            child: Container(
+                              height: 64,
+                              padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
+                              child: Row(
+                                children: <Widget>[
+                                  Text(
+                                    usage,
+                                    style: TextStyle(
+                                        fontSize: 14, color: Colors.black54),
+                                  ),
+                                  Expanded(flex: 1, child: Container()),
+                                  Icon(Icons.chevron_right),
+                                ],
+                              ),
+                            ),
                           ),
-                      null,
+                        ),
+                        actionButton(
+                          '设备网络',
+                          () => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) {
+                                  return Network();
+                                }),
+                              ),
+                          null,
+                        ),
+                        actionButton(
+                          '关于本机',
+                          () => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) {
+                                  return DeviceInfo();
+                                }),
+                              ),
+                          null,
+                        ),
+                        actionButton(
+                          '软件更新',
+                          () => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) {
+                                  return DeviceInfo();
+                                }),
+                              ),
+                          null,
+                        ),
+                      ],
                     ),
                   ],
                 ),
