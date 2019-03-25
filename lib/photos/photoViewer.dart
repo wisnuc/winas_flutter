@@ -65,15 +65,20 @@ class _PhotoViewerState extends State<PhotoViewer> {
             PageController(initialPage: widget.list.indexOf(currentItem)),
         itemBuilder: (context, position) {
           final photo = widget.list[position];
+          final bool isVideo =
+              videoTypes.split('.').contains(photo.metadata.type);
+          final view = GridPhoto(
+            updateOpacity: updateOpacity,
+            photo: photo,
+            thumbData: photo == widget.photo ? widget.thumbData : null,
+          );
           return Container(
-            child: Hero(
-              tag: photo.uuid,
-              child: GridPhoto(
-                updateOpacity: updateOpacity,
-                photo: photo,
-                thumbData: photo == widget.photo ? widget.thumbData : null,
-              ),
-            ),
+            child: isVideo
+                ? view
+                : Hero(
+                    tag: photo.uuid,
+                    child: view,
+                  ),
           );
         },
         itemCount: widget.list.length,
@@ -123,9 +128,10 @@ class _GridPhotoState extends State<GridPhoto>
 
   @override
   void dispose() {
-    _controller.dispose();
-    videoPlayerController.dispose();
-    chewieController.dispose();
+    _controller?.dispose();
+    videoPlayerController?.pause();
+    videoPlayerController?.dispose();
+    chewieController?.dispose();
     super.dispose();
   }
 
@@ -236,23 +242,34 @@ class _GridPhotoState extends State<GridPhoto>
     } else {
       return;
     }
-
+    // is video
     if (videoTypes.split('.').contains(widget.photo.metadata.type)) {
+      final apis = state.apis;
       // preview video
+      if (apis.isCloud) return;
 
-      videoPlayerController = VideoPlayerController.network(
-          'https://www.sample-videos.com/video123/mp4/720/big_buck_bunny_720p_20mb.mp4');
+      final key = await cm.getRandomKey(widget.photo, state);
+      if (key == null) return;
+
+      final String url = 'http://${apis.lanIp}:3000/media/$key';
+      print('url: $url, $mounted');
+
+      // keep singleton
+      if (videoPlayerController != null) return;
+
+      videoPlayerController = VideoPlayerController.network(url);
 
       chewieController = ChewieController(
         videoPlayerController: videoPlayerController,
         aspectRatio: 3 / 2,
-        autoPlay: false,
+        autoPlay: true,
         looping: true,
       );
 
       playerWidget = Chewie(
         controller: chewieController,
       );
+      setState(() {});
     } else {
       // download raw photo
       imageData = await cm.getPhoto(widget.photo, state);
@@ -316,25 +333,27 @@ class _GridPhotoState extends State<GridPhoto>
                   bottom: 0,
                   child: thumbData == null
                       ? Center(child: CircularProgressIndicator())
-                      : GestureDetector(
-                          onScaleStart: _handleOnScaleStart,
-                          onScaleUpdate: _handleOnScaleUpdate,
-                          onScaleEnd: _handleOnScaleEnd,
-                          // onDoubleTap: _handleonDoubleTap,
-                          onTapUp: handleTapUp,
-                          child: ClipRect(
-                            child: Transform(
-                              transform: Matrix4.identity()
-                                ..translate(_offset.dx, _offset.dy)
-                                ..scale(_scale),
-                              child: Image.memory(
-                                thumbData,
-                                fit: BoxFit.contain,
-                                gaplessPlayback: true,
+                      : playerWidget != null
+                          ? Container()
+                          : GestureDetector(
+                              onScaleStart: _handleOnScaleStart,
+                              onScaleUpdate: _handleOnScaleUpdate,
+                              onScaleEnd: _handleOnScaleEnd,
+                              // onDoubleTap: _handleonDoubleTap,
+                              onTapUp: handleTapUp,
+                              child: ClipRect(
+                                child: Transform(
+                                  transform: Matrix4.identity()
+                                    ..translate(_offset.dx, _offset.dy)
+                                    ..scale(_scale),
+                                  child: Image.memory(
+                                    thumbData,
+                                    fit: BoxFit.contain,
+                                    gaplessPlayback: true,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
                 ),
                 Positioned(
                   top: 0,

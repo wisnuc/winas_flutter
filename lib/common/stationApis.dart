@@ -203,6 +203,10 @@ class Apis {
         );
         break;
 
+      case 'randomSrc':
+        r = tget('media/${args['hash']}', {'alt': 'random'});
+        break;
+
       case 'rename':
         r = writeDir(
           'drives/${args['driveUUID']}/dirs/${args['dirUUID']}/entries',

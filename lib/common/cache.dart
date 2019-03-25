@@ -204,6 +204,33 @@ class CacheManager {
     }
   }
 
+  /// get random key, use AsyncMemoizer to memoizer result
+  Future getRandomKey(Entry entry, AppState state) {
+    final name = 'randomKey+${entry.hash}';
+    int index = tasks.indexWhere((task) => task.name == name);
+    if (index > -1) {
+      return tasks[index].lock.runOnce(() => _getRandomKey(entry, state));
+    } else {
+      Task task = Task(name);
+      tasks.add(task);
+      return task.lock.runOnce(() => _getRandomKey(entry, state));
+    }
+  }
+
+  Future<String> _getRandomKey(Entry entry, AppState state) async {
+    String key;
+    try {
+      final res = await state.apis.req('randomSrc', {'hash': entry.hash});
+      print(res);
+      key = res.data['random'];
+    } catch (e) {
+      print(e);
+      key = null;
+    }
+
+    return key;
+  }
+
   Future<Uint8List> _getPhoto(Entry entry, AppState state) async {
     String entryPath = _imageDir() + entry.hash;
     String transPath = _transDir() + '/' + Uuid().v4();
