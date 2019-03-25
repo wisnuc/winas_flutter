@@ -4,6 +4,7 @@ import 'package:flutter_redux/flutter_redux.dart';
 import './info.dart';
 import '../redux/redux.dart';
 import '../common/utils.dart';
+import '../common/appBarSlivers.dart';
 
 Widget _ellipsisText(String text) {
   return ellipsisText(text, style: TextStyle(color: Colors.black38));
@@ -88,7 +89,29 @@ class _DeviceInfoState extends State<DeviceInfo> {
   bool failed = false;
   ScrollController myScrollController = ScrollController();
 
-  refresh(AppState state) async {
+  /// left padding of appbar
+  double paddingLeft = 16;
+
+  /// scrollController's listener to get offset
+  void listener() {
+    setState(() {
+      paddingLeft = (myScrollController.offset * 1.25).clamp(16.0, 72.0);
+    });
+  }
+
+  @override
+  void initState() {
+    myScrollController.addListener(listener);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    myScrollController.removeListener(listener);
+    super.dispose();
+  }
+
+  void refresh(AppState state) async {
     try {
       final res = await state.apis.req('winasInfo', null);
       info = Info.fromMap(res.data);
@@ -109,60 +132,10 @@ class _DeviceInfoState extends State<DeviceInfo> {
     }
   }
 
-  void listener() {
-    setState(() {
-      left = (myScrollController.offset * 1.25).clamp(16.0, 72.0);
-      print(left);
-    });
-  }
-
-  double left = 16;
-  @override
-  void initState() {
-    myScrollController.addListener(listener);
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    myScrollController.removeListener(listener);
-    super.dispose();
-  }
-
   List<Widget> getSlivers() {
     final String titleName = '关于本机';
     // title
-    List<Widget> slivers = [
-      SliverAppBar(
-        pinned: true,
-        elevation: 0.0, // no shadow
-        backgroundColor: left >= 72.0 ? Colors.grey[50] : Colors.transparent,
-        centerTitle: false,
-        brightness: Brightness.light,
-        iconTheme: IconThemeData(color: Colors.black38),
-        title: Text(
-          titleName,
-          style: TextStyle(
-            color: left == 72.0 ? Colors.black87 : Colors.transparent,
-            fontSize: 21,
-            fontWeight: FontWeight.normal,
-          ),
-        ),
-      ),
-      SliverToBoxAdapter(
-        child: Container(
-          padding: EdgeInsets.fromLTRB(left, 16, 16, 32),
-          child: Text(
-            titleName,
-            style: TextStyle(
-              color: Colors.black87,
-              fontSize: 21,
-              fontWeight: FontWeight.normal,
-            ),
-          ),
-        ),
-      )
-    ];
+    List<Widget> slivers = appBarSlivers(paddingLeft, titleName);
     if (loading) {
       // loading
       slivers.add(SliverToBoxAdapter(child: Container(height: 16)));

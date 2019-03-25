@@ -66,6 +66,38 @@ Future showLoading(BuildContext context, {bool barrierDismissible: false}) {
   );
 }
 
+class Model {
+  Model();
+  bool close = false;
+  bool get shouldClose => close;
+}
+
+void showNormalDialog<T>({BuildContext context, String text, Model model}) {
+  showDialog<T>(
+    context: context,
+    builder: (BuildContext context) => WillPopScope(
+          onWillPop: () => Future.value(model.shouldClose),
+          child: SimpleDialog(
+            elevation: 2.0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            children: <Widget>[
+              Container(height: 16),
+              Center(
+                child: CircularProgressIndicator(),
+              ),
+              Container(height: 16),
+              Center(
+                child: Text(text),
+              ),
+              Container(height: 16),
+            ],
+          ),
+        ),
+  ).then<void>((T value) {});
+}
+
 /// Provide pretty printed file sizes
 String prettySize(num size) {
   if (size == null) return '';

@@ -5,6 +5,7 @@ import 'package:flutter_redux/flutter_redux.dart';
 import './network.dart';
 import './deviceInfo.dart';
 import './newDeviceName.dart';
+import './firmwareUpdate.dart';
 import '../redux/redux.dart';
 import '../common/utils.dart';
 import '../login/stationList.dart';
@@ -86,17 +87,18 @@ class StorageDetail extends StatelessWidget {
         iconTheme: IconThemeData(color: Colors.black38),
         title: Text('存储详情', style: TextStyle(color: Colors.black87)),
       ),
-      body: Center(
-        child: Container(
-          constraints: BoxConstraints.expand(),
-          padding: EdgeInsets.all(16),
-          child: Column(
-            children: usageData
-                .where((d) => d['title'] != null)
-                .map((u) => row(u))
-                .toList(),
+      body: ListView(
+        children: <Widget>[
+          Container(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              children: usageData
+                  .where((d) => d['title'] != null)
+                  .map((u) => row(u))
+                  .toList(),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -232,31 +234,6 @@ class _MyStationState extends State<MyStation> {
               },
             ),
       ),
-      // rename device
-      Builder(
-        builder: (ctx) {
-          return IconButton(
-            icon: Icon(Icons.edit),
-            onPressed: () async {
-              try {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (ctx) {
-                      return NewDeviceName(deviceName: state.device.deviceName);
-                    },
-                    fullscreenDialog: true,
-                  ),
-                );
-
-                await refresh(state);
-              } catch (error) {
-                print(error);
-              }
-            },
-          );
-        },
-      ),
       // switch device
       Builder(
         builder: (ctx) => IconButton(
@@ -279,6 +256,24 @@ class _MyStationState extends State<MyStation> {
             ),
       ),
     ];
+  }
+
+  void rename(AppState state) async {
+    try {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (ctx) {
+            return NewDeviceName(deviceName: state.device.deviceName);
+          },
+          fullscreenDialog: true,
+        ),
+      );
+
+      await refresh(state);
+    } catch (error) {
+      print(error);
+    }
   }
 
   @override
@@ -311,19 +306,28 @@ class _MyStationState extends State<MyStation> {
                           padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
                           child: Row(
                             children: <Widget>[
-                              Expanded(
-                                flex: 10,
+                              Container(
+                                constraints: BoxConstraints(
+                                    maxWidth:
+                                        MediaQuery.of(context).size.width -
+                                            108),
                                 child: Text(
                                   state.device.deviceName,
                                   style: TextStyle(fontSize: 28),
                                   textAlign: TextAlign.start,
-                                  overflow: TextOverflow.ellipsis,
+                                  overflow: TextOverflow.fade,
+                                  softWrap: false,
                                   maxLines: 1,
                                 ),
                               ),
-                              Expanded(
-                                child: Container(),
-                                flex: 1,
+                              // rename device
+                              Builder(
+                                builder: (ctx) {
+                                  return IconButton(
+                                    icon: Icon(Icons.edit),
+                                    onPressed: () => rename(state),
+                                  );
+                                },
                               ),
                             ],
                           ),
@@ -433,7 +437,7 @@ class _MyStationState extends State<MyStation> {
                           () => Navigator.push(
                                 context,
                                 MaterialPageRoute(builder: (context) {
-                                  return DeviceInfo();
+                                  return Firmware();
                                 }),
                               ),
                           null,
