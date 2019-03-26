@@ -98,6 +98,52 @@ void showNormalDialog<T>({BuildContext context, String text, Model model}) {
   ).then<void>((T value) {});
 }
 
+class DownloadingDialog {
+  double progress = 0;
+  BuildContext ctx;
+  bool closed = false;
+  DownloadingDialog(this.ctx);
+
+  Model model = Model();
+
+  openDialog<T>() async {
+    showDialog<T>(
+      context: ctx,
+      builder: (BuildContext context) => WillPopScope(
+            onWillPop: () => Future.value(model.shouldClose),
+            child: SimpleDialog(
+              elevation: 2.0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              children: <Widget>[
+                Container(height: 16),
+                Center(
+                  child: CircularProgressIndicator(),
+                ),
+                Container(height: 16),
+                Center(
+                  child: Text('${(progress * 100).toStringAsFixed(1)}%'),
+                ),
+                Container(height: 16),
+              ],
+            ),
+          ),
+    ).then<void>((T value) {});
+  }
+
+  void close() {
+    if (closed) return;
+    model.close = true;
+    Navigator.pop(ctx);
+  }
+
+  void onProgress(int a, int b) {
+    progress = a / b;
+    print(progress);
+  }
+}
+
 /// Provide pretty printed file sizes
 String prettySize(num size) {
   if (size == null) return '';

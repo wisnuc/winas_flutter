@@ -226,12 +226,13 @@ class _FilesState extends State<Files> {
   // download and openFile via system or share to other app
   void _download(BuildContext ctx, Entry entry, AppState state,
       {bool share: false}) async {
-    showLoading(ctx);
+    final dialog = DownloadingDialog(ctx);
+    dialog.openDialog();
 
     final cm = await CacheManager.getInstance();
-    String entryPath = await cm.getTmpFile(entry, state);
+    String entryPath = await cm.getTmpFile(entry, state, dialog.onProgress);
 
-    Navigator.pop(ctx);
+    dialog.close();
     if (entryPath == null) {
       showSnackBar(ctx, '下载失败');
     } else {
