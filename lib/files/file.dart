@@ -230,10 +230,13 @@ class _FilesState extends State<Files> {
     dialog.openDialog();
 
     final cm = await CacheManager.getInstance();
-    String entryPath = await cm.getTmpFile(entry, state, dialog.onProgress);
+    String entryPath = await cm.getTmpFile(
+        entry, state, dialog.onProgress, dialog.cancelToken);
 
     dialog.close();
-    if (entryPath == null) {
+    if (dialog.canceled) {
+      showSnackBar(ctx, '下载已取消');
+    } else if (entryPath == null) {
       showSnackBar(ctx, '下载失败');
     } else {
       try {

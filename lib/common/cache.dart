@@ -104,8 +104,8 @@ class CacheManager {
     await _instance._init();
   }
 
-  Future<String> getTmpFile(
-      Entry entry, AppState state, Function onProgress) async {
+  Future<String> getTmpFile(Entry entry, AppState state, Function onProgress,
+      CancelToken cancelToken) async {
     String entryDir = _tmpDir() + entry.uuid.substring(24, 36) + '/';
     String entryPath = entryDir + entry.name;
 
@@ -124,11 +124,11 @@ class CacheManager {
       // mkdir
       await Directory(entryDir).create(recursive: true);
       // download
-      await state.apis.download(ep, qs, transPath, onProgress: onProgress);
+      await state.apis.download(ep, qs, transPath,
+          onProgress: onProgress, cancelToken: cancelToken);
       // rename
       await File(transPath).rename(entryPath);
     } catch (error) {
-      print(error);
       return null;
     }
     return entryPath;

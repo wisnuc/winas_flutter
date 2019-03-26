@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:device_info/device_info.dart';
 
@@ -98,15 +100,75 @@ void showNormalDialog<T>({BuildContext context, String text, Model model}) {
   ).then<void>((T value) {});
 }
 
+class Progress extends StatefulWidget {
+  Progress({Key key, this.ctrl, this.onCancel}) : super(key: key);
+  final StreamController ctrl;
+  final Function onCancel;
+  @override
+  _ProgressState createState() => _ProgressState();
+}
+
+class _ProgressState extends State<Progress> {
+  double progress = 0;
+
+  @override
+  void initState() {
+    widget.ctrl.stream.listen((value) {
+      setState(() {
+        progress = value.clamp(0, 1);
+      });
+    });
+    super.initState();
+  }
+
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Container(
+          padding: EdgeInsets.all(16),
+          child: Text('缓存文件中', style: TextStyle(fontSize: 18)),
+        ),
+        Container(
+          padding: EdgeInsets.all(16),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                  flex: 1, child: LinearProgressIndicator(value: progress)),
+              Container(width: 16),
+              Text('${(progress * 100).toStringAsFixed(1)}%'),
+            ],
+          ),
+        ),
+        Container(
+          child: Row(
+            children: <Widget>[
+              Expanded(flex: 1, child: Container()),
+              FlatButton(
+                child: Text('取消', style: TextStyle(color: Colors.redAccent)),
+                onPressed: widget.onCancel,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class DownloadingDialog {
   double progress = 0;
-  BuildContext ctx;
+  final BuildContext ctx;
+  bool canceled = false;
   bool closed = false;
   DownloadingDialog(this.ctx);
+  CancelToken cancelToken = CancelToken();
 
   Model model = Model();
 
-  openDialog<T>() async {
+  final StreamController ctrl = StreamController();
+
+  openDialog<T>() {
     showDialog<T>(
       context: ctx,
       builder: (BuildContext context) => WillPopScope(
@@ -117,29 +179,33 @@ class DownloadingDialog {
                 borderRadius: BorderRadius.circular(16),
               ),
               children: <Widget>[
-                Container(height: 16),
-                Center(
-                  child: CircularProgressIndicator(),
+                Progress(
+                  ctrl: ctrl,
+                  onCancel: cancel,
                 ),
-                Container(height: 16),
-                Center(
-                  child: Text('${(progress * 100).toStringAsFixed(1)}%'),
-                ),
-                Container(height: 16),
               ],
             ),
           ),
     ).then<void>((T value) {});
   }
 
+  void cancel() {
+    canceled = true;
+    close();
+  }
+
   void close() {
     if (closed) return;
+    closed = true;
+    cancelToken.cancel();
     model.close = true;
+    ctrl.close();
     Navigator.pop(ctx);
   }
 
   void onProgress(int a, int b) {
     progress = a / b;
+    ctrl.sink.add(progress);
     print(progress);
   }
 }
