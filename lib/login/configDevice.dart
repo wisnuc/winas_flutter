@@ -116,7 +116,7 @@ class _ConfigDeviceState extends State<ConfigDevice> {
     });
 
     try {
-      final res = await request.req('cloudBind', null);
+      final res = await request.req('encrypted', null);
       final encrypted = res.data['encrypted'] as String;
       final bindRes = await request.deviceBind(ip, encrypted);
       print('bindRes $bindRes');
@@ -391,6 +391,7 @@ class _ConfigDeviceState extends State<ConfigDevice> {
   Widget renderBind(BuildContext ctx) {
     String text = '';
     String buttonLabel;
+    Widget icon = CircularProgressIndicator();
     switch (status) {
       case Status.connecting:
         text = '连接设备中...';
@@ -399,6 +400,7 @@ class _ConfigDeviceState extends State<ConfigDevice> {
       case Status.connectFailed:
         text = '连接失败';
         buttonLabel = '返回';
+        icon = Icon(Icons.error_outline, color: Colors.redAccent, size: 96);
         break;
 
       case Status.binding:
@@ -408,6 +410,7 @@ class _ConfigDeviceState extends State<ConfigDevice> {
       case Status.bindFailed:
         text = '绑定失败';
         buttonLabel = '返回';
+        icon = Icon(Icons.error_outline, color: Colors.redAccent, size: 96);
         break;
 
       case Status.logging:
@@ -417,6 +420,7 @@ class _ConfigDeviceState extends State<ConfigDevice> {
       case Status.loginFailed:
         text = '登录失败';
         buttonLabel = '返回';
+        icon = Icon(Icons.error_outline, color: Colors.redAccent, size: 96);
         break;
 
       default:
@@ -434,11 +438,11 @@ class _ConfigDeviceState extends State<ConfigDevice> {
           ),
         ),
         Container(
-          height: 216,
-          child: Center(child: CircularProgressIndicator()),
+          height: 108,
+          child: Center(child: icon),
         ),
         Container(
-          height: 160,
+          height: 64,
           padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: Center(
               child: Text(

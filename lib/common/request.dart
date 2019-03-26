@@ -30,7 +30,7 @@ class Request {
   // handle data.data response
   void interceptDio() {
     dio.interceptor.response.onSuccess = (Response response) {
-      var res = response.data['data'];
+      var res = response.data == null ? null : response.data['data'];
       // save cloud token not lanToken
       if (res is Map && res['token'] != null && res['id'] != null) {
         token = res['token'];
@@ -139,6 +139,18 @@ class Request {
     return res.data;
   }
 
+  /// unbind device
+  Future unbindDevice(String ip, String encrypted) async {
+    // return Future.value('fake success');
+    final res = await dio.post(
+      'http://$ip:3001/winasd/unbind',
+      data: {'encrypted': encrypted},
+      options: Options(connectTimeout: 10000),
+    );
+    print('unbindDevice res $res');
+    return res.data;
+  }
+
   Future req(String name, Map<String, dynamic> args) {
     Future r;
     interceptDio();
@@ -177,9 +189,9 @@ class Request {
           'password': args['password']
         });
         break;
-
-      case 'cloudBind':
-        r = tpost('station', null);
+      // get user encrypted info, used in bind or unbind device
+      case 'encrypted':
+        r = tpost('user/encrypted', null);
         break;
 
       case 'wechat':

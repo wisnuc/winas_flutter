@@ -4,14 +4,14 @@ import 'package:wifi/wifi.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 
 const LOCAL_AUTH_SERVICE = '60000000-0182-406c-9221-0a6680bd0943';
-const LOCAL_AUTH_SERVICE_INDICATE = '60000001-0182-406c-9221-0a6680bd0943';
-const LOCAL_AUTH_SERVICE_WRITE = '60000002-0182-406c-9221-0a6680bd0943';
+const LOCAL_AUTH_SERVICE_INDICATE = '60000002-0182-406c-9221-0a6680bd0943';
+const LOCAL_AUTH_SERVICE_WRITE = '60000003-0182-406c-9221-0a6680bd0943';
 const NET_SETTING_SERVICE = '70000000-0182-406c-9221-0a6680bd0943';
-const NET_SETTING_SERVICE_INDICATE = '70000001-0182-406c-9221-0a6680bd0943';
-const NET_SETTING_SERVICE_WRITE = '70000002-0182-406c-9221-0a6680bd0943';
+const NET_SETTING_SERVICE_INDICATE = '70000002-0182-406c-9221-0a6680bd0943';
+const NET_SETTING_SERVICE_WRITE = '70000003-0182-406c-9221-0a6680bd0943';
 const CLOUD_SERVICE = '80000000-0182-406c-9221-0a6680bd0943';
-const CLOUD_SERVICE_INDICATE = '80000001-0182-406c-9221-0a6680bd0943';
-const CLOUD_SERVICE_WRITE = '80000002-0182-406c-9221-0a6680bd0943';
+const CLOUD_SERVICE_INDICATE = '80000002-0182-406c-9221-0a6680bd0943';
+const CLOUD_SERVICE_WRITE = '80000003-0182-406c-9221-0a6680bd0943';
 
 /// action of ble device
 ///
@@ -148,5 +148,5 @@ Future writeDataAsync(
 /// add a simple timeout
 Future withTimeout(Future future, int seconds) async {
   final timeout = Future.delayed(Duration(seconds: seconds));
-  await Future.any([timeout, future]);
+  return await Future.any([timeout, future]);
 }

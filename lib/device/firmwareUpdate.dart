@@ -126,8 +126,8 @@ class _FirmwareState extends State<Firmware> {
                     );
                     await Future.delayed(Duration(seconds: 3));
                     model.close = true;
-                    Navigator.pop(context);
-                    // Navigator.pop(ctx);
+                    Navigator.pushNamedAndRemoveUntil(
+                        ctx, '/deviceList', (Route<dynamic> route) => false);
                   },
                   child: Text(
                     '立即安装更新',

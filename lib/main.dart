@@ -8,6 +8,7 @@ import './login/login.dart';
 import './nav/bottom_navigation.dart';
 import './redux/redux.dart';
 import './transfer/manager.dart';
+import './login/stationList.dart';
 
 void main() async {
   Directory root = await getApplicationDocumentsDirectory();
@@ -63,6 +64,20 @@ class MyApp extends StatelessWidget {
         routes: <String, WidgetBuilder>{
           '/login': (BuildContext context) => LoginPage(),
           '/station': (BuildContext context) => BottomNavigation(),
+          // log out device, then jump to device list
+          '/deviceList': (BuildContext context) {
+            // cancel monitor of network connection
+            store.state?.apis?.monitorCancel();
+            // remove apis, device, reset config
+            store.dispatch(UpdateApisAction(null));
+            store.dispatch(DeviceLoginAction(null));
+            store.dispatch(UpdateConfigAction(Config()));
+            print('afterLogout ${store.state}');
+            return StationList(
+              request: store.state.cloud,
+              afterLogout: true,
+            );
+          },
         },
         home: (store?.state?.account?.id != null && store?.state?.apis != null)
             ? BottomNavigation()

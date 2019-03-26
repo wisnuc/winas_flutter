@@ -113,18 +113,18 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
     final value = manufacturerData[65535][0];
     String status = '';
     switch (value) {
-      case 0:
+      case 1:
         status = '待配置';
         break;
 
-      case 1:
+      case 2:
         status = '已绑定';
         break;
 
       default:
         status = '设备异常';
     }
-    bool enabled = widget.action == Action.wifi || value == 0;
+    bool enabled = widget.action == Action.wifi || value == 1;
     return {
       'status': status,
       'enabled': enabled,

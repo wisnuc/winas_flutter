@@ -312,7 +312,7 @@ class _MyStationState extends State<MyStation> {
                                         MediaQuery.of(context).size.width -
                                             108),
                                 child: Text(
-                                  state.device.deviceName,
+                                  state?.device?.deviceName ?? '',
                                   style: TextStyle(fontSize: 28),
                                   textAlign: TextAlign.start,
                                   overflow: TextOverflow.fade,

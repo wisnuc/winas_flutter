@@ -2,79 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 
 import './info.dart';
+import './auth.dart';
+import './resetDevice.dart';
 import '../redux/redux.dart';
 import '../common/utils.dart';
 import '../common/appBarSlivers.dart';
 
 Widget _ellipsisText(String text) {
   return ellipsisText(text, style: TextStyle(color: Colors.black38));
-}
-
-class Auth extends StatelessWidget {
-  final Info info;
-
-  Auth(this.info);
-
-  @override
-  Widget build(BuildContext context) {
-    return StoreConnector<AppState, Account>(
-        onInit: (store) => {},
-        onDispose: (store) => {},
-        converter: (store) => store.state.account,
-        builder: (context, account) {
-          return Scaffold(
-            appBar: AppBar(
-              elevation: 0.0, // no shadow
-              backgroundColor: Colors.white10,
-              brightness: Brightness.light,
-              iconTheme: IconThemeData(color: Colors.black38),
-            ),
-            body: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Container(
-                  padding: EdgeInsets.all(16),
-                  child: Text(
-                    '设备身份',
-                    style: TextStyle(color: Colors.black87, fontSize: 21),
-                  ),
-                ),
-                Container(height: 16),
-                sliverActionButton(
-                  '设备SN',
-                  () => {},
-                  _ellipsisText(info.sn),
-                ),
-                sliverActionButton(
-                  '证书',
-                  () => {},
-                  _ellipsisText(info.cert),
-                ),
-                sliverActionButton(
-                  '证书指纹',
-                  () => {},
-                  _ellipsisText(info.fingerprint),
-                ),
-                sliverActionButton(
-                  '证书签发身份',
-                  () => {},
-                  _ellipsisText(info.signer),
-                ),
-                sliverActionButton(
-                  '证书签发时间',
-                  () => {},
-                  _ellipsisText(info.certNotBefore),
-                ),
-                sliverActionButton(
-                  '证书有效期至',
-                  () => {},
-                  _ellipsisText(info.certNotAfter),
-                ),
-              ],
-            ),
-          );
-        });
-  }
 }
 
 class DeviceInfo extends StatefulWidget {
@@ -180,7 +115,7 @@ class _DeviceInfoState extends State<DeviceInfo> {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) {
-                return Auth(info);
+                return Auth(info: info);
               }),
             );
           },
@@ -192,7 +127,7 @@ class _DeviceInfoState extends State<DeviceInfo> {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) {
-                return Auth(info);
+                return ResetDevice();
               }),
             );
           },

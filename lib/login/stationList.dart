@@ -11,7 +11,12 @@ import '../common/request.dart';
 final pColor = Colors.teal;
 
 class StationList extends StatefulWidget {
-  StationList({Key key, this.stationList, this.request, this.switchDevice})
+  StationList(
+      {Key key,
+      this.stationList,
+      this.request,
+      this.switchDevice,
+      this.afterLogout})
       : super(key: key);
 
   /// Wechat token for binding
@@ -20,6 +25,10 @@ class StationList extends StatefulWidget {
 
   /// in switch device page
   final bool switchDevice;
+
+  /// after logout device page
+  final bool afterLogout;
+
   @override
   _StationListState createState() => _StationListState();
 }
@@ -70,7 +79,9 @@ class _StationListState extends State<StationList> {
   void initState() {
     super.initState();
     stationList = widget.stationList;
-    if (widget.switchDevice == true) {
+    if (widget.switchDevice == true ||
+        stationList == null ||
+        widget.afterLogout == true) {
       loading = true;
       refresh();
     }
@@ -198,19 +209,17 @@ class _StationListState extends State<StationList> {
     List<Station> list = List.from(stationList);
     list.sort((a, b) => a.online - b.online);
     return <Widget>[
-      SliverFixedExtentList(
-        itemExtent: 80,
-        delegate: SliverChildBuilderDelegate(
-          (context, index) => Container(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                  widget.switchDevice == true
-                      ? '请选择要切换的设备'
-                      : '未能自动登录上次使用的设备，您可以重试或者选择其他设备。',
-                  style: TextStyle(fontSize: 21),
-                ),
-              ),
-          childCount: 1,
+      SliverToBoxAdapter(
+        child: Container(
+          padding: EdgeInsets.all(16),
+          child: Text(
+            widget.switchDevice == true
+                ? '请选择要切换的设备'
+                : widget.afterLogout == true
+                    ? '请选择要登录的设备'
+                    : '未能自动登录上次使用的设备，您可以重试或者选择其他设备。',
+            style: TextStyle(fontSize: 21),
+          ),
         ),
       ),
       renderPadding(16),
@@ -264,7 +273,11 @@ class _StationListState extends State<StationList> {
                           Expanded(flex: 1, child: Container()),
                           Text(
                             stationStatus(station),
-                            style: TextStyle(color: Colors.black38),
+                            style: TextStyle(
+                                color: station.isOnline
+                                    ? Colors.teal
+                                    : Colors.black38,
+                                fontSize: 16),
                           ),
                         ],
                       ),

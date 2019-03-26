@@ -18,11 +18,19 @@ class Info {
     final net = m['net'];
     this.bleAddr = device['bleAddr'];
     this.eccName = device['ecc'];
-    this.bandwidth = '${net['networkInterface']['speed']} Mbps';
+
     this.sn = device['sn'];
     this.cert = device['cert'];
-    this.address = net['networkInterface']['address'];
-    this.interfaceName = net['networkInterface']['interfaceName'];
+    if (net != null && net['state'] == 70) {
+      final interface = net['addresses'][0];
+      this.bandwidth = '${interface['speed']} Mbps';
+      this.address = interface['address'];
+      this.interfaceName = interface['address'];
+    } else {
+      this.bandwidth = '未知';
+      this.address = '未知';
+      this.interfaceName = '未知';
+    }
 
     this.fingerprint = device['fingerprint'];
     this.signer = device['signer'];

@@ -144,7 +144,11 @@ class Apis {
   }
 
   monitorCancel() {
-    sub?.cancel();
+    try {
+      sub?.cancel();
+    } catch (e) {
+      print(e);
+    }
   }
 
   Future<bool> testLAN() async {
