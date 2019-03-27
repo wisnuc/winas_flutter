@@ -142,28 +142,6 @@ class _DetailState extends State<Detail> {
                     ],
                   ),
                 ),
-                StoreConnector<AppState, VoidCallback>(
-                  converter: (store) => () {
-                        // cancel network monitor
-                        store.state.apis.monitorCancel();
-
-                        // remove account, apis, device, reset config
-                        store.dispatch(LoginAction(null));
-                        store.dispatch(UpdateApisAction(null));
-                        store.dispatch(DeviceLoginAction(null));
-                        store.dispatch(UpdateConfigAction(Config()));
-                      },
-                  builder: (context, logout) {
-                    return actionButton(
-                      '注销',
-                      () {
-                        logout();
-                        Navigator.pushReplacementNamed(context, '/login');
-                      },
-                      Container(),
-                    );
-                  },
-                ),
               ],
             ),
           );

@@ -134,7 +134,12 @@ class _ProgressState extends State<Progress> {
           child: Row(
             children: <Widget>[
               Expanded(
-                  flex: 1, child: LinearProgressIndicator(value: progress)),
+                  flex: 1,
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    valueColor: AlwaysStoppedAnimation(Colors.teal),
+                    backgroundColor: Colors.grey[200],
+                  )),
               Container(width: 16),
               Text('${(progress * 100).toStringAsFixed(1)}%'),
             ],
@@ -156,6 +161,7 @@ class _ProgressState extends State<Progress> {
   }
 }
 
+/// Downloading dialog with progress
 class DownloadingDialog {
   double progress = 0;
   final BuildContext ctx;

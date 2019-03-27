@@ -129,7 +129,7 @@ class _AccountInfoState extends State<AccountInfo> {
                 ),
                 Container(height: 16),
                 actionButton(
-                  '账户安全',
+                  '帐户与安全',
                   () => Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) {
@@ -150,7 +150,7 @@ class _AccountInfoState extends State<AccountInfo> {
                       context: this.context,
                       builder: (BuildContext context) => AlertDialog(
                             title: Text('清除缓存'),
-                            content: Text('该操作将清除所有缓存的图片、文件'),
+                            content: Text('该操作将清除所有缓存的文件、照片原图和视频'),
                             actions: <Widget>[
                               FlatButton(
                                   textColor: Theme.of(context).primaryColor,

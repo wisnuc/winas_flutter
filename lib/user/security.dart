@@ -38,7 +38,7 @@ class _SecurityState extends State<Security> {
                 Container(
                   padding: EdgeInsets.all(16),
                   child: Text(
-                    '账户安全',
+                    '帐户与安全',
                     style: TextStyle(color: Colors.black87, fontSize: 21),
                   ),
                 ),
@@ -84,6 +84,28 @@ class _SecurityState extends State<Security> {
                       Icon(Icons.chevron_right, color: Colors.black38),
                     ],
                   ),
+                ),
+                StoreConnector<AppState, VoidCallback>(
+                  converter: (store) => () {
+                        // cancel network monitor
+                        store.state.apis.monitorCancel();
+
+                        // remove account, apis, device, reset config
+                        store.dispatch(LoginAction(null));
+                        store.dispatch(UpdateApisAction(null));
+                        store.dispatch(DeviceLoginAction(null));
+                        store.dispatch(UpdateConfigAction(Config()));
+                      },
+                  builder: (context, logout) {
+                    return actionButton(
+                      '退出登录',
+                      () {
+                        logout();
+                        Navigator.pushReplacementNamed(context, '/login');
+                      },
+                      Container(),
+                    );
+                  },
                 ),
               ],
             ),

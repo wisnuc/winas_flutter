@@ -84,9 +84,9 @@ class CacheManager {
     var res = await Future.wait([
       _getDirSize(_tmpDir()),
       _getDirSize(_transDir()),
-      _getDirSize(_thumbnailDir()),
+      // _getDirSize(_thumbnailDir()),
       _getDirSize(_imageDir()),
-      _getDirSize(_downloadDir()),
+      // _getDirSize(_downloadDir()),
     ]);
     int size = 0;
     for (int s in res) {
@@ -98,9 +98,9 @@ class CacheManager {
   Future clearCache() async {
     await Directory(_tmpDir()).delete(recursive: true);
     await Directory(_transDir()).delete(recursive: true);
-    await Directory(_thumbnailDir()).delete(recursive: true);
+    // await Directory(_thumbnailDir()).delete(recursive: true);
     await Directory(_imageDir()).delete(recursive: true);
-    await Directory(_downloadDir()).delete(recursive: true);
+    // await Directory(_downloadDir()).delete(recursive: true);
     await _instance._init();
   }
 
