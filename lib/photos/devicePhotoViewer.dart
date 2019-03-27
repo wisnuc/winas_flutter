@@ -64,20 +64,10 @@ class _DevicePhotoViewerState extends State<DevicePhotoViewer> {
             PageController(initialPage: widget.list.indexOf(currentItem)),
         itemBuilder: (context, position) {
           final photo = widget.list[position] as AssetEntity;
-          // final bool isVideo = photo.type == AssetType.video;
-          final bool isVideo = true;
-          final view = GridPhoto(
+          return GridPhoto(
             updateOpacity: updateOpacity,
             photo: photo,
             thumbData: photo == widget.entity ? widget.thumbData : null,
-          );
-          return Container(
-            child: isVideo
-                ? view
-                : Hero(
-                    tag: photo.id,
-                    child: view,
-                  ),
           );
         },
         itemCount: widget.list.length,
@@ -277,10 +267,15 @@ class _GridPhotoState extends State<GridPhoto>
     // is video
     if (widget.photo.type == AssetType.video) {
       final file = await widget.photo.file;
+      final size = await widget.photo.size;
+
       videoPlayerController = VideoPlayerController.file(file);
+
+      print('aspectRatio ${size.toString()}');
 
       chewieController = ChewieController(
         videoPlayerController: videoPlayerController,
+        aspectRatio: size.aspectRatio,
         autoPlay: true,
         looping: true,
       );

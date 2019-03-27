@@ -259,9 +259,18 @@ class _GridPhotoState extends State<GridPhoto>
 
       videoPlayerController = VideoPlayerController.network(url);
 
+      double aspectRatio;
+      final meta = widget.photo.metadata;
+      if (meta.width != null && meta.height != null && meta.width != 0) {
+        aspectRatio = meta.width / meta.height;
+        if (meta.rot == 90) {
+          aspectRatio = 1 / aspectRatio;
+        }
+      }
+      print('aspectRatio $aspectRatio');
       chewieController = ChewieController(
         videoPlayerController: videoPlayerController,
-        aspectRatio: 3 / 2,
+        aspectRatio: aspectRatio,
         autoPlay: true,
         looping: true,
       );

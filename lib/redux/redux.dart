@@ -241,12 +241,14 @@ class Metadata {
   String hdate;
   int height;
   int width;
+  int rot;
 
   Metadata.fromMap(Map m) {
     this.type = m['type'];
     this.datetime = m['date'];
     this.height = m['h'];
     this.width = m['w'];
+    this.rot = m['rot'];
 
     try {
       // only allow format: "2017:06:17 17:31:18", Res: 2017-06-17

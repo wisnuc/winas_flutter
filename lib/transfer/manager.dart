@@ -140,6 +140,8 @@ class TransferItem {
     }
     return 1000;
   }
+
+  bool get isShare => transType == TransType.shared;
 }
 
 class TransferManager {
@@ -296,9 +298,36 @@ class TransferManager {
     return photosDir;
   }
 
+  /// upload file in Isolate
+  Future<void> uploadAsync(AppState state, Entry targetDir, String filePath,
+      String hash, CancelToken cancelToken) async {
+    final fileName = filePath.split('/').last;
+    File file = File(filePath);
+    final FileStat stat = await file.stat();
+
+    final formDataOptions = {
+      'op': 'newfile',
+      'size': stat.size,
+      'sha256': hash,
+      'bctime': stat.modified.millisecondsSinceEpoch,
+      'bmtime': stat.modified.millisecondsSinceEpoch,
+      'policy': ['rename', 'rename'],
+    };
+
+    final args = {
+      'driveUUID': targetDir.pdrv,
+      'dirUUID': targetDir.uuid,
+      'fileName': fileName,
+      'file': UploadFileInfo(file, jsonEncode(formDataOptions)),
+    };
+
+    await state.apis.uploadAsync(args, cancelToken: cancelToken);
+  }
+
   Future<void> uploadSharedFile(TransferItem item, AppState state) async {
     final filePath = item.filePath;
-    item.start(null, () => {});
+    CancelToken cancelToken = CancelToken();
+    item.start(cancelToken, () => {});
     try {
       await _save();
 
@@ -324,8 +353,11 @@ class TransferManager {
       // hash
       final hash = await hashViaIsolate(filePath);
 
-      // download
-      await uploadViaIsolate(state.apis, targetDir, filePath, hash);
+      // upload via isolate
+      // await uploadViaIsolate(state.apis, targetDir, filePath, hash);
+
+      // upload async
+      await uploadAsync(state, targetDir, filePath, hash, cancelToken);
 
       item.finish();
 
@@ -353,7 +385,13 @@ class TransferManager {
               filePath: filePath,
             );
             transferList.add(item);
-            uploadSharedFile(item, state).catchError((onError) => item.fail());
+            uploadSharedFile(item, state).catchError((error) {
+              print(error);
+              // DioErrorType.CANCEL is not error
+              if (error is! DioError || (error?.type != DioErrorType.CANCEL)) {
+                item.fail();
+              }
+            });
           }
         },
       ).catchError(print);

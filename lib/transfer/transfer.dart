@@ -47,6 +47,14 @@ class _TransferState extends State<Transfer> {
       case 'finished':
         return Center(child: Icon(Icons.check_circle_outline));
       case 'working':
+        if (item.isShare) {
+          return Center(
+            child: CircularProgressIndicator(
+              strokeWidth: 3.0,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.teal),
+            ),
+          );
+        }
         return Stack(
           children: <Widget>[
             Positioned(
@@ -195,11 +203,15 @@ class _TransferState extends State<Transfer> {
                             Container(height: 8),
                             Row(
                               children: <Widget>[
-                                Icon(Icons.file_download),
+                                Icon(
+                                  item.transType == TransType.download
+                                      ? Icons.file_download
+                                      : Icons.file_upload,
+                                ),
                                 Container(width: 8),
                                 Text(
-                                    item.status == 'finished'
-                                        ? prettySize(item.finishedSize)
+                                    item.status == 'finished' || item.isShare
+                                        ? prettySize(item.entry.size)
                                         : '${prettySize(item.finishedSize)} / ${prettySize(item.entry.size)}',
                                     style: TextStyle(fontSize: 12)),
                               ],
