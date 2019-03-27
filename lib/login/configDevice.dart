@@ -137,6 +137,20 @@ class _ConfigDeviceState extends State<ConfigDevice> {
     });
 
     try {
+      bool started = false;
+      while (started != true) {
+        await Future.delayed(Duration(seconds: 1));
+        final res = await request.winasdInfo(ip);
+        print(res);
+        final winas = res['winas'];
+        if (winas != null) {
+          if (winas['state'] == "Started") {
+            started = true;
+          } else if (winas['state'] == "Failed") {
+            throw 'Winas Failed';
+          }
+        }
+      }
       final result = await reqStationList(request);
       final stationList = result['stationList'] as List;
       final currentDevice = stationList.firstWhere(
