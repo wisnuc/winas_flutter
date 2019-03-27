@@ -2,34 +2,32 @@ import 'dart:typed_data';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:photo_manager/photo_manager.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 
 import '../redux/redux.dart';
-import '../common/cache.dart';
 
 const double _kMinFlingVelocity = 800.0;
 
-const videoTypes = 'RM.RMVB.WMV.AVI.MP4.3GP.MKV.MOV.FLV';
-
-class PhotoViewer extends StatefulWidget {
-  const PhotoViewer({Key key, this.photo, this.thumbData, this.list})
+class DevicePhotoViewer extends StatefulWidget {
+  const DevicePhotoViewer({Key key, this.entity, this.thumbData, this.list})
       : super(key: key);
   final Uint8List thumbData;
   final List list;
-  final Entry photo;
+  final AssetEntity entity;
 
   @override
-  _PhotoViewerState createState() => _PhotoViewerState();
+  _DevicePhotoViewerState createState() => _DevicePhotoViewerState();
 }
 
-class _PhotoViewerState extends State<PhotoViewer> {
+class _DevicePhotoViewerState extends State<DevicePhotoViewer> {
   /// current photo, default: widget.photo
-  Entry currentItem;
+  AssetEntity currentItem;
   ScrollController myScrollController = ScrollController();
 
   @override
   void initState() {
-    currentItem = widget.photo;
+    currentItem = widget.entity;
     super.initState();
   }
 
@@ -42,12 +40,13 @@ class _PhotoViewerState extends State<PhotoViewer> {
 
   @override
   Widget build(BuildContext context) {
-    print('currentItem ${currentItem.uuid}');
+    print('currentItem ${currentItem.id}');
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(
-          currentItem.name,
+          // TODO: name
+          '照片',
           style: TextStyle(
             color: Color.fromARGB((opacity * 255 * 0.87).round(), 0, 0, 0),
             fontWeight: FontWeight.normal,
@@ -64,19 +63,19 @@ class _PhotoViewerState extends State<PhotoViewer> {
         controller:
             PageController(initialPage: widget.list.indexOf(currentItem)),
         itemBuilder: (context, position) {
-          final photo = widget.list[position];
-          final bool isVideo =
-              videoTypes.split('.').contains(photo.metadata.type);
+          final photo = widget.list[position] as AssetEntity;
+          // final bool isVideo = photo.type == AssetType.video;
+          final bool isVideo = true;
           final view = GridPhoto(
             updateOpacity: updateOpacity,
             photo: photo,
-            thumbData: photo == widget.photo ? widget.thumbData : null,
+            thumbData: photo == widget.entity ? widget.thumbData : null,
           );
           return Container(
             child: isVideo
                 ? view
                 : Hero(
-                    tag: photo.uuid,
+                    tag: photo.id,
                     child: view,
                   ),
           );
@@ -99,7 +98,7 @@ class GridPhoto extends StatefulWidget {
   const GridPhoto({Key key, this.photo, this.thumbData, this.updateOpacity})
       : super(key: key);
   final Uint8List thumbData;
-  final Entry photo;
+  final AssetEntity photo;
   final Function updateOpacity;
 
   @override
@@ -226,61 +225,6 @@ class _GridPhotoState extends State<GridPhoto>
       ..fling(velocity: magnitude / 1000.0);
   }
 
-  Uint8List imageData;
-  Uint8List thumbData;
-
-  _getPhoto(AppState state) async {
-    final cm = await CacheManager.getInstance();
-
-    // download thumb
-    if (thumbData == null) {
-      thumbData = await cm.getThumbData(widget.photo, state);
-    }
-    if (this.mounted) {
-      print('thumbData updated');
-      setState(() {});
-    } else {
-      return;
-    }
-    // is video
-    if (videoTypes.split('.').contains(widget.photo.metadata.type)) {
-      final apis = state.apis;
-      // preview video
-      if (apis.isCloud) return;
-
-      final key = await cm.getRandomKey(widget.photo, state);
-      if (key == null) return;
-
-      final String url = 'http://${apis.lanIp}:3000/media/$key';
-      print('url: $url, $mounted');
-
-      // keep singleton
-      if (videoPlayerController != null) return;
-
-      videoPlayerController = VideoPlayerController.network(url);
-
-      chewieController = ChewieController(
-        videoPlayerController: videoPlayerController,
-        aspectRatio: 3 / 2,
-        autoPlay: true,
-        looping: true,
-      );
-
-      playerWidget = Chewie(
-        controller: chewieController,
-      );
-      setState(() {});
-    } else {
-      // download raw photo
-      imageData = await cm.getPhoto(widget.photo, state);
-
-      if (imageData != null && this.mounted) {
-        print('imageData updated');
-        setState(() {});
-      }
-    }
-  }
-
   int lastTapTime = 0;
 
   /// milliseconds of double tap's delay
@@ -289,7 +233,7 @@ class _GridPhotoState extends State<GridPhoto>
   /// scale rate when double tap
   final scaleRate = 2.0;
 
-  handleTapUp(TapUpDetails event) {
+  void handleTapUp(TapUpDetails event) {
     final tapTime = DateTime.now().millisecondsSinceEpoch;
     if (tapTime - lastTapTime < timeDelay) {
       double scaleEnd;
@@ -313,6 +257,52 @@ class _GridPhotoState extends State<GridPhoto>
         ..fling(velocity: 1.0);
     }
     lastTapTime = tapTime;
+  }
+
+  Uint8List imageData;
+  Uint8List thumbData;
+
+  _getPhoto(AppState state) async {
+    // download thumb
+    if (thumbData == null) {
+      thumbData = await widget.photo.thumbDataWithSize(200, 200);
+    }
+    if (thumbData != null && this.mounted) {
+      print('thumbData updated');
+      await Future.delayed(Duration.zero);
+      setState(() {});
+    } else {
+      return;
+    }
+    // is video
+    if (widget.photo.type == AssetType.video) {
+      final file = await widget.photo.file;
+      videoPlayerController = VideoPlayerController.file(file);
+
+      chewieController = ChewieController(
+        videoPlayerController: videoPlayerController,
+        autoPlay: true,
+        looping: true,
+      );
+
+      playerWidget = Chewie(
+        controller: chewieController,
+      );
+
+      if (this.mounted) {
+        print('video updated');
+        setState(() {});
+      }
+    } else if (widget.photo.type == AssetType.image) {
+      final file = await widget.photo.file;
+      imageData = await file.readAsBytes();
+
+      if (imageData != null && this.mounted) {
+        print('imageData updated');
+        setState(() {});
+      }
+    }
+    print('refresh success');
   }
 
   @override
@@ -339,7 +329,6 @@ class _GridPhotoState extends State<GridPhoto>
                               onScaleStart: _handleOnScaleStart,
                               onScaleUpdate: _handleOnScaleUpdate,
                               onScaleEnd: _handleOnScaleEnd,
-                              // onDoubleTap: _handleonDoubleTap,
                               onTapUp: handleTapUp,
                               child: ClipRect(
                                 child: Transform(
@@ -368,7 +357,6 @@ class _GridPhotoState extends State<GridPhoto>
                               onScaleStart: _handleOnScaleStart,
                               onScaleUpdate: _handleOnScaleUpdate,
                               onScaleEnd: _handleOnScaleEnd,
-                              // onDoubleTap: _handleonDoubleTap,
                               onTapUp: handleTapUp,
                               child: ClipRect(
                                 child: Transform(

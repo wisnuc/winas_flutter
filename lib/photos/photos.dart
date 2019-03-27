@@ -34,7 +34,7 @@ class _PhotosState extends State<Photos> {
     Entry entry = album.items[0];
 
     final cm = await CacheManager.getInstance();
-    final Uint8List thumbData = await cm.getThumbData(entry, state, null);
+    final Uint8List thumbData = await cm.getThumbData(entry, state);
 
     if (this.mounted && thumbData != null) {
       album.setCover(thumbData);

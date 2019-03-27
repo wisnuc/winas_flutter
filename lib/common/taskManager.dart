@@ -1,23 +1,38 @@
 import 'dart:async';
 import 'dart:typed_data';
-import 'package:dio/dio.dart';
 
 import '../redux/redux.dart';
 import '../common/cache.dart';
+import 'package:photo_manager/photo_manager.dart';
 
 enum Status { pending, running, finished }
 
-Future<Uint8List> getThumbAsync(
-    Entry entry, AppState state, CancelToken cancelToken) async {
-  final cm = await CacheManager.getInstance();
-  final Uint8List thumbData = await cm.getThumbData(entry, state, cancelToken);
+class TaskProps {
+  // Nas photo
+  Entry entry;
+  AppState state;
+  // local photo
+  AssetEntity entity;
 
+  TaskProps({this.entity, this.entry, this.state});
+
+  bool get isNasPhoto => entry != null && state != null;
+  bool get isLocalPhoto => entity != null;
+}
+
+Future<Uint8List> getThumbAsync(TaskProps props) async {
+  Uint8List thumbData;
+  if (props.isNasPhoto) {
+    final cm = await CacheManager.getInstance();
+    thumbData = await cm.getThumbData(props.entry, props.state);
+  } else if (props.isLocalPhoto) {
+    thumbData = await props.entity.thumbDataWithSize(200, 200);
+  }
   return thumbData;
 }
 
-void getThumbCallback(
-    Entry entry, AppState state, CancelToken cancelToken, Function callback) {
-  getThumbAsync(entry, state, cancelToken)
+void getThumbCallback(TaskProps props, Function callback) {
+  getThumbAsync(props)
       .then((value) => callback(null, value))
       .catchError((error) => callback(error, null));
 }
@@ -54,13 +69,10 @@ class Task {
 }
 
 class ThumbTask extends Task {
-  final AppState state;
-  final Entry entry;
-  final CancelToken cancelToken = CancelToken();
+  TaskProps props;
 
   ThumbTask(
-    this.entry,
-    this.state,
+    this.props,
     Function onFinished,
   ) : super(onFinished);
 
@@ -69,7 +81,7 @@ class ThumbTask extends Task {
   @override
   run() {
     super.run();
-    getThumbCallback(entry, state, cancelToken, (err, value) {
+    getThumbCallback(props, (err, value) {
       if (err != null) {
         this.error(err);
       } else {
@@ -82,7 +94,6 @@ class ThumbTask extends Task {
   @override
   abort() {
     if (this.isFinished || this.isRunning) return;
-    // cancelToken?.cancel();
     super.abort();
   }
 }
@@ -103,14 +114,14 @@ class TaskManager {
 
   TaskManager._();
 
-  ThumbTask createThumbTask(Entry entry, AppState state, Function callback) {
+  ThumbTask createThumbTask(TaskProps props, Function callback) {
     final Function onFinished = (error, value) {
       callback(error, value);
       // schedule in next event-loop iteration
       Future.delayed(Duration.zero).then((v) => schedule());
     };
 
-    final task = ThumbTask(entry, state, onFinished);
+    final task = ThumbTask(props, onFinished);
     thumbTaskQueue.insert(0, task);
     schedule();
     return task;
@@ -123,14 +134,6 @@ class TaskManager {
     // calc number of task left to run
     int freeNum =
         thumbTaskLimit - thumbTaskQueue.where((t) => t.isRunning).length;
-
-    // print("""
-    //   queue length:  ${thumbTaskQueue.length}
-    //      freeNum:    $freeNum
-    //      isPending:  ${thumbTaskQueue.where((t) => t.isPending).length}
-    //      isRunning:  ${thumbTaskQueue.where((t) => t.isRunning).length}
-    //      isFinished: ${thumbTaskQueue.where((t) => t.isFinished).length}
-    //      """);
 
     // run pending tasks
     if (freeNum > 0) {

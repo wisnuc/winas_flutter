@@ -405,6 +405,7 @@ class Node {
   Node({this.name, this.driveUUID, this.dirUUID, this.tag, this.location});
 }
 
+/// list of photos and videos from NAS
 class Album {
   List<Entry> items = [];
   String name;
@@ -420,6 +421,7 @@ class Album {
   }
 }
 
+/// list of photos and videos from phone
 class LocalAlbum {
   List<AssetEntity> items = [];
   String name;

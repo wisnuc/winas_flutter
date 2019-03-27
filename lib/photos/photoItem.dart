@@ -27,7 +27,8 @@ class _PhotoItemState extends State<PhotoItem> {
     // check hash
     if (entry.hash == null) return;
     final tm = TaskManager.getInstance();
-    task = tm.createThumbTask(entry, state, (error, value) {
+    TaskProps props = TaskProps(entry: entry, state: state);
+    task = tm.createThumbTask(props, (error, value) {
       if (error == null && value is Uint8List && this.mounted) {
         setState(() {
           thumbData = value;

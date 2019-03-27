@@ -137,11 +137,8 @@ class CacheManager {
   /// download thumb withLimit
   ///
   /// fire cancelToken.cancel() to cancel request
-  Future<Uint8List> getThumbData(
-    Entry entry,
-    AppState state,
-    CancelToken cancelToken,
-  ) async {
+  Future<Uint8List> getThumbData(Entry entry, AppState state,
+      {CancelToken cancelToken}) async {
     String entryPath = _thumbnailDir() + entry.hash + '&width=200&height=200';
     File entryFile = File(entryPath);
 
