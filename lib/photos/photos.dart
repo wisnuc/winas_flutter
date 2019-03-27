@@ -191,14 +191,17 @@ class _PhotosState extends State<Photos> {
                         ),
                     child: Container(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Expanded(
                             flex: 1,
                             child: album.cover != null
-                                ? Image.memory(
-                                    album.cover,
-                                    fit: BoxFit.cover,
+                                ? Container(
+                                    constraints: BoxConstraints.expand(),
+                                    child: Image.memory(
+                                      album.cover,
+                                      fit: BoxFit.cover,
+                                    ),
                                   )
                                 : Container(
                                     color: Colors.grey[300],
