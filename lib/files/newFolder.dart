@@ -41,6 +41,10 @@ class _NewFolderState extends State<NewFolder> {
     Navigator.pop(context, true);
   }
 
+  bool isEnabled() {
+    return _error == null && _fileName is String && _fileName.length > 0;
+  }
+
   @override
   Widget build(BuildContext context) {
     return StoreConnector<AppState, AppState>(
@@ -69,7 +73,7 @@ class _NewFolderState extends State<NewFolder> {
             FlatButton(
               textColor: Theme.of(context).primaryColor,
               child: Text('确定'),
-              onPressed: () => _onPressed(context, state),
+              onPressed: isEnabled() ? () => _onPressed(context, state) : null,
             )
           ],
         );
