@@ -19,7 +19,7 @@ class _NewFolderState extends State<NewFolder> {
   final Node node;
 
   _onPressed(context, state) async {
-    print(_fileName);
+    if (!isEnabled()) return;
 
     setState(() {
       loading = true;
@@ -55,7 +55,10 @@ class _NewFolderState extends State<NewFolder> {
   }
 
   bool isEnabled() {
-    return _error == null && _fileName is String && _fileName.length > 0;
+    return loading == false &&
+        _error == null &&
+        _fileName is String &&
+        _fileName.length > 0;
   }
 
   @override

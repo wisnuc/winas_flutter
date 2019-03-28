@@ -1,5 +1,7 @@
-import 'package:flutter_redux/flutter_redux.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_redux/flutter_redux.dart';
+
 import '../redux/redux.dart';
 
 class RenameDialog extends StatefulWidget {
@@ -7,22 +9,21 @@ class RenameDialog extends StatefulWidget {
 
   final Entry entry;
   @override
-  _RenameDialogState createState() => _RenameDialogState(entry);
+  _RenameDialogState createState() => _RenameDialogState();
 }
 
 class _RenameDialogState extends State<RenameDialog> {
-  _RenameDialogState(this.entry) : _fileName = entry.name;
   String _fileName;
   String _error;
+  TextEditingController textController;
   bool loading = false;
 
-  final Entry entry;
-
   _onPressed(context, state) async {
+    if (!isEnabled()) return;
     setState(() {
       loading = true;
     });
-
+    final entry = widget.entry;
     try {
       await state.apis.req('rename', {
         'oldName': entry.name,
@@ -31,15 +32,40 @@ class _RenameDialogState extends State<RenameDialog> {
         'driveUUID': entry.pdrv,
       });
     } catch (error) {
-      print(error);
+      _error = '重命名失败';
+      if (error is DioError && error?.response?.data is Map) {
+        final res = error.response.data;
+        print(res);
+        if (res['code'] == 'EEXIST') {
+          _error = res['xcode'] == 'EISFILE' ? '存在同名的文件' : '同名文件夹已经存在';
+        } else if (res['message'] == 'invalid name') {
+          _error = '名称不合法，如不能包含 \\/?<>*:"| 等字符';
+        }
+      } else {
+        print(error);
+      }
+
       setState(() {
         loading = false;
-        _error = '重命名失败';
       });
       return;
     }
 
     Navigator.pop(context, true);
+  }
+
+  bool isEnabled() {
+    return loading == false &&
+        _error == null &&
+        _fileName is String &&
+        _fileName.length > 0 &&
+        widget.entry.name != _fileName;
+  }
+
+  @override
+  void initState() {
+    textController = TextEditingController(text: widget.entry.name);
+    super.initState();
   }
 
   @override
@@ -57,13 +83,7 @@ class _RenameDialogState extends State<RenameDialog> {
               setState(() => _error = null);
               _fileName = text;
             },
-            // controller: TextEditingController(text: _fileName),
-            // controller: TextEditingController.fromValue(
-            //   TextEditingValue(
-            //     text: _fileName,
-            //     selection: TextSelection.collapsed(offset: _fileName.length),
-            //   ),
-            // ),
+            controller: textController,
             decoration: InputDecoration(errorText: _error),
             style: TextStyle(fontSize: 24, color: Colors.black87),
           ),
@@ -77,7 +97,7 @@ class _RenameDialogState extends State<RenameDialog> {
             FlatButton(
               textColor: Theme.of(context).primaryColor,
               child: Text('确定'),
-              onPressed: () => _onPressed(context, state),
+              onPressed: isEnabled() ? () => _onPressed(context, state) : null,
             )
           ],
         );
