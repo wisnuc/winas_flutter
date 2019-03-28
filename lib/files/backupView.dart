@@ -236,7 +236,9 @@ class _BackupViewState extends State<BackupView> {
                                             Expanded(
                                                 flex: 1, child: Container()),
                                             Text(
-                                              drive.fileTotalSize,
+                                              drive.fileTotalSize == '0 B'
+                                                  ? '未备份'
+                                                  : drive.fileTotalSize,
                                               style: TextStyle(
                                                   color: Colors.black54),
                                             ),
