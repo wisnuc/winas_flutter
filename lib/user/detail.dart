@@ -102,15 +102,16 @@ class _DetailState extends State<Detail> {
                       ),
                     );
                   },
-                  Row(
-                    children: <Widget>[
-                      Text(
-                        account.nickName,
-                        style: TextStyle(color: Colors.black38),
-                      ),
-                      Container(width: 8),
-                      Icon(Icons.chevron_right, color: Colors.black38),
-                    ],
+                  Expanded(
+                    flex: 10,
+                    child: Row(
+                      children: <Widget>[
+                        ellipsisText(account.nickName,
+                            style: TextStyle(color: Colors.black38)),
+                        Container(width: 8),
+                        Icon(Icons.chevron_right, color: Colors.black38),
+                      ],
+                    ),
                   ),
                 ),
                 actionButton(
