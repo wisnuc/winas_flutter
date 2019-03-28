@@ -8,6 +8,53 @@ import './xcopyDialog.dart';
 import '../redux/redux.dart';
 import '../common/utils.dart';
 import '../common/renderIcon.dart';
+import '../icons/winas_icons.dart';
+
+class FileType {
+  String name;
+  Widget icon;
+  String types;
+  FileType(this.name, this.icon, this.types);
+}
+
+/// [title, icon, types]
+final List<FileType> fileTypes = List.from([
+  [
+    'PDFs',
+    renderIcon('a.pdf', null),
+    'PDF',
+  ],
+  [
+    'Word',
+    renderIcon('a.docx', null),
+    'DOCX.DOC',
+  ],
+  [
+    'Excel',
+    renderIcon('a.xlsx', null),
+    'XLSX.XLS',
+  ],
+  [
+    'PPT',
+    renderIcon('a.ppt', null),
+    'PPTX.PPT',
+  ],
+  [
+    '照片与图片',
+    renderIcon('a.bmp', null),
+    'JPEG.PNG.JPG.GIF.BMP.RAW',
+  ],
+  [
+    '视频',
+    renderIcon('a.mkv', null),
+    'RM.RMVB.WMV.AVI.MP4.3GP.MKV.MOV.FLV',
+  ],
+  [
+    '音频',
+    renderIcon('a.mp3', null),
+    'WAV.MP3.APE.WMA.FLAC',
+  ],
+].map((x) => FileType(x[0], x[1], x[2])));
 
 class Search extends StatefulWidget {
   Search({Key key, this.node, this.actions, this.download}) : super(key: key);
@@ -19,7 +66,7 @@ class Search extends StatefulWidget {
 }
 
 class _SearchState extends State<Search> {
-  String _types;
+  FileType _fileType;
   final Node node;
   Function actions;
   final download;
@@ -32,8 +79,8 @@ class _SearchState extends State<Search> {
 
   _onSearch(AppState state) async {
     FocusScope.of(this.context).requestFocus(FocusNode());
-    print('onSearch $_types $_searchText');
-    if (_types == null && _searchText == null) return;
+    print('onSearch $_fileType $_searchText');
+    if (_fileType == null && _searchText == null) return;
     setState(() {
       loading = true;
     });
@@ -51,9 +98,9 @@ class _SearchState extends State<Search> {
       });
     }
 
-    if (_types != null) {
+    if (_fileType != null) {
       args.addAll({
-        'types': _types,
+        'types': _fileType.types,
         'order': 'newest',
       });
     }
@@ -74,44 +121,6 @@ class _SearchState extends State<Search> {
     }
   }
 
-  /// [title, icon, types]
-  List<List> fileTypes = [
-    [
-      'PDFs',
-      renderIcon('a.pdf', null),
-      'PDF',
-    ],
-    [
-      'Word',
-      renderIcon('a.docx', null),
-      'DOCX.DOC',
-    ],
-    [
-      'Excel',
-      renderIcon('a.xlsx', null),
-      'XLSX.XLS',
-    ],
-    [
-      'PPT',
-      renderIcon('a.ppt', null),
-      'PPTX.PPT',
-    ],
-    [
-      '照片与图片',
-      renderIcon('a.bmp', null),
-      'JPEG.PNG.JPG.GIF.BMP.RAW',
-    ],
-    [
-      '视频',
-      renderIcon('a.mkv', null),
-      'RM.RMVB.WMV.AVI.MP4.3GP.MKV.MOV.FLV',
-    ],
-    [
-      '音频',
-      renderIcon('a.mp3', null),
-      'WAV.MP3.APE.WMA.FLAC',
-    ],
-  ];
   @override
   void initState() {
     super.initState();
@@ -229,6 +238,7 @@ class _SearchState extends State<Search> {
         ];
   }
 
+  /// Normal AppBar
   AppBar searchAppBar(AppState state) {
     return AppBar(
       elevation: 2.0, // no shadow
@@ -239,6 +249,11 @@ class _SearchState extends State<Search> {
         // autofocus: true,
         onChanged: (text) {
           _searchText = text;
+          if (text == '') {
+            setState(() {
+              _entries = null;
+            });
+          }
         },
         decoration: InputDecoration(
           border: InputBorder.none,
@@ -251,6 +266,7 @@ class _SearchState extends State<Search> {
     );
   }
 
+  /// AppBar when selected
   AppBar selectAppBar(AppState state) {
     return AppBar(
       title: Text(
@@ -363,6 +379,131 @@ class _SearchState extends State<Search> {
     );
   }
 
+  /// No search, init UI
+  Widget renderInitUI(AppState state) {
+    return Column(
+      children: [
+        Container(
+          height: 56,
+          child: Row(
+            children: <Widget>[
+              Container(width: 16),
+              Text('文件类型'),
+            ],
+          ),
+        ),
+        Expanded(
+          flex: 1,
+          child: ListView(
+            children: fileTypes
+                .map((fileType) => InkWell(
+                      onTap: () {
+                        _fileType = fileType;
+                        _onSearch(state);
+                      },
+                      child: Container(
+                        height: 56,
+                        child: Row(
+                          children: <Widget>[
+                            Container(width: 16),
+                            fileType.icon,
+                            Container(width: 32),
+                            Text(fileType.name),
+                          ],
+                        ),
+                      ),
+                    ))
+                .toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// No search result
+  Widget renderNoResult() {
+    return Column(
+      children: <Widget>[
+        Expanded(flex: 1, child: Container()),
+        Container(
+          padding: EdgeInsets.all(16),
+          child: Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: Colors.grey[400],
+              borderRadius: BorderRadius.circular(36),
+            ),
+            child: Icon(Winas.logo, color: Colors.grey[50], size: 84),
+          ),
+        ),
+        Text('未搜索到任何结果'),
+        Expanded(
+          flex: 2,
+          child: Container(),
+        ),
+      ],
+    );
+  }
+
+  /// show search result
+  Widget renderList(AppState state) {
+    if (_entries.length == 0) return renderNoResult();
+    return Container(
+      color: Colors.grey[200],
+      child: DraggableScrollbar.semicircle(
+        controller: myScrollController,
+        child: CustomScrollView(
+          controller: myScrollController,
+          physics: AlwaysScrollableScrollPhysics(),
+          slivers: <Widget>[
+            // images, show GridView
+            _fileType != fileTypes[4]
+                ? SliverFixedExtentList(
+                    itemExtent: 64,
+                    delegate: SliverChildBuilderDelegate(
+                      (BuildContext ctx, int index) {
+                        final entry = _entries[index];
+                        return FileRow(
+                          entry: entry,
+                          type: 'file',
+                          actions: actions(state),
+                          onPress: () => download(ctx, entry, state),
+                          isGrid: false,
+                          select: select,
+                        );
+                      },
+                      childCount: _entries.length,
+                    ),
+                  )
+                : SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 8.0,
+                      crossAxisSpacing: 8.0,
+                      childAspectRatio: 1.0,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (BuildContext ctx, int index) {
+                        final entry = _entries[index];
+                        return FileRow(
+                          entry: entry,
+                          type: 'file',
+                          actions: actions(state),
+                          onPress: () => download(ctx, entry, state),
+                          isGrid: true,
+                          select: select,
+                        );
+                      },
+                      childCount: _entries.length,
+                    ),
+                  ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return StoreConnector<AppState, AppState>(
@@ -375,98 +516,55 @@ class _SearchState extends State<Search> {
               select.selectMode() ? selectAppBar(state) : searchAppBar(state),
           body: Container(
             child: loading
+                // loading
                 ? Center(child: CircularProgressIndicator())
-                : _entries != null
-                    ? Container(
-                        color: Colors.grey[200],
-                        child: DraggableScrollbar.semicircle(
-                          controller: myScrollController,
-                          child: CustomScrollView(
-                            controller: myScrollController,
-                            physics: AlwaysScrollableScrollPhysics(),
-                            slivers: <Widget>[
-                              // images, GridView
-                              _types != fileTypes[4][2]
-                                  ? SliverFixedExtentList(
-                                      itemExtent: 64,
-                                      delegate: SliverChildBuilderDelegate(
-                                        (BuildContext ctx, int index) {
-                                          final entry = _entries[index];
-                                          return FileRow(
-                                            entry: entry,
-                                            type: 'file',
-                                            actions: actions(state),
-                                            onPress: () =>
-                                                download(ctx, entry, state),
-                                            isGrid: false,
-                                            select: select,
-                                          );
-                                        },
-                                        childCount: _entries.length,
+                : _entries == null
+                    // no search
+                    ? renderInitUI(state)
+                    // search result
+                    : _fileType == null
+                        // no specific types
+                        ? renderList(state)
+                        // with specific types
+                        : Column(
+                            children: <Widget>[
+                              Container(
+                                height: 56,
+                                padding: EdgeInsets.only(left: 16),
+                                width: double.infinity,
+                                color: Colors.grey[200],
+                                child: Row(
+                                  children: <Widget>[
+                                    Chip(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(4),
                                       ),
+                                      padding: EdgeInsets.all(12),
+                                      backgroundColor: Colors.white,
+                                      elevation: 2.0,
+                                      label: Text(_fileType.name),
+                                      avatar: _fileType.icon,
+                                      deleteIcon: Icon(
+                                        Icons.cancel,
+                                        color: Colors.black38,
+                                        size: 18,
+                                      ),
+                                      onDeleted: () {
+                                        setState(() {
+                                          _fileType = null;
+                                          _entries = null;
+                                        });
+                                      },
                                     )
-                                  : SliverGrid(
-                                      gridDelegate:
-                                          SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 2,
-                                        mainAxisSpacing: 8.0,
-                                        crossAxisSpacing: 8.0,
-                                        childAspectRatio: 1.0,
-                                      ),
-                                      delegate: SliverChildBuilderDelegate(
-                                        (BuildContext ctx, int index) {
-                                          final entry = _entries[index];
-                                          return FileRow(
-                                            entry: entry,
-                                            type: 'file',
-                                            actions: actions(state),
-                                            onPress: () =>
-                                                download(ctx, entry, state),
-                                            isGrid: true,
-                                            select: select,
-                                          );
-                                        },
-                                        childCount: _entries.length,
-                                      ),
-                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: renderList(state),
+                              ),
                             ],
                           ),
-                        ),
-                      )
-                    : Column(
-                        children: [
-                          Container(
-                            height: 56,
-                            child: Row(
-                              children: <Widget>[
-                                Container(width: 16),
-                                Text('文件类型'),
-                              ],
-                            ),
-                          ),
-                          Column(
-                            children: fileTypes
-                                .map((a) => InkWell(
-                                      onTap: () {
-                                        _types = a[2];
-                                        _onSearch(state);
-                                      },
-                                      child: Container(
-                                        height: 56,
-                                        child: Row(
-                                          children: <Widget>[
-                                            Container(width: 16),
-                                            a[1],
-                                            Container(width: 32),
-                                            Text(a[0]),
-                                          ],
-                                        ),
-                                      ),
-                                    ))
-                                .toList(),
-                          )
-                        ],
-                      ),
           ),
         );
       },
