@@ -22,7 +22,7 @@ class _AvatarViewState extends State<AvatarView> {
     final rawFile = await ImagePicker.pickImage(
       source: camera ? ImageSource.camera : ImageSource.gallery,
     );
-
+    if (rawFile == null) return;
     final cropFile = await ImageCropper.cropImage(
       toolbarColor: Colors.black,
       toolbarTitle: '照片编辑',

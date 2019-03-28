@@ -59,11 +59,11 @@ class _DeleteDialogState extends State<DeleteDialog> {
         _error = '删除失败';
         print(_error);
       });
-      Navigator.pop(context, false);
+      // Navigator.pop(context, false);
       return;
     }
-
-    Navigator.pop(context, true);
+    // TODO: fix delete
+    // Navigator.pop(context, true);
   }
 
   @override

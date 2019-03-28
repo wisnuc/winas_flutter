@@ -1,5 +1,7 @@
-import 'package:flutter_redux/flutter_redux.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_redux/flutter_redux.dart';
+
 import '../redux/redux.dart';
 
 class NewFolder extends StatefulWidget {
@@ -30,10 +32,21 @@ class _NewFolderState extends State<NewFolder> {
         'driveUUID': node.driveUUID,
       });
     } catch (error) {
-      print(error);
+      _error = '创建失败';
+      if (error is DioError && error?.response?.data is Map) {
+        final res = error.response.data;
+        print(res);
+        if (res['code'] == 'EEXIST') {
+          _error = res['xcode'] == 'EISFILE' ? '存在同名的文件' : '同名文件夹已经存在';
+        } else if (res['message'] == 'invalid name') {
+          _error = '名称不合法，如不能包含 \\/?<>*:"| 等字符';
+        }
+      } else {
+        print(error);
+      }
+
       setState(() {
         loading = false;
-        _error = '创建失败';
       });
       return;
     }
