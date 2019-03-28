@@ -4,34 +4,34 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
-    <key>CFBundleDocumentTypes</key>
-    <array>
-        <dict>
-            <key>CFBundleTypeIconFiles</key>
-            <array>
-                <string>96.png</string>
-                <string>96@2x.png</string>
-            </array>
-            <key>CFBundleTypeName</key>
-            <string>com.myapp.common-data</string>
-            <key>LSItemContentTypes</key>
-            <array>
-                <string>com.microsoft.powerpoint.ppt</string>
-                <string>public.item</string>
-                <string>com.microsoft.word.doc</string>
-                <string>com.adobe.pdf</string>
-                <string>com.microsoft.excel.xls</string>
-                <string>public.image</string>
-                <string>public.content</string>
-                <string>public.composite-content</string>
-                <string>public.archive</string>
-                <string>public.audio</string>
-                <string>public.movie</string>
-                <string>public.text</string>
-                <string>public.data</string>
-            </array>
-        </dict>
-    </array>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeIconFiles</key>
+			<array>
+				<string>96.png</string>
+				<string>96@2x.png</string>
+			</array>
+			<key>CFBundleTypeName</key>
+			<string>com.myapp.common-data</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.microsoft.powerpoint.ppt</string>
+				<string>public.item</string>
+				<string>com.microsoft.word.doc</string>
+				<string>com.adobe.pdf</string>
+				<string>com.microsoft.excel.xls</string>
+				<string>public.image</string>
+				<string>public.content</string>
+				<string>public.composite-content</string>
+				<string>public.archive</string>
+				<string>public.audio</string>
+				<string>public.movie</string>
+				<string>public.text</string>
+				<string>public.data</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -75,6 +75,10 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>App need your agree to use your Camera</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>App need your agree to use your Microphone</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>App need your agree to visit your album</string>
 	<key>UIBackgroundModes</key>
