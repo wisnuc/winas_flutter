@@ -351,7 +351,7 @@ class Entry {
     this.namepath = m['namepath'];
     Drive drive = d[m['place']];
     this.pdrv = drive.uuid;
-    this.location = drive.type ?? drive.tag;
+    this.location = drive.tag ?? drive.type;
 
     this.hdate = this.metadata?.hdate ?? prettyDate(this.mtime, showDay: true);
   }

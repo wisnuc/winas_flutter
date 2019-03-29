@@ -449,6 +449,7 @@ class _SearchState extends State<Search> {
   /// show search result
   Widget renderList(AppState state) {
     if (_entries.length == 0) return renderNoResult();
+    print(_entries);
     return Container(
       color: Colors.grey[200],
       child: DraggableScrollbar.semicircle(

@@ -101,12 +101,17 @@ class TitleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final title = Text(
+      type == 'file' ? '文件' : '文件夹',
+      style: TextStyle(fontSize: 12, color: Colors.black54),
+    );
+
     if (!isFirst)
       return Container(
         height: 48,
-        padding: EdgeInsets.fromLTRB(16, 0, 0, 0),
+        padding: EdgeInsets.only(left: 16),
         alignment: Alignment.centerLeft,
-        child: type == 'file' ? Text('文件') : Text('文件夹'),
+        child: title,
       );
 
     return Container(
@@ -115,7 +120,7 @@ class TitleRow extends StatelessWidget {
         children: <Widget>[
           Container(width: 16),
           Container(
-            child: type == 'file' ? Text('文件') : Text('文件夹'),
+            child: title,
           ),
           Expanded(
             flex: 1,
@@ -140,18 +145,22 @@ class TitleRow extends StatelessWidget {
                               value: type,
                               child: Row(
                                 children: <Widget>[
-                                  Icon(
-                                    type.toString().endsWith('Up')
-                                        ? Icons.arrow_upward
-                                        : Icons.arrow_downward,
-                                    color: Colors.black26,
+                                  Transform.rotate(
+                                    angle: type.toString().endsWith('Up')
+                                        ? -3.14159265 / 2
+                                        : 3.14159265 / 2,
+                                    child: Icon(
+                                      Icons.trending_flat,
+                                      color: Colors.black38,
+                                      size: 16,
+                                    ),
                                   ),
-                                  Container(width: 8),
+                                  Container(width: 4),
                                   Container(
                                     child: Text(
                                       entrySort.getName(type),
                                       style: TextStyle(
-                                          color: Colors.black38, fontSize: 14),
+                                          color: Colors.black54, fontSize: 12),
                                     ),
                                   ),
                                 ],

@@ -628,13 +628,16 @@ class _FilesState extends State<Files> {
       elevation: 2.0,
       iconTheme: IconThemeData(color: Colors.black38),
       actions: [
-        IconButton(
-          icon: Icon(Icons.create_new_folder),
-          onPressed: () => showDialog(
-                context: context,
-                builder: (BuildContext context) => NewFolder(node: currentNode),
-              ).then((success) => success ? refresh(state) : null),
-        ),
+        node.location == 'backup'
+            ? Container()
+            : IconButton(
+                icon: Icon(Icons.create_new_folder),
+                onPressed: () => showDialog(
+                      context: context,
+                      builder: (BuildContext context) =>
+                          NewFolder(node: currentNode),
+                    ).then((success) => success ? refresh(state) : null),
+              ),
         StoreConnector<AppState, VoidCallback>(
           converter: (store) {
             return () => store.dispatch(UpdateConfigAction(
