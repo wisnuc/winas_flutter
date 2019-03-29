@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../redux/redux.dart';
+import '../common/utils.dart';
 
 class DeleteDialog extends StatefulWidget {
   DeleteDialog({Key key, this.entries}) : super(key: key);
@@ -14,13 +15,17 @@ class DeleteDialog extends StatefulWidget {
 class _DeleteDialogState extends State<DeleteDialog> {
   _DeleteDialogState(this.entries);
   String _fileName;
-  String _error;
+  Model model = Model();
   bool loading = false;
   final List<Entry> entries;
 
-  _onPressed(context, state) async {
-    print(_fileName);
+  void close({bool success}) {
+    if (model.close) return;
+    model.close = true;
+    Navigator.pop(this.context, success);
+  }
 
+  void onPressed(state) async {
     setState(() {
       loading = true;
     });
@@ -56,14 +61,11 @@ class _DeleteDialogState extends State<DeleteDialog> {
       print(error);
       setState(() {
         loading = false;
-        _error = '删除失败';
-        print(_error);
       });
-      // Navigator.pop(context, false);
+      close(success: false);
       return;
     }
-    // TODO: fix delete
-    // Navigator.pop(context, true);
+    close(success: true);
   }
 
   @override
@@ -73,22 +75,24 @@ class _DeleteDialogState extends State<DeleteDialog> {
       onDispose: (store) => {},
       converter: (store) => store.state,
       builder: (context, state) {
-        return AlertDialog(
-          title: Text('删除文件或文件夹'),
-          content: Text('确定删除选择的文件或文件夹吗？'),
-          actions: <Widget>[
-            FlatButton(
+        return WillPopScope(
+          onWillPop: () => Future.value(model.shouldClose),
+          child: AlertDialog(
+            title: Text('删除文件或文件夹'),
+            content: Text('确定删除选择的文件或文件夹吗？'),
+            actions: <Widget>[
+              FlatButton(
                 textColor: Theme.of(context).primaryColor,
                 child: Text('取消'),
-                onPressed: () {
-                  Navigator.pop(context);
-                }),
-            FlatButton(
-              textColor: Theme.of(context).primaryColor,
-              child: Text('确定'),
-              onPressed: () => _onPressed(context, state),
-            )
-          ],
+                onPressed: () => close(),
+              ),
+              FlatButton(
+                textColor: Theme.of(context).primaryColor,
+                child: Text(loading ? '删除中' : '确定'),
+                onPressed: loading ? null : () => onPressed(state),
+              )
+            ],
+          ),
         );
       },
     );
