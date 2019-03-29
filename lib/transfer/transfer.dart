@@ -3,6 +3,7 @@ import 'package:open_file/open_file.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import './manager.dart';
+import './removable.dart';
 import '../redux/redux.dart';
 import '../common/utils.dart';
 import '../common/renderIcon.dart';
@@ -57,22 +58,14 @@ class _TransferState extends State<Transfer> {
         }
         return Stack(
           children: <Widget>[
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
+            Positioned.fill(
               child: CircularProgressIndicator(
                 strokeWidth: 3.0,
                 value: 1,
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.teal[50]),
               ),
             ),
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
+            Positioned.fill(
               child: CircularProgressIndicator(
                 strokeWidth: 3.0,
                 value: item.finishedSize / item.entry.size,
@@ -84,34 +77,21 @@ class _TransferState extends State<Transfer> {
       case 'paused':
         return Stack(
           children: <Widget>[
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
+            Positioned.fill(
               child: CircularProgressIndicator(
                 strokeWidth: 3.0,
                 value: 1,
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[200]),
               ),
             ),
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
+            Positioned.fill(
               child: CircularProgressIndicator(
                 strokeWidth: 3.0,
                 value: item.finishedSize / item.entry.size,
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
               ),
             ),
-            Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: Center(child: Icon(Icons.pause))),
+            Positioned.fill(child: Center(child: Icon(Icons.pause))),
           ],
         );
       case 'failed':
@@ -124,31 +104,16 @@ class _TransferState extends State<Transfer> {
       BuildContext ctx, List<TransferItem> items, int index, AppState state) {
     TransferItem item = items[index];
     Entry entry = item.entry;
-    return Dismissible(
+    return Removable(
       key: Key(item.uuid),
-      onDismissed: (direction) {
-        item.clean();
-        items.removeAt(index);
-        showSnackBar(ctx, '删除成功');
+      onDismissed: () {
+        setState(() {
+          item.clean();
+          items.removeAt(index);
+          print("showSnackBar");
+          showSnackBar(ctx, '删除成功');
+        });
       },
-      background: Container(
-          color: Colors.red,
-          child: Row(
-            children: <Widget>[
-              Expanded(flex: 1, child: Container()),
-              Container(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                  '删除',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              )
-            ],
-          )),
       child: Material(
         child: InkWell(
           onTap: () async {

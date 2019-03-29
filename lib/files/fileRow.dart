@@ -532,18 +532,10 @@ class _FileRowState extends State<FileRow> {
               child: isGrid
                   ? Stack(
                       children: <Widget>[
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
+                        Positioned.fill(
                           child: renderGrid(context, thumbData),
                         ),
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
+                        Positioned.fill(
                           child: (select.selectMode() && entry.type == 'file')
                               ? Container(
                                   color: Colors.black12,

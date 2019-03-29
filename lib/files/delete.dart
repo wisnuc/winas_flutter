@@ -14,7 +14,6 @@ class DeleteDialog extends StatefulWidget {
 
 class _DeleteDialogState extends State<DeleteDialog> {
   _DeleteDialogState(this.entries);
-  String _fileName;
   Model model = Model();
   bool loading = false;
   final List<Entry> entries;

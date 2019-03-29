@@ -74,11 +74,7 @@ class _PhotoItemState extends State<PhotoItem> {
               onLongPress: () {},
               child: Stack(
                 children: <Widget>[
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
+                  Positioned.fill(
                     child: thumbData == null
                         ? Container()
                         : Hero(
@@ -94,11 +90,7 @@ class _PhotoItemState extends State<PhotoItem> {
                             ),
                           ),
                   ),
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
+                  Positioned.fill(
                     child: thumbData == null
                         ? Container(color: Colors.grey[300])
                         : Image.memory(
@@ -106,11 +98,7 @@ class _PhotoItemState extends State<PhotoItem> {
                             fit: BoxFit.cover,
                           ),
                   ),
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
+                  Positioned.fill(
                     child: entry.selected
                         ? Container(
                             color: Colors.black12,

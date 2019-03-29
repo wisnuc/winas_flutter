@@ -154,11 +154,7 @@ class _GridPhotoViewerState extends State<GridPhotoViewer>
       builder: (context, state) {
         return Stack(
           children: <Widget>[
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
+            Positioned.fill(
               child: _hiddenThumb
                   ? Container()
                   : thumbData == null
@@ -168,11 +164,7 @@ class _GridPhotoViewerState extends State<GridPhotoViewer>
                           fit: BoxFit.contain,
                         ),
             ),
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
+            Positioned.fill(
               child: imageData == null
                   ? Container(color: Colors.transparent)
                   : GestureDetector(

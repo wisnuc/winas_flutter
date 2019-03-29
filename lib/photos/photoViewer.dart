@@ -335,11 +335,7 @@ class _GridPhotoState extends State<GridPhoto>
             color: Color.fromARGB((opacity * 255).round(), 255, 255, 255),
             child: Stack(
               children: <Widget>[
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
+                Positioned.fill(
                   child: thumbData == null
                       ? Center(child: CircularProgressIndicator())
                       : playerWidget != null
@@ -364,11 +360,7 @@ class _GridPhotoState extends State<GridPhoto>
                               ),
                             ),
                 ),
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
+                Positioned.fill(
                   child: thumbData == null && imageData == null
                       ? Center(child: CircularProgressIndicator())
                       : playerWidget != null

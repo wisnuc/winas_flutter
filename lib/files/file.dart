@@ -820,11 +820,7 @@ class _FilesState extends State<Files> {
               alignment: Alignment.center,
               children: <Widget>[
                 // File list
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
+                Positioned.fill(
                   child: RefreshIndicator(
                     onRefresh: loading ? () async {} : () => refresh(state),
                     child: _error != null
@@ -971,11 +967,7 @@ class _FilesState extends State<Files> {
 
                 // CircularProgressIndicator
                 loading
-                    ? Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
+                    ? Positioned.fill(
                         child: Center(
                           child: CircularProgressIndicator(),
                         ),
