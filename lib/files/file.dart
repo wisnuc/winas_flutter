@@ -34,7 +34,7 @@ Widget _buildItem(
       return TitleRow(isFirst: index == 0, type: 'file');
     case 'file':
       return FileRow(
-        key: Key(entry.name + entry.uuid),
+        key: Key(entry.name + entry.uuid + entry.selected.toString()),
         type: 'file',
         onPress: () => download(entry),
         entry: entry,
@@ -44,7 +44,7 @@ Widget _buildItem(
       );
     case 'directory':
       return FileRow(
-        key: Key(entry.name + entry.uuid),
+        key: Key(entry.name + entry.uuid + entry.selected.toString()),
         type: 'directory',
         onPress: () => Navigator.push(
               context,
@@ -794,7 +794,9 @@ class _FilesState extends State<Files> {
                 // File list
                 Positioned.fill(
                   child: RefreshIndicator(
-                    onRefresh: loading ? () async {} : () => refresh(state),
+                    onRefresh: loading || select.selectMode()
+                        ? () async {}
+                        : () => refresh(state),
                     child: _error != null
                         ? Center(
                             child: Column(
@@ -861,7 +863,7 @@ class _FilesState extends State<Files> {
                                           ),
                                         );
                                       },
-                                      childCount: 1,
+                                      childCount: select.selectMode() ? 0 : 1,
                                     ),
                                   ),
 
