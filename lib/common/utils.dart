@@ -372,3 +372,20 @@ class TransparentPageRoute extends PageRoute<void> {
     );
   }
 }
+
+/// handle error, convert dynamic error to String
+///
+String converError(dynamic error) {
+  if (error is DioError) {
+    if (error.message is String) if (error.message
+        .contains('Connection refused')) {
+      return '未能连接到设备';
+    }
+    if (error.message.contains(' Connection closed')) {
+      return '与设备的连接已断开';
+    }
+
+    return error.toString();
+  }
+  return error.toString();
+}

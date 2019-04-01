@@ -29,6 +29,7 @@ class TransferItem {
   Entry entry;
   TransType transType;
   String speed = '';
+  String error;
   int finishedTime = -1;
   int startTime = -1;
   int finishedSize = 0;
@@ -66,8 +67,8 @@ class TransferItem {
       'startTime': startTime,
       'finishedSize': finishedSize,
       'filePath': filePath,
+      'error': error,
     };
-
     return jsonEncode(m);
   }
 
@@ -112,6 +113,7 @@ class TransferItem {
 
   void resume() {
     this.speed = '';
+    this.error = '';
     this.status = 'working';
   }
 
@@ -120,8 +122,10 @@ class TransferItem {
     this.status = 'finished';
   }
 
-  void fail() {
+  void fail(dynamic error) {
     this.status = 'failed';
+    // convert dynamic error to String
+    this.error = converError(error);
   }
 
   /// sort order
@@ -259,7 +263,7 @@ class TransferManager {
       print(error);
       // DioErrorType.CANCEL is not error
       if (error is DioError && (error?.type != DioErrorType.CANCEL)) {
-        item.fail();
+        item.fail(error);
       }
     }
   }
@@ -271,7 +275,7 @@ class TransferManager {
       transType: TransType.download,
     );
     transferList.add(item);
-    _downloadFile(item, state).catchError((onError) => item.fail());
+    _downloadFile(item, state).catchError((onError) => item.fail(onError));
   }
 
   Future<Entry> getTargetDir(
@@ -366,7 +370,7 @@ class TransferManager {
       print(error);
       // DioErrorType.CANCEL is not error
       if (error is! DioError || (error?.type != DioErrorType.CANCEL)) {
-        item.fail();
+        item.fail(error);
       }
     }
   }
@@ -389,7 +393,7 @@ class TransferManager {
               print(error);
               // DioErrorType.CANCEL is not error
               if (error is! DioError || (error?.type != DioErrorType.CANCEL)) {
-                item.fail();
+                item.fail(error);
               }
             });
           }

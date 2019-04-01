@@ -49,7 +49,21 @@ class _TransferState extends State<Transfer> {
     }
   }
 
-  Widget renderStatus(TransferItem item) {
+  /// Resume task
+  ///
+  /// clean current, start a new task
+  void resumeTask(List<TransferItem> items, int index, AppState state) {
+    final item = items[index];
+    item.clean();
+    items.removeAt(index);
+    if (item.transType == TransType.download) {
+      final cm = TransferManager.getInstance();
+      cm.newDownload(item.entry, state);
+    }
+  }
+
+  Widget renderStatus(List<TransferItem> items, int index, AppState state) {
+    final item = items[index];
     switch (item.status) {
       case 'finished':
         return Center(child: Icon(Icons.check_circle_outline));
@@ -101,7 +115,36 @@ class _TransferState extends State<Transfer> {
           ],
         );
       case 'failed':
-        return Center(child: Icon(Icons.error, color: Colors.pinkAccent));
+        return Center(
+          child: IconButton(
+            icon: Icon(Icons.error, color: Colors.redAccent),
+            onPressed: () async {
+              await showDialog(
+                context: this.context,
+                builder: (BuildContext context) => AlertDialog(
+                      title: Text('传输失败'),
+                      content: Text('${item.error}'),
+                      actions: <Widget>[
+                        FlatButton(
+                            textColor: Theme.of(context).primaryColor,
+                            child: Text('取消'),
+                            onPressed: () {
+                              Navigator.pop(context);
+                            }),
+                        FlatButton(
+                            textColor: Theme.of(context).primaryColor,
+                            child: Text('重试'),
+                            onPressed: () {
+                              Navigator.pop(context);
+
+                              resumeTask(items, index, state);
+                            })
+                      ],
+                    ),
+              );
+            },
+          ),
+        );
     }
     return Container();
   }
@@ -131,10 +174,7 @@ class _TransferState extends State<Transfer> {
               item.pause();
             } else if (item.status == 'paused') {
               // resume task
-              item.clean();
-              items.removeAt(index);
-              final cm = TransferManager.getInstance();
-              cm.newDownload(entry, state);
+              resumeTask(items, index, state);
             } else if (item.status == 'failed') {
               // retry
               items.removeAt(index);
@@ -209,7 +249,7 @@ class _TransferState extends State<Transfer> {
                         padding: EdgeInsets.all(16),
                         width: 72,
                         height: 72,
-                        child: renderStatus(item),
+                        child: renderStatus(items, index, state),
                       ),
                     ],
                   ),
