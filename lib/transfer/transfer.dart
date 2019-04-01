@@ -208,7 +208,7 @@ class _TransferState extends State<Transfer> {
                             Text(
                               entry.name,
                               textAlign: TextAlign.start,
-                              overflow: TextOverflow.ellipsis,
+                              overflow: TextOverflow.fade,
                               maxLines: 1,
                             ),
                             Container(height: 8),

@@ -27,6 +27,17 @@ List<String> thumbMagic = [
   'FLV'
 ];
 
+/// Ellipsis Text
+Widget ellipsisText(String text, {TextStyle style}) {
+  return Text(
+    text ?? '',
+    overflow: TextOverflow.fade,
+    softWrap: false,
+    maxLines: 1,
+    style: style,
+  );
+}
+
 class FileNavView {
   final Widget _icon;
   final String _title;
@@ -277,12 +288,7 @@ class _FileRowState extends State<FileRow> {
                         : Icon(Icons.folder, color: Colors.orange),
                     Container(width: 32),
                     Expanded(
-                      child: Text(
-                        name,
-                        textAlign: TextAlign.start,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
+                      child: ellipsisText(name),
                       flex: 10,
                     ),
                     Expanded(
@@ -290,7 +296,10 @@ class _FileRowState extends State<FileRow> {
                       flex: 1,
                     ),
                     IconButton(
-                      icon: Icon(Icons.info),
+                      icon: Icon(
+                        Icons.info,
+                        color: Colors.grey,
+                      ),
                       onPressed: () {
                         Navigator.pop(c);
                         Navigator.push(
@@ -353,12 +362,7 @@ class _FileRowState extends State<FileRow> {
               Container(width: 16),
               Icon(icon),
               Container(width: 32),
-              Text(
-                title,
-                textAlign: TextAlign.start,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
+              ellipsisText(title),
             ],
           ),
         ),
@@ -392,12 +396,7 @@ class _FileRowState extends State<FileRow> {
         ),
         Container(width: 4),
         Expanded(
-          child: Text(
-            name,
-            textAlign: TextAlign.start,
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
+          child: ellipsisText(name),
           flex: 10,
         ),
         Expanded(
@@ -473,12 +472,7 @@ class _FileRowState extends State<FileRow> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text(
-                        name,
-                        textAlign: TextAlign.start,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
+                      ellipsisText(name),
                       Container(height: 4),
                       Row(
                         children: <Widget>[

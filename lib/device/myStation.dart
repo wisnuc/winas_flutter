@@ -48,7 +48,7 @@ class StorageDetail extends StatelessWidget {
                         Text(
                           u['title'],
                           textAlign: TextAlign.start,
-                          overflow: TextOverflow.ellipsis,
+                          overflow: TextOverflow.fade,
                           maxLines: 1,
                           style: TextStyle(fontSize: 16, color: Colors.black87),
                         ),

@@ -238,7 +238,7 @@ class _XCopyViewState extends State<XCopyView> {
                         child: Text(
                           entry.name,
                           textAlign: TextAlign.start,
-                          overflow: TextOverflow.ellipsis,
+                          overflow: TextOverflow.fade,
                           maxLines: 1,
                         ),
                         decoration: BoxDecoration(
