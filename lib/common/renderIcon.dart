@@ -23,6 +23,7 @@ Widget renderIcon(String name, Metadata metadata, {double size: 24}) {
     case 'png':
       return aIcon(Winas.png, Color(0xffea4335));
     case 'bmp':
+    case 'heic':
       return aIcon(Icons.image, Color(0xffea4335));
     case 'mov':
       return aIcon(Winas.mov, Color(0xfff44336));
