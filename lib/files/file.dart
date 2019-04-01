@@ -470,17 +470,37 @@ class _FilesState extends State<Files> {
             context: this.context,
             builder: (BuildContext c) {
               return SafeArea(
-                child: Material(
-                  child: InkWell(
-                    onTap: () {
-                      select.selectAll(entries);
-                      Navigator.pop(c);
-                    },
-                    child: Container(
-                      padding: EdgeInsets.all(16),
-                      child: Text('选择全部'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Material(
+                      child: InkWell(
+                        onTap: () {
+                          select.enterSelect();
+                          Navigator.pop(c);
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(16),
+                          child: Text('选择'),
+                        ),
+                      ),
                     ),
-                  ),
+                    Material(
+                      child: InkWell(
+                        onTap: () {
+                          select.selectAll(entries);
+                          Navigator.pop(c);
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(16),
+                          child: Text('选择全部'),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               );
             },
@@ -544,9 +564,10 @@ class _FilesState extends State<Files> {
   }
 
   AppBar selectAppBar(AppState state) {
+    final length = select.selectedEntry.length;
     return AppBar(
       title: Text(
-        '选择了${select.selectedEntry.length}项',
+        '选择了$length项',
         style: TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.normal,
@@ -564,91 +585,97 @@ class _FilesState extends State<Files> {
         Builder(builder: (ctx) {
           return IconButton(
             icon: Icon(Icons.content_copy),
-            onPressed: select.selectedEntry.any((e) => e.location == 'backup')
-                ? null
-                : () {
-                    Navigator.push(
-                      this.context,
-                      MaterialPageRoute(
-                        settings: RouteSettings(name: 'xcopy'),
-                        fullscreenDialog: true,
-                        builder: (xcopyCtx) {
-                          return XCopyView(
-                              node: Node(
-                                name: '全部文件',
-                                tag: 'root',
-                                location: 'xcopy',
-                              ),
-                              src: select.selectedEntry,
-                              preCtx: [
-                                ctx,
-                                xcopyCtx
-                              ], // for snackbar and navigation
-                              actionType: 'copy',
-                              callback: () {
-                                select.clearSelect();
-                                refresh(state);
-                              });
-                        },
-                      ),
-                    );
-                  },
+            onPressed:
+                select.selectedEntry.any((e) => e.location == 'backup') ||
+                        length == 0
+                    ? null
+                    : () {
+                        Navigator.push(
+                          this.context,
+                          MaterialPageRoute(
+                            settings: RouteSettings(name: 'xcopy'),
+                            fullscreenDialog: true,
+                            builder: (xcopyCtx) {
+                              return XCopyView(
+                                  node: Node(
+                                    name: '全部文件',
+                                    tag: 'root',
+                                    location: 'xcopy',
+                                  ),
+                                  src: select.selectedEntry,
+                                  preCtx: [
+                                    ctx,
+                                    xcopyCtx
+                                  ], // for snackbar and navigation
+                                  actionType: 'copy',
+                                  callback: () {
+                                    select.clearSelect();
+                                    refresh(state);
+                                  });
+                            },
+                          ),
+                        );
+                      },
           );
         }),
         // move selected entry
         Builder(builder: (ctx) {
           return IconButton(
             icon: Icon(Icons.forward),
-            onPressed: select.selectedEntry.any((e) => e.location == 'backup')
-                ? null
-                : () {
-                    Navigator.push(
-                      this.context,
-                      MaterialPageRoute(
-                        settings: RouteSettings(name: 'xcopy'),
-                        fullscreenDialog: true,
-                        builder: (xcopyCtx) {
-                          return XCopyView(
-                              node: Node(
-                                name: '全部文件',
-                                tag: 'root',
-                                location: 'xcopy',
-                              ),
-                              src: select.selectedEntry,
-                              preCtx: [
-                                ctx,
-                                xcopyCtx
-                              ], // for snackbar and navigation
-                              actionType: 'move',
-                              callback: () {
-                                select.clearSelect();
-                                refresh(state);
-                              });
-                        },
-                      ),
-                    );
-                  },
+            onPressed:
+                select.selectedEntry.any((e) => e.location == 'backup') ||
+                        length == 0
+                    ? null
+                    : () {
+                        Navigator.push(
+                          this.context,
+                          MaterialPageRoute(
+                            settings: RouteSettings(name: 'xcopy'),
+                            fullscreenDialog: true,
+                            builder: (xcopyCtx) {
+                              return XCopyView(
+                                  node: Node(
+                                    name: '全部文件',
+                                    tag: 'root',
+                                    location: 'xcopy',
+                                  ),
+                                  src: select.selectedEntry,
+                                  preCtx: [
+                                    ctx,
+                                    xcopyCtx
+                                  ], // for snackbar and navigation
+                                  actionType: 'move',
+                                  callback: () {
+                                    select.clearSelect();
+                                    refresh(state);
+                                  });
+                            },
+                          ),
+                        );
+                      },
           );
         }),
         // delete selected entry
         Builder(builder: (ctx) {
           return IconButton(
             icon: Icon(Icons.delete),
-            onPressed: () async {
-              bool success = await showDialog(
-                context: this.context,
-                builder: (BuildContext context) =>
-                    DeleteDialog(entries: select.selectedEntry),
-              );
-              select.clearSelect();
+            onPressed: length == 0
+                ? null
+                : () async {
+                    bool success = await showDialog(
+                      context: this.context,
+                      builder: (BuildContext context) =>
+                          DeleteDialog(entries: select.selectedEntry),
+                    );
+                    select.clearSelect();
 
-              if (success == true) {
-                showSnackBar(ctx, '删除成功');
-              } else if (success == false) {
-                showSnackBar(ctx, '删除失败');
-              }
-              await refresh(state);
-            },
+                    if (success == true) {
+                      showSnackBar(ctx, '删除成功');
+                    } else if (success == false) {
+                      showSnackBar(ctx, '删除失败');
+                    }
+                    await refresh(state);
+                  },
           );
         }),
       ],

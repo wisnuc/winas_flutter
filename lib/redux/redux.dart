@@ -448,6 +448,7 @@ class LocalAlbum {
 class Select {
   Function update;
   Select(this.update);
+  bool forceSelect = false;
   List<Entry> selectedEntry = [];
 
   void toggleSelect(Entry entry) {
@@ -466,6 +467,7 @@ class Select {
       entry.unSelect();
     }
     selectedEntry.clear();
+    forceSelect = false;
     this.update();
   }
 
@@ -477,7 +479,12 @@ class Select {
     this.update();
   }
 
-  bool selectMode() => selectedEntry.length != 0;
+  void enterSelect() {
+    forceSelect = true;
+    this.update();
+  }
+
+  bool selectMode() => selectedEntry.length != 0 || forceSelect;
 }
 
 /// Types of sortBy:
