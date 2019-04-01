@@ -1032,8 +1032,21 @@ class _FilesState extends State<Files> {
 
   @override
   Widget build(BuildContext context) {
-    if (node.tag == 'home') return homeView();
-    if (node.tag == 'dir' || node.tag == 'built-in') return directoryView();
-    return Center(child: Text('Error !'));
+    return WillPopScope(
+      onWillPop: () {
+        if (select.selectMode()) {
+          select.clearSelect();
+          return Future.value(false);
+        }
+        return Future.value(true);
+      },
+      child: node.tag == 'home'
+          ? homeView()
+          : (node.tag == 'dir' || node.tag == 'built-in')
+              ? directoryView()
+              : Center(
+                  child: Text('Error !'),
+                ),
+    );
   }
 }
