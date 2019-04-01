@@ -29,12 +29,18 @@ class _TransferState extends State<Transfer> {
   /// refresh per second
   _autoRefresh({bool isFirst = false}) async {
     list = TransferManager.getList();
-    list.sort((a, b) {
-      if (a.order == b.order) {
-        return b.startTime - a.startTime;
-      }
-      return b.order - a.order;
-    });
+
+    // order by status(paused/working/finisehd) and startTime
+    // list.sort((a, b) {
+    //   if (a.order == b.order) {
+    //     return b.startTime - a.startTime;
+    //   }
+    //   return b.order - a.order;
+    // });
+
+    // only order by startTime
+    list.sort((a, b) => b.startTime - a.startTime);
+
     await Future.delayed(
         isFirst ? Duration(milliseconds: 100) : Duration(seconds: 1));
     if (this.mounted) {
@@ -172,13 +178,20 @@ class _TransferState extends State<Transfer> {
                                   item.transType == TransType.download
                                       ? Icons.file_download
                                       : Icons.file_upload,
+                                  size: 18,
                                 ),
-                                Container(width: 8),
-                                Text(
+                                Container(height: 4),
+                                Expanded(
+                                  flex: 1,
+                                  child: Text(
                                     item.status == 'finished' || item.isShare
                                         ? prettySize(item.entry.size)
                                         : '${prettySize(item.finishedSize)} / ${prettySize(item.entry.size)}',
-                                    style: TextStyle(fontSize: 12)),
+                                    style: TextStyle(fontSize: 10),
+                                    overflow: TextOverflow.fade,
+                                    maxLines: 1,
+                                  ),
+                                ),
                               ],
                             ),
                             Expanded(flex: 1, child: Container()),
