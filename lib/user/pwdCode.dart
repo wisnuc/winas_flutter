@@ -147,9 +147,8 @@ class _SmsCodeState extends State<SmsCode> {
         _status = 'success';
       });
     } else {
-      // return to login: remove all router, and push '/login'
-      Navigator.pushNamedAndRemoveUntil(
-          context, '/login', (Route<dynamic> route) => false);
+      // return to security
+      Navigator.popUntil(context, ModalRoute.withName('security'));
     }
   }
 

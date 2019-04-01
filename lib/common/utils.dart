@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:device_info/device_info.dart';
+import 'package:package_info/package_info.dart';
 
 /// showSnackBar, require BuildContext to find Scaffold
 void showSnackBar(BuildContext ctx, String message) {
@@ -331,6 +332,19 @@ Future<String> getClientId() async {
     clientId = 'default_mobile_clientId';
   }
   return clientId;
+}
+
+/// App version
+Future<String> getAppVersion() async {
+  String version = '';
+  try {
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    version = packageInfo.version;
+  } catch (e) {
+    print(e);
+    version = '';
+  }
+  return version;
 }
 
 /// Transparent PageRoute

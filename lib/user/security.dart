@@ -69,9 +69,11 @@ class _SecurityState extends State<Security> {
                   () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) {
-                        return ResetPwd();
-                      }),
+                      MaterialPageRoute(
+                        builder: (context) {
+                          return ResetPwd();
+                        },
+                      ),
                     );
                   },
                   Row(

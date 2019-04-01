@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import './license.dart';
+import '../common/utils.dart';
 import '../icons/winas_icons.dart';
 
 class About extends StatefulWidget {
@@ -12,9 +13,16 @@ class About extends StatefulWidget {
 }
 
 class _AboutState extends State<About> {
+  String version = '';
+
   @override
   void initState() {
     super.initState();
+    getAppVersion().then((value) {
+      setState(() {
+        version = value;
+      });
+    });
   }
 
   @override
@@ -32,7 +40,7 @@ class _AboutState extends State<About> {
           Container(
             padding: EdgeInsets.all(16),
             child: Text(
-              '关于闻上云盘',
+              '闻上云盘 版本$version',
               style: TextStyle(color: Colors.black87, fontSize: 21),
             ),
           ),

@@ -17,7 +17,7 @@ class AccountInfo extends StatefulWidget {
 
 class _AccountInfoState extends State<AccountInfo> {
   int cacheSize;
-
+  String version = '';
   Future getCacheSize() async {
     final cm = await CacheManager.getInstance();
     var size = await cm.getCacheSize();
@@ -38,7 +38,15 @@ class _AccountInfoState extends State<AccountInfo> {
   @override
   void initState() {
     super.initState();
+    // cache
     getCacheSize();
+
+    // app version
+    getAppVersion().then((value) {
+      setState(() {
+        version = value;
+      });
+    });
   }
 
   @override
@@ -132,9 +140,12 @@ class _AccountInfoState extends State<AccountInfo> {
                   '帐户与安全',
                   () => Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) {
-                          return Security();
-                        }),
+                        MaterialPageRoute(
+                          builder: (context) {
+                            return Security();
+                          },
+                          settings: RouteSettings(name: 'security'),
+                        ),
                       ),
                   null,
                 ),
@@ -177,7 +188,12 @@ class _AccountInfoState extends State<AccountInfo> {
                           return About();
                         }),
                       ),
-                  null,
+                  Row(
+                    children: <Widget>[
+                      Text('版本$version'),
+                      Icon(Icons.chevron_right),
+                    ],
+                  ),
                 ),
               ],
             ),
