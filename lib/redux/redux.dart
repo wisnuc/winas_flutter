@@ -402,8 +402,13 @@ class Node {
   String name;
   String driveUUID;
   String dirUUID;
+
+  /// root, dir, built-in, home,
   String tag;
+
+  /// backup, home, built-in, xcopy
   String location;
+
   Node({this.name, this.driveUUID, this.dirUUID, this.tag, this.location});
 }
 

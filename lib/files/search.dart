@@ -17,41 +17,44 @@ class FileType {
   FileType(this.name, this.icon, this.types);
 }
 
+/// Get corresponding icon via given file name
+final iconFromName = (String name) => renderIcon(name, null, size: 16);
+
 /// [title, icon, types]
 final List<FileType> fileTypes = List.from([
   [
     'PDFs',
-    renderIcon('a.pdf', null),
+    iconFromName('a.pdf'),
     'PDF',
   ],
   [
     'Word',
-    renderIcon('a.docx', null),
+    iconFromName('a.docx'),
     'DOCX.DOC',
   ],
   [
     'Excel',
-    renderIcon('a.xlsx', null),
+    iconFromName('a.xlsx'),
     'XLSX.XLS',
   ],
   [
     'PPT',
-    renderIcon('a.ppt', null),
+    iconFromName('a.ppt'),
     'PPTX.PPT',
   ],
   [
     '照片与图片',
-    renderIcon('a.bmp', null),
+    iconFromName('a.bmp'),
     'JPEG.PNG.JPG.GIF.BMP.RAW',
   ],
   [
     '视频',
-    renderIcon('a.mkv', null),
+    iconFromName('a.mkv'),
     'RM.RMVB.WMV.AVI.MP4.3GP.MKV.MOV.FLV',
   ],
   [
     '音频',
-    renderIcon('a.mp3', null),
+    iconFromName('a.mp3'),
     'WAV.MP3.APE.WMA.FLAC',
   ],
 ].map((x) => FileType(x[0], x[1], x[2])));

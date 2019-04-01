@@ -170,7 +170,7 @@ class _FilesState extends State<Files> {
     // node: Node(tag: 'home')
     if (widget.node.tag == 'home') {
       String filePath = await Intent.initIntent;
-      print(filePath);
+      print('handle intent: $filePath');
       if (filePath != null) {
         final cm = TransferManager.getInstance();
         cm.newUploadSharedFile(filePath, state);
@@ -190,7 +190,7 @@ class _FilesState extends State<Files> {
     List<Entry> newFiles = [];
 
     if (rawEntries.length == 0) {
-      print('empty entries or some error');
+      // print('empty entries');
     } else if (rawEntries[0]?.type == 'directory') {
       int index = rawEntries.indexWhere((entry) => entry.type == 'file');
       if (index > -1) {
@@ -431,187 +431,63 @@ class _FilesState extends State<Files> {
     );
   }
 
-  Widget searchBar(AppState state) {
-    return Material(
-      elevation: 2.0,
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            flex: 1,
-            child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onTap: () => openSearch(this.context, state),
-              child: Row(
-                children: <Widget>[
-                  Container(width: 16),
-                  Icon(Icons.search),
-                  Container(width: 32),
-                  Text('搜索文件', style: TextStyle(color: Colors.black54)),
-                ],
-              ),
+  List<Widget> appBarAction(AppState state) {
+    return [
+      // Button to add new Folder
+      node.location == 'backup'
+          ? Container()
+          : IconButton(
+              icon: Icon(Icons.create_new_folder),
+              onPressed: () => showDialog(
+                    context: context,
+                    builder: (BuildContext context) =>
+                        NewFolder(node: currentNode),
+                  ).then((success) => success ? refresh(state) : null),
             ),
-          ),
-          IconButton(
-            icon: Icon(Icons.create_new_folder),
-            onPressed: () => showDialog(
-                  context: this.context,
-                  builder: (BuildContext context) =>
-                      NewFolder(node: currentNode),
-                ).then((success) => success == true ? refresh(state) : null),
-          ),
-          StoreConnector<AppState, VoidCallback>(
-            converter: (store) {
-              return () => store.dispatch(UpdateConfigAction(
-                    Config.combine(
-                      store.state.config,
-                      Config(gridView: !store.state.config.gridView),
+      // Button to toggle gridView
+      StoreConnector<AppState, VoidCallback>(
+        converter: (store) {
+          return () => store.dispatch(UpdateConfigAction(
+                Config.combine(
+                  store.state.config,
+                  Config(gridView: !store.state.config.gridView),
+                ),
+              ));
+        },
+        builder: (context, callback) {
+          return IconButton(
+            icon: Icon(
+                state.config.gridView ? Icons.view_list : Icons.view_module),
+            onPressed: callback,
+          );
+        },
+      ),
+      // Button to show more actions
+      IconButton(
+        icon: Icon(Icons.more_horiz),
+        onPressed: () {
+          showModalBottomSheet(
+            context: this.context,
+            builder: (BuildContext c) {
+              return SafeArea(
+                child: Material(
+                  child: InkWell(
+                    onTap: () {
+                      select.selectAll(entries);
+                      Navigator.pop(c);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(16),
+                      child: Text('选择全部'),
                     ),
-                  ));
-            },
-            builder: (context, callback) {
-              return IconButton(
-                icon: Icon(state.config.gridView
-                    ? Icons.view_list
-                    : Icons.view_module),
-                onPressed: callback,
+                  ),
+                ),
               );
             },
-          ),
-          IconButton(
-            icon: Icon(Icons.more_horiz),
-            onPressed: () {
-              showModalBottomSheet(
-                context: this.context,
-                builder: (BuildContext c) {
-                  return SafeArea(
-                    child: Material(
-                      child: InkWell(
-                        onTap: () {
-                          select.selectAll(entries);
-                          Navigator.pop(c);
-                        },
-                        child: Container(
-                          padding: EdgeInsets.all(16),
-                          child: Text('选择全部'),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget dirTitle() {
-    return SliverFixedExtentList(
-      itemExtent: 48,
-      delegate: SliverChildBuilderDelegate(
-        (BuildContext context, int index) {
-          return TitleRow(
-            isFirst: true,
-            type: 'directory',
-            entrySort: entrySort,
           );
         },
-        childCount: dirs.length > 0 ? 1 : 0,
       ),
-    );
-  }
-
-  Widget fileTitle() {
-    return SliverFixedExtentList(
-      itemExtent: 48,
-      delegate: SliverChildBuilderDelegate(
-        (BuildContext context, int index) {
-          return TitleRow(
-            isFirst: dirs.length == 0,
-            type: 'file',
-            entrySort: entrySort,
-          );
-        },
-        childCount: files.length > 0 ? 1 : 0,
-      ),
-    );
-  }
-
-  Widget dirGrid(state) {
-    return SliverGrid(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 8.0,
-        crossAxisSpacing: 8.0,
-        childAspectRatio: 4.0,
-      ),
-      delegate: SliverChildBuilderDelegate(
-        (BuildContext context, int index) {
-          return _buildItem(
-            context,
-            dirs,
-            index,
-            actions(state),
-            (entry) => _download(context, entry, state),
-            select,
-            true,
-          );
-        },
-        childCount: dirs.length,
-      ),
-    );
-  }
-
-  Widget dirRow(state) {
-    return SliverFixedExtentList(
-      itemExtent: 64,
-      delegate: SliverChildBuilderDelegate(
-        (BuildContext context, int index) {
-          return _buildItem(
-            context,
-            dirs,
-            index,
-            actions(state),
-            (entry) => _download(context, entry, state),
-            select,
-            false,
-          );
-        },
-        childCount: dirs.length,
-      ),
-    );
-  }
-
-  Widget fileGrid(state) {
-    return SliverGrid(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 8.0,
-        crossAxisSpacing: 8.0,
-        childAspectRatio: 1.0,
-      ),
-      delegate: SliverChildBuilderDelegate(
-        (BuildContext context, int index) {
-          return _buildItem(context, files, index, actions(state),
-              (entry) => _download(context, entry, state), select, true);
-        },
-        childCount: files.length,
-      ),
-    );
-  }
-
-  Widget fileRow(state) {
-    return SliverFixedExtentList(
-      itemExtent: 64,
-      delegate: SliverChildBuilderDelegate(
-        (BuildContext context, int index) {
-          return _buildItem(context, files, index, actions(state),
-              (entry) => _download(context, entry, state), select, false);
-        },
-        childCount: files.length,
-      ),
-    );
+    ];
   }
 
   AppBar directoryViewAppBar(AppState state) {
@@ -627,72 +503,43 @@ class _FilesState extends State<Files> {
       backgroundColor: Colors.white,
       elevation: 2.0,
       iconTheme: IconThemeData(color: Colors.black38),
-      actions: [
-        node.location == 'backup'
-            ? Container()
-            : IconButton(
-                icon: Icon(Icons.create_new_folder),
-                onPressed: () => showDialog(
-                      context: context,
-                      builder: (BuildContext context) =>
-                          NewFolder(node: currentNode),
-                    ).then((success) => success ? refresh(state) : null),
-              ),
-        StoreConnector<AppState, VoidCallback>(
-          converter: (store) {
-            return () => store.dispatch(UpdateConfigAction(
-                  Config.combine(
-                    store.state.config,
-                    Config(gridView: !store.state.config.gridView),
-                  ),
-                ));
-          },
-          builder: (context, callback) {
-            return IconButton(
-              icon: Icon(
-                  state.config.gridView ? Icons.view_list : Icons.view_module),
-              onPressed: callback,
-            );
-          },
-        ),
-        IconButton(
-          icon: Icon(Icons.more_horiz),
-          onPressed: () {
-            showModalBottomSheet(
-              context: this.context,
-              builder: (BuildContext c) {
-                return SafeArea(
-                  child: Material(
-                    child: InkWell(
-                      onTap: () {
-                        select.selectAll(entries);
-                        Navigator.pop(c);
-                      },
-                      child: Container(
-                        padding: EdgeInsets.all(16),
-                        child: Text('选择全部'),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            );
-          },
-        ),
-      ],
+      actions: appBarAction(state),
     );
   }
 
   AppBar homeViewAppBar(AppState state) {
+    final List<Widget> actions = [
+      Expanded(
+        flex: 1,
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () => openSearch(this.context, state),
+          child: Row(
+            children: <Widget>[
+              Container(width: 16),
+              Icon(Icons.search),
+              Container(width: 32),
+              Text(
+                '搜索文件',
+                style: TextStyle(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.normal,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+      )
+    ]..addAll(appBarAction(state));
+
     return AppBar(
       elevation: 2.0,
       brightness: Brightness.light,
       backgroundColor: Colors.white,
       titleSpacing: 0.0,
       iconTheme: IconThemeData(color: Colors.black38),
-      title: Container(
-        child: searchBar(state),
-      ),
+      title: Row(children: actions),
     );
   }
 
@@ -805,6 +652,128 @@ class _FilesState extends State<Files> {
           );
         }),
       ],
+    );
+  }
+
+  Widget dirTitle() {
+    return SliverFixedExtentList(
+      itemExtent: 48,
+      delegate: SliverChildBuilderDelegate(
+        (BuildContext context, int index) {
+          return TitleRow(
+            isFirst: true,
+            type: 'directory',
+            entrySort: entrySort,
+          );
+        },
+        childCount: dirs.length > 0 ? 1 : 0,
+      ),
+    );
+  }
+
+  Widget fileTitle() {
+    return SliverFixedExtentList(
+      itemExtent: 48,
+      delegate: SliverChildBuilderDelegate(
+        (BuildContext context, int index) {
+          return TitleRow(
+            isFirst: dirs.length == 0,
+            type: 'file',
+            entrySort: entrySort,
+          );
+        },
+        childCount: files.length > 0 ? 1 : 0,
+      ),
+    );
+  }
+
+  Widget dirGrid(state) {
+    return SliverGrid(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 8.0,
+        crossAxisSpacing: 8.0,
+        childAspectRatio: 4.0,
+      ),
+      delegate: SliverChildBuilderDelegate(
+        (BuildContext context, int index) {
+          return _buildItem(
+            context,
+            dirs,
+            index,
+            actions(state),
+            (entry) => _download(context, entry, state),
+            select,
+            true,
+          );
+        },
+        childCount: dirs.length,
+      ),
+    );
+  }
+
+  Widget dirRow(state) {
+    return SliverFixedExtentList(
+      itemExtent: 64,
+      delegate: SliverChildBuilderDelegate(
+        (BuildContext context, int index) {
+          return _buildItem(
+            context,
+            dirs,
+            index,
+            actions(state),
+            (entry) => _download(context, entry, state),
+            select,
+            false,
+          );
+        },
+        childCount: dirs.length,
+      ),
+    );
+  }
+
+  Widget fileGrid(state) {
+    return SliverGrid(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 8.0,
+        crossAxisSpacing: 8.0,
+        childAspectRatio: 1.0,
+      ),
+      delegate: SliverChildBuilderDelegate(
+        (BuildContext context, int index) {
+          return _buildItem(
+            context,
+            files,
+            index,
+            actions(state),
+            (entry) => _download(context, entry, state),
+            select,
+            true,
+          );
+        },
+        childCount: files.length,
+      ),
+    );
+  }
+
+  Widget fileRow(state) {
+    return SliverFixedExtentList(
+      itemExtent: 64,
+      delegate: SliverChildBuilderDelegate(
+        (BuildContext context, int index) {
+          return _buildItem(
+            context,
+            files,
+            index,
+            actions(state),
+            (entry) => _download(context, entry, state),
+            select,
+            false,
+          );
+        },
+        childCount: files.length,
+      ),
     );
   }
 
