@@ -19,32 +19,36 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: 0.1.2
+  outline_material_icons: 0.1.0
 
   redux: 3.0.0
   flutter_redux: 0.5.0
   redux_persist: 0.8.1
+
   path_provider: 0.5.0
-  open_file: 1.2.0
+  open_file: 2.0.1+1
+  shared_preferences: 0.4.3
+
   synchronized: 2.0.2+1
   uuid: 2.0.0-rc1
   url_launcher: 4.2.0+3
-  package_info: 0.3.2+1
 
-  shared_preferences: 0.4.3
-  outline_material_icons: 0.1.0
+
   async: 2.0.8
   crypto: 2.0.6
+
+  package_info: 0.3.2+1
   device_info: 0.3.0
 
   fluwx: 0.5.7
   
-  image_picker: 0.4.12+1
+  image_picker: 0.5.0+9
   image_cropper: 1.0.0
+  photo_manager: 0.3.3
 
   connectivity: 0.3.2
-  wifi: 0.1.4
+  wifi: 0.1.5
 
-  photo_manager: 0.2.1
   chewie: 0.9.6
   video_player: 0.9.0
  
@@ -55,18 +59,18 @@ dependencies:
 
   # share_extend: 1.0.3
   # to fix conflict with open_file
-  share_extend:
-    git: https://github.com/juncaixinchi/ShareExtend.git
+  # share_extend:
+  #   git: https://github.com/juncaixinchi/ShareExtend.git
 
   # draggable_scrollbar: 0.0.4
   # to use draggable-scrollbar with sliver list
   draggable_scrollbar:
     git: https://github.com/juncaixinchi/flutter-draggable-scrollbar.git
 
-  # flutter_blue: 0.4.2
+  flutter_blue: 0.5.0
   # fix BLE connection bug
-  flutter_blue:
-    git: https://github.com/juncaixinchi/flutter_blue.git
+  # flutter_blue:
+  #   git: https://github.com/juncaixinchi/flutter_blue.git
 
 dev_dependencies:
   flutter_test:
