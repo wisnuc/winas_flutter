@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-// import 'package:image_picker/image_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:image_cropper/image_cropper.dart';
 
@@ -19,10 +19,9 @@ class _AvatarViewState extends State<AvatarView> {
   File imageFile;
 
   Future getImage(BuildContext ctx, store, {bool camera}) async {
-    // final rawFile = await ImagePicker.pickImage(
-    //   source: camera ? ImageSource.camera : ImageSource.gallery,
-    // );
-    final rawFile = null;
+    final rawFile = await ImagePicker.pickImage(
+      source: camera ? ImageSource.camera : ImageSource.gallery,
+    );
     if (rawFile == null) return;
     final cropFile = await ImageCropper.cropImage(
       toolbarColor: Colors.black,

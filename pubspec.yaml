@@ -21,55 +21,64 @@ dependencies:
   cupertino_icons: 0.1.2
   outline_material_icons: 0.1.0
 
+  # flutter/plugins
+  path_provider: 0.5.0+1
+  shared_preferences: 0.5.1+2
+  url_launcher: 5.0.2
+  package_info: 0.4.0+2
+  device_info: 0.4.0+1
+  connectivity: 0.4.2
+  video_player: 0.10.0+4
+
+  # redux
   redux: 3.0.0
   flutter_redux: 0.5.3
   redux_persist: 0.8.2
 
-  path_provider: 0.5.0+1
-  open_file: 2.0.1+1
-  shared_preferences: 0.5.1+2
-
-  synchronized: 2.1.0
-  uuid: 2.0.0-rc1
-  url_launcher: 5.0.2
-
-  async: 2.0.8
-  crypto: 2.0.6
-
-  package_info: 0.4.0+2
-  device_info: 0.4.0+1
-
-  fluwx: 0.6.1
-  
+  # image
   image_picker: 0.5.0+9
   image_cropper: 1.0.0
   photo_manager: 0.3.3
 
-  connectivity: 0.4.2
+  # video
+  chewie: 0.9.6
+
+  # wechat
+  fluwx: 0.6.1
+
+  # handle file
+  open_file: 2.0.1+1
+  share_extend: 1.0.8
+
+  # async utility
+  async: 2.0.8
+  synchronized: 2.1.0
+
+  # create uuid
+  uuid: 2.0.0-rc1
+
+  # calc sha256
+  crypto: 2.0.6
+
+  # wifi ssid
   wifi: 0.1.5
 
-  chewie: 0.9.6
-  video_player: 0.10.0+4
- 
+  # custom modified packages
+  #
   # dio: 1.0.13
   # fix bug in PUT List<int> method, close fd, fix bug of 'open too many files'
   dio:
     git: https://github.com/juncaixinchi/dio.git
-
-  # share_extend: 1.0.3
-  # to fix conflict with open_file
-  # share_extend:
-  #   git: https://github.com/juncaixinchi/ShareExtend.git
 
   # draggable_scrollbar: 0.0.4
   # to use draggable-scrollbar with sliver list
   draggable_scrollbar:
     git: https://github.com/juncaixinchi/flutter-draggable-scrollbar.git
 
-  flutter_blue: 0.5.0
+  # flutter_blue: 0.5.0
   # fix BLE connection bug
-  # flutter_blue:
-  #   git: https://github.com/juncaixinchi/flutter_blue.git
+  flutter_blue:
+    git: https://github.com/juncaixinchi/flutter_blue.git
 
 dev_dependencies:
   flutter_test:
