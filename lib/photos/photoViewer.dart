@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
@@ -40,67 +41,125 @@ class _PhotoViewerState extends State<PhotoViewer> {
     });
   }
 
+  bool showTitle = true;
+  void toggleTitle({bool show}) {
+    if (show != null) {
+      setState(() {
+        showTitle = show;
+      });
+    } else {
+      setState(() {
+        showTitle = !showTitle;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     print('currentItem ${currentItem.uuid}');
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: Text(
-          currentItem.name,
-          style: TextStyle(
-            color: Color.fromARGB((opacity * 255 * 0.87).round(), 0, 0, 0),
-            fontWeight: FontWeight.normal,
+      body: Stack(
+        children: <Widget>[
+          Positioned.fill(
+            child: PageView.builder(
+              controller:
+                  PageController(initialPage: widget.list.indexOf(currentItem)),
+              itemBuilder: (context, position) {
+                final photo = widget.list[position];
+                // final bool isVideo =
+                //     videoTypes.split('.').contains(photo.metadata.type);
+
+                final bool isVideo = true;
+                final view = GridPhoto(
+                  updateOpacity: updateOpacity,
+                  photo: photo,
+                  thumbData: photo == widget.photo ? widget.thumbData : null,
+                  toggleTitle: toggleTitle,
+                  showTitle: showTitle,
+                );
+                return Container(
+                  child: isVideo
+                      ? view
+                      : Hero(
+                          tag: photo.uuid,
+                          child: view,
+                        ),
+                );
+              },
+              itemCount: widget.list.length,
+              onPageChanged: (int index) {
+                print('current index $index');
+                if (mounted) {
+                  setState(() {
+                    currentItem = widget.list[index];
+                  });
+                }
+              },
+            ),
           ),
-        ),
-        elevation: 0.0,
-        brightness: Brightness.light,
-        bottomOpacity: opacity,
-        toolbarOpacity: opacity,
-        backgroundColor: Color.fromARGB((opacity * 255).round(), 255, 255, 255),
-        iconTheme: IconThemeData(color: Colors.black38),
-      ),
-      body: PageView.builder(
-        controller:
-            PageController(initialPage: widget.list.indexOf(currentItem)),
-        itemBuilder: (context, position) {
-          final photo = widget.list[position];
-          final bool isVideo =
-              videoTypes.split('.').contains(photo.metadata.type);
-          final view = GridPhoto(
-            updateOpacity: updateOpacity,
-            photo: photo,
-            thumbData: photo == widget.photo ? widget.thumbData : null,
-          );
-          return Container(
-            child: isVideo
-                ? view
-                : Hero(
-                    tag: photo.uuid,
-                    child: view,
-                  ),
-          );
-        },
-        itemCount: widget.list.length,
-        onPageChanged: (int index) {
-          print('current index $index');
-          if (mounted) {
-            setState(() {
-              currentItem = widget.list[index];
-            });
-          }
-        },
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 80,
+            child: showTitle
+                ? Material(
+                    color: Color.fromARGB(240, 255, 255, 255),
+                    elevation: 2.0,
+                    child: SafeArea(
+                      child: Container(
+                          height: 80,
+                          color: Colors.transparent,
+                          child: Row(
+                            children: <Widget>[
+                              Container(width: 4),
+                              IconButton(
+                                icon: Icon(
+                                  Platform.isIOS
+                                      ? Icons.chevron_left
+                                      : Icons.arrow_back,
+                                ),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                              ),
+                              Container(width: 16),
+                              Text(
+                                currentItem.name,
+                                style: TextStyle(
+                                  color: Color.fromARGB(
+                                      (opacity * 255 * 0.87).round(), 0, 0, 0),
+                                  fontWeight: FontWeight.normal,
+                                  fontSize: 21,
+                                ),
+                              ),
+                            ],
+                          )),
+                    ),
+                  )
+                : Container(),
+          ),
+        ],
       ),
     );
   }
 }
 
 class GridPhoto extends StatefulWidget {
-  const GridPhoto({Key key, this.photo, this.thumbData, this.updateOpacity})
-      : super(key: key);
+  const GridPhoto({
+    Key key,
+    this.photo,
+    this.thumbData,
+    this.updateOpacity,
+    this.toggleTitle,
+    this.showTitle,
+  }) : super(key: key);
   final Uint8List thumbData;
   final Entry photo;
   final Function updateOpacity;
+  final Function toggleTitle;
+  final bool showTitle;
 
   @override
   _GridPhotoState createState() => _GridPhotoState();
@@ -163,6 +222,12 @@ class _GridPhotoState extends State<GridPhoto>
     print('_handleOnScaleStart');
     opacity = 1;
     prevPosition = details.focalPoint;
+
+    // toggle title
+    canceled = true;
+    widget.toggleTitle(show: false);
+
+    // update opacity
     updateOpacity();
     setState(() {
       _previousScale = _scale;
@@ -175,6 +240,7 @@ class _GridPhotoState extends State<GridPhoto>
   void _handleOnScaleUpdate(ScaleUpdateDetails details) {
     print('_handleOnScaleUpdate ${details.scale}');
     if (_scale == 1.0 && details.scale == 1.0) {
+      /// rate of downScale to close viewer
       final rate = 255;
 
       Offset delta = details.focalPoint - prevPosition;
@@ -198,7 +264,7 @@ class _GridPhotoState extends State<GridPhoto>
   }
 
   void _handleOnScaleEnd(ScaleEndDetails details) {
-    if (opacity <= 0.5) {
+    if (opacity <= 0.8) {
       Navigator.pop(context);
       return;
     }
@@ -298,13 +364,21 @@ class _GridPhotoState extends State<GridPhoto>
   /// scale rate when double tap
   final scaleRate = 2.0;
 
-  handleTapUp(TapUpDetails event) {
+  /// whether background Color is red
+  bool showBlack = false;
+
+  /// handle double tap
+  bool canceled = false;
+  void handleTapUp(TapUpDetails event) {
     final tapTime = DateTime.now().millisecondsSinceEpoch;
     if (tapTime - lastTapTime < timeDelay) {
+      canceled = true;
+      widget.toggleTitle(show: false);
       double scaleEnd;
       Offset offsetEnd;
       if (_scale == 1.0) {
-        scaleEnd = 4.0;
+        scaleEnd = 2.0;
+        // offsetEnd = event.globalPosition * scaleEnd / -2;
         offsetEnd = event.globalPosition * scaleEnd / -2;
       } else {
         scaleEnd = 1.0;
@@ -320,6 +394,10 @@ class _GridPhotoState extends State<GridPhoto>
       _controller
         ..value = 0.0
         ..fling(velocity: 1.0);
+    } else {
+      canceled = false;
+      Future.delayed(Duration(milliseconds: timeDelay))
+          .then((v) => canceled ? null : widget.toggleTitle());
     }
     lastTapTime = tapTime;
   }
@@ -332,7 +410,9 @@ class _GridPhotoState extends State<GridPhoto>
       converter: (store) => store.state,
       builder: (context, state) {
         return Container(
-            color: Color.fromARGB((opacity * 255).round(), 255, 255, 255),
+            color: widget.showTitle
+                ? Color.fromARGB((opacity * 255).round(), 255, 255, 255)
+                : Color.fromARGB((opacity * 255).round(), 0, 0, 0),
             child: Stack(
               children: <Widget>[
                 Positioned.fill(
