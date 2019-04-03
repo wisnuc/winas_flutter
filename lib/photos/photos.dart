@@ -56,10 +56,22 @@ class _PhotosState extends State<Photos> {
       return;
     }
 
+    int time = DateTime.now().millisecondsSinceEpoch;
     List<String> driveUUIDs = List.from(state.drives.map((d) => d.uuid));
     String places = driveUUIDs.join('.');
-
+    List<AssetEntity> localAssetList;
     try {
+      // req local photos
+      try {
+        List<AssetPathEntity> pathList = await PhotoManager.getAssetPathList();
+        localAssetList = await pathList[0].assetList;
+        localAssetList = List.from(localAssetList);
+      } catch (e) {
+        print(e);
+        localAssetList = [];
+      }
+
+      print('get local photo: ${DateTime.now().millisecondsSinceEpoch - time}');
       // all photos and videos
       final res = await state.apis.req('search', {
         'places': places,
@@ -67,10 +79,7 @@ class _PhotosState extends State<Photos> {
         'order': 'newest',
       });
 
-      List<AssetPathEntity> pathList = await PhotoManager.getAssetPathList();
-      List<AssetEntity> localAssetList = await pathList[0].assetList;
-      localAssetList = List.from(localAssetList.reversed);
-
+      print('get nas photo: ${DateTime.now().millisecondsSinceEpoch - time}');
       final List<Entry> allMedia = List.from(
         res.data.map((d) => Entry.fromSearch(d, state.drives)).where(
             (d) => d?.metadata?.height != null && d?.metadata?.width != null),
@@ -78,6 +87,7 @@ class _PhotosState extends State<Photos> {
 
       // sort allMedia
       allMedia.sort((a, b) => b.hdate.compareTo(a.hdate));
+      print('sort photo: ${DateTime.now().millisecondsSinceEpoch - time}');
       final allMediaAlbum = Album(allMedia, '所有照片', places);
 
       final videoArray = videoTypes.split('.');
@@ -119,7 +129,7 @@ class _PhotosState extends State<Photos> {
           getLocalCover(album).catchError(print);
         }
       }
-
+      print('get album: ${DateTime.now().millisecondsSinceEpoch - time}');
       // cache data
       userUUID = state.localUser.uuid;
       if (this.mounted) {
@@ -253,6 +263,9 @@ class _PhotosState extends State<Photos> {
             iconTheme: IconThemeData(color: Colors.black38),
             title: Text('相簿', style: TextStyle(color: Colors.black87)),
             actions: <Widget>[
+              Center(
+                child: Text('本机照片备份', style: TextStyle(color: Colors.black87)),
+              ),
               Switch(
                 activeColor: Colors.teal,
                 value: state.config.autoBackup == true,
