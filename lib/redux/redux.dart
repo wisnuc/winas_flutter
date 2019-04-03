@@ -287,6 +287,7 @@ class Entry {
   String pdir;
   String pdrv;
   String location;
+  bool archived = false;
 
   /// photo token date
   String hdate;
@@ -307,6 +308,7 @@ class Entry {
     this.location = m['location'];
     this.pdir = m['pdir'];
     this.pdrv = m['pdrv'];
+    this.archived = m['archived'] ?? false;
     this.metadata = (m['metadata'] == 'null' || m['metadata'] == null)
         ? null
         : Metadata.fromMap(m['metadata'] is String
@@ -329,6 +331,7 @@ class Entry {
       'location': location,
       'namepath': namepath,
       'metadata': metadata,
+      'archived': archived,
     };
     return jsonEncode(m);
   }
@@ -352,7 +355,7 @@ class Entry {
     Drive drive = d[m['place']];
     this.pdrv = drive.uuid;
     this.location = drive.tag ?? drive.type;
-
+    this.archived = m['archived'] ?? false;
     this.hdate = this.metadata?.hdate ?? prettyDate(this.mtime, showDay: true);
   }
 
@@ -366,6 +369,7 @@ class Entry {
     this.hash = m['hash'];
     this.hsize = prettySize(this.size);
     this.hmtime = prettyDate(this.mtime);
+    this.archived = m['archived'] ?? false;
     this.metadata =
         m['metadata'] == null ? null : Metadata.fromMap(m['metadata']);
     this.pdir = n.dirUUID;
@@ -552,17 +556,25 @@ class EntrySort {
 
 class Config {
   bool gridView = false;
-  bool autoBackup;
+  bool showArchive = false;
+  bool autoBackup = false;
 
-  Config({this.gridView = false, this.autoBackup});
+  Config({
+    this.gridView = false,
+    this.showArchive = false,
+    this.autoBackup = false,
+  });
+
   Config.combine(Config oldConfig, Config newConfig) {
     this.gridView = newConfig.gridView ?? oldConfig.gridView;
     this.autoBackup = newConfig.autoBackup ?? oldConfig.autoBackup;
+    this.showArchive = newConfig.showArchive ?? oldConfig.showArchive;
   }
 
   Config.fromMap(Map m) {
-    this.gridView = m['gridView'];
-    this.autoBackup = m['autoBackup'];
+    this.gridView = m['gridView'] == true;
+    this.autoBackup = m['autoBackup'] == true;
+    this.showArchive = m['showArchive'] == true;
   }
 
   @override
@@ -570,6 +582,7 @@ class Config {
     Map<String, dynamic> m = {
       'gridView': gridView,
       'autoBackup': autoBackup,
+      'showArchive': showArchive,
     };
     return jsonEncode(m);
   }

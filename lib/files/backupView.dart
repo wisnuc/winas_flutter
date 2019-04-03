@@ -80,7 +80,8 @@ class _BackupViewState extends State<BackupView> {
         return Scaffold(
           appBar: AppBar(
             elevation: 0.0, // no shadow
-            backgroundColor: Colors.white10,
+            brightness: Brightness.light,
+            backgroundColor: Colors.white,
             iconTheme: IconThemeData(color: Colors.black38),
             title: Text('备份空间', style: TextStyle(color: Colors.black87)),
           ),

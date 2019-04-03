@@ -107,12 +107,20 @@ class _SearchState extends State<Search> {
         'order': 'newest',
       });
     }
+
     try {
       var res = await state.apis.req('search', args);
-      assert(res != null && res.data != null);
+      assert(res != null && res.data is List);
       print('search results\' length: ${res.data.length}');
-      _entries =
-          List.from(res.data.map((d) => Entry.fromSearch(d, state.drives)));
+      final list = res.data;
+
+      // filter archived files
+      if (list is List) {
+        _entries = list
+            .map((d) => Entry.fromSearch(d, state.drives))
+            .where((entry) => entry.archived != true);
+      } else
+        throw 'result is not List';
     } catch (error) {
       print(error);
     } finally {

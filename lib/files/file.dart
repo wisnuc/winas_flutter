@@ -173,6 +173,12 @@ class _FilesState extends State<Files> {
     List<DirPath> rawPath =
         List.from(listNav.data['path'].map((path) => DirPath.fromMap(path)));
 
+    // hidden archived entries
+    if (state.config.showArchive != true) {
+      rawEntries =
+          List.from(rawEntries.where((entry) => entry.archived != true));
+    }
+
     parseEntries(rawEntries, rawPath);
 
     // handle intent
@@ -442,9 +448,37 @@ class _FilesState extends State<Files> {
 
   List<Widget> appBarAction(AppState state) {
     return [
-      // Button to add new Folder
       node.location == 'backup'
-          ? Container()
+          // Button to toggle archive view in backup
+          ? StoreConnector<AppState, VoidCallback>(
+              converter: (store) {
+                return () {
+                  bool showArchive = !store.state.config.showArchive;
+                  store.dispatch(UpdateConfigAction(
+                    Config.combine(
+                      store.state.config,
+                      Config(showArchive: showArchive),
+                    ),
+                  ));
+                  setState(() {
+                    loading = true;
+                  });
+                  refresh(store.state);
+                };
+              },
+              builder: (context, callback) {
+                return IconButton(
+                  icon: Icon(
+                    state.config.showArchive
+                        ? Icons.visibility_off
+                        : Icons.visibility,
+                  ),
+                  tooltip: state.config.showArchive ? '隐藏归档的文件' : '显示归档的文件',
+                  onPressed: callback,
+                );
+              },
+            )
+          // Button to add new Folder
           : IconButton(
               icon: Icon(Icons.create_new_folder),
               onPressed: () => showDialog(
@@ -467,6 +501,7 @@ class _FilesState extends State<Files> {
           return IconButton(
             icon: Icon(
                 state.config.gridView ? Icons.view_list : Icons.view_module),
+            tooltip: state.config.gridView ? '列表显示' : '网格显示',
             onPressed: callback,
           );
         },
