@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:open_file/open_file.dart';
 import 'package:share_extend/share_extend.dart';
@@ -10,6 +11,7 @@ import './search.dart';
 import './fileRow.dart';
 import './newFolder.dart';
 import './xcopyDialog.dart';
+import './tokenExpired.dart';
 import '../redux/redux.dart';
 import '../common/cache.dart';
 import '../common/utils.dart';
@@ -132,28 +134,35 @@ class _FilesState extends State<Files> {
         location: 'built-in',
       );
     }
+    // restart monitorStart
+    if (state.apis.sub == null) {
+      state.apis.monitorStart();
+    }
+
+    // test network
+    if (state.apis.isCloud == null || isRetry) {
+      await state.apis.testLAN();
+    }
 
     // request listNav
     var listNav;
     try {
-      // restart monitorStart
-      if (state.apis.sub == null) {
-        state.apis.monitorStart();
-      }
-
-      // test network
-      if (state.apis.isCloud == null || isRetry) {
-        await state.apis.testLAN();
-      }
       listNav = await state.apis
           .req('listNavDir', {'driveUUID': driveUUID, 'dirUUID': dirUUID});
       _error = null;
     } catch (error) {
       print(error);
-      setState(() {
-        loading = false;
-        _error = error;
-      });
+      if (error is DioError && error?.response?.statusCode == 401) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) => TokenExpired(),
+        );
+      } else {
+        setState(() {
+          loading = false;
+          _error = error;
+        });
+      }
       return;
     }
 
