@@ -15,7 +15,7 @@ class StationList extends StatefulWidget {
       {Key key,
       this.stationList,
       this.request,
-      this.switchDevice,
+      this.currentDevSN,
       this.afterLogout})
       : super(key: key);
 
@@ -23,8 +23,8 @@ class StationList extends StatefulWidget {
   final List<Station> stationList;
   final Request request;
 
-  /// in switch device page
-  final bool switchDevice;
+  /// current device's SN, in switch device page
+  final String currentDevSN;
 
   /// after logout device page
   final bool afterLogout;
@@ -35,11 +35,18 @@ class StationList extends StatefulWidget {
 
 class _StationListState extends State<StationList> {
   ScrollController myScrollController = ScrollController();
-  int selected = -1;
+
+  /// index of device selected
+  ///
+  /// if (-1) no device selected
+  ///
+  /// if (-2) no device selected, except current logged device
+  int selected = -2;
   List<Station> stationList;
   bool loading = false;
 
   String stationStatus(Station s) {
+    if (s.sn != null && widget.currentDevSN == s.sn) return '当前设备';
     if (!s.isOnline) {
       return '设备离线';
     } else {
@@ -79,7 +86,7 @@ class _StationListState extends State<StationList> {
   void initState() {
     super.initState();
     stationList = widget.stationList;
-    if (widget.switchDevice == true ||
+    if (widget.currentDevSN != null ||
         stationList == null ||
         widget.afterLogout == true) {
       loading = true;
@@ -213,7 +220,7 @@ class _StationListState extends State<StationList> {
         child: Container(
           padding: EdgeInsets.all(16),
           child: Text(
-            widget.switchDevice == true
+            widget.currentDevSN != null
                 ? '请选择要切换的设备'
                 : widget.afterLogout == true
                     ? '请选择要登录的设备'
@@ -230,11 +237,15 @@ class _StationListState extends State<StationList> {
         delegate: SliverChildBuilderDelegate(
           (context, index) {
             Station station = list[index];
-            bool isSelected = selected == index;
+            bool isCurrent =
+                station.sn != null && widget.currentDevSN == station.sn;
+            bool selectAble = station.isOnline && !isCurrent;
+            bool isSelected =
+                selected == index || (isCurrent && selected == -2);
             bool isLast = index == list.length - 1;
             return Material(
               child: InkWell(
-                onTap: station.isOnline
+                onTap: selectAble
                     ? () {
                         setState(() {
                           selected = isSelected ? -1 : index;
@@ -242,7 +253,7 @@ class _StationListState extends State<StationList> {
                       }
                     : null,
                 child: Opacity(
-                  opacity: station.isOnline ? 1 : 0.5,
+                  opacity: selectAble ? 1 : 0.5,
                   child: Container(
                     padding: EdgeInsets.only(
                       left: 16,
@@ -263,7 +274,9 @@ class _StationListState extends State<StationList> {
                                 ? Icons.radio_button_checked
                                 : Icons.radio_button_unchecked,
                             size: 32,
-                            color: isSelected ? pColor : Colors.black38,
+                            color: isSelected && selectAble
+                                ? pColor
+                                : Colors.black38,
                           ),
                           Container(width: 32),
                           Text(
@@ -274,9 +287,8 @@ class _StationListState extends State<StationList> {
                           Text(
                             stationStatus(station),
                             style: TextStyle(
-                                color: station.isOnline
-                                    ? Colors.teal
-                                    : Colors.black38,
+                                color:
+                                    selectAble ? Colors.teal : Colors.black38,
                                 fontSize: 16),
                           ),
                         ],
@@ -304,9 +316,8 @@ class _StationListState extends State<StationList> {
                   elevation: 1.0,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(48)),
-                  onPressed: selected == -1
-                      ? null
-                      : () => callback(ctx, list[selected]),
+                  onPressed:
+                      selected < 0 ? null : () => callback(ctx, list[selected]),
                   child: Text(
                     '登录设备',
                     style: TextStyle(color: Colors.white, fontSize: 16),
@@ -344,8 +355,8 @@ class _StationListState extends State<StationList> {
             backgroundColor: Colors.grey[50],
             titleSpacing: 0,
             iconTheme: IconThemeData(color: Colors.black38),
-            automaticallyImplyLeading: widget.switchDevice == true,
-            title: widget.switchDevice == true
+            automaticallyImplyLeading: widget.currentDevSN != null,
+            title: widget.currentDevSN != null
                 ? null
                 : Material(
                     child: InkWell(
@@ -363,7 +374,7 @@ class _StationListState extends State<StationList> {
                     ),
                   ),
             centerTitle: false,
-            actions: widget.switchDevice != true &&
+            actions: widget.currentDevSN == null &&
                     stationList != null &&
                     stationList.length > 0
                 ? <Widget>[

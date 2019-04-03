@@ -247,7 +247,7 @@ class _MyStationState extends State<MyStation> {
                       return StationList(
                         request: state.cloud,
                         stationList: null,
-                        switchDevice: true,
+                        currentDevSN: state.device.deviceSN,
                       );
                     },
                   ),
