@@ -202,6 +202,56 @@ class CacheManager {
     }
   }
 
+  /// get photo data
+  Future _getPhoto(Entry entry, AppState state) async {
+    String entryPath;
+    Uint8List imageData;
+    try {
+      entryPath = await getPhotoPath(entry, state);
+      if (entryPath == null) throw 'get entryPath failed';
+    } catch (e) {
+      print(e);
+      return null;
+    }
+
+    File entryFile = File(entryPath);
+    try {
+      imageData = await entryFile.readAsBytes();
+    } catch (e) {
+      print(e);
+      return null;
+    }
+    return imageData;
+  }
+
+  /// get photo path
+  Future<String> getPhotoPath(Entry entry, AppState state) async {
+    String entryPath = _imageDir() + entry.hash;
+    String transPath = _transDir() + '/' + Uuid().v4();
+    File entryFile = File(entryPath);
+
+    FileStat res = await entryFile.stat();
+
+    // file already downloaded
+    if (res.type != FileSystemEntityType.notFound) {
+      return entryPath;
+    }
+
+    final ep = 'media/${entry.hash}';
+    final qs = {'alt': 'data'};
+    try {
+      // download
+      await state.apis.download(ep, qs, transPath);
+
+      // rename
+      await File(transPath).rename(entryPath);
+    } catch (error) {
+      print(error);
+      return null;
+    }
+    return entryPath;
+  }
+
   /// get random key, use AsyncMemoizer to memoizer result
   Future getRandomKey(Entry entry, AppState state) {
     final name = 'randomKey+${entry.hash}';
@@ -227,45 +277,5 @@ class CacheManager {
     }
 
     return key;
-  }
-
-  Future<Uint8List> _getPhoto(Entry entry, AppState state) async {
-    String entryPath = _imageDir() + entry.hash;
-    String transPath = _transDir() + '/' + Uuid().v4();
-    File entryFile = File(entryPath);
-
-    FileStat res = await entryFile.stat();
-
-    Uint8List imageData;
-
-    // file already downloaded
-    if (res.type != FileSystemEntityType.notFound) {
-      try {
-        imageData = await entryFile.readAsBytes();
-      } catch (error) {
-        print(error);
-        return null;
-      }
-      return imageData;
-    }
-
-    final ep = 'media/${entry.hash}';
-    final qs = {
-      'alt': 'data',
-    };
-    try {
-      // download
-      await state.apis.download(ep, qs, transPath);
-
-      // rename
-      await File(transPath).rename(entryPath);
-
-      // read data
-      imageData = await entryFile.readAsBytes();
-    } catch (error) {
-      print(error);
-      return null;
-    }
-    return imageData;
   }
 }

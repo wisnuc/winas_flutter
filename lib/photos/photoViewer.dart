@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:share_extend/share_extend.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import '../redux/redux.dart';
 import '../common/cache.dart';
@@ -120,9 +121,20 @@ class _PhotoViewerState extends State<PhotoViewer> {
                             ),
                             Container(width: 16),
                             Expanded(flex: 1, child: Container()),
-                            IconButton(
-                              icon: Icon(Icons.share),
-                              onPressed: () {},
+                            StoreConnector<AppState, AppState>(
+                              converter: (store) => store.state,
+                              builder: (context, state) {
+                                return IconButton(
+                                  icon: Icon(Icons.share),
+                                  onPressed: () async {
+                                    final cm = await CacheManager.getInstance();
+                                    final entryPath = await cm.getPhotoPath(
+                                        currentItem, state);
+                                    print('entryPath $entryPath');
+                                    ShareExtend.share(entryPath, "file");
+                                  },
+                                );
+                              },
                             ),
                             IconButton(
                               icon: Icon(Icons.file_download),
@@ -279,6 +291,62 @@ class _GridPhotoState extends State<GridPhoto>
       // fling after move
       if (magnitude < _kMinFlingVelocity) return;
       final Offset direction = details.velocity.pixelsPerSecond / magnitude;
+      final double distance = (Offset.zero & context.size).shortestSide;
+      _flingAnimation = _controller.drive(Tween<Offset>(
+          begin: _offset, end: _clampOffset(_offset + direction * distance)));
+    }
+    opacity = 1.0;
+    updateOpacity();
+
+    _controller
+      ..value = 0.0
+      ..fling(velocity: magnitude / 1000.0);
+  }
+
+  void handleHDragStart(DragStartDetails detail) {
+    print('_handleOnScaleStart');
+    opacity = 1;
+    prevPosition = detail.globalPosition;
+
+    // toggle title
+    canceled = true;
+    widget.toggleTitle(show: false);
+
+    // update opacity
+    updateOpacity();
+    setState(() {
+      _previousScale = _scale;
+      _normalizedOffset = (prevPosition - _offset) / _scale;
+      // The fling animation stops if an input gesture starts.
+      _controller.stop();
+    });
+  }
+
+  void handleHDragUpdate(DragUpdateDetails details) {
+    setState(() {
+      // Ensure that image location under the focal point stays in the same place despite scaling.
+      _offset =
+          _clampOffset(details.globalPosition - _normalizedOffset * _scale);
+    });
+  }
+
+  void handleHDragEnd(DragEndDetails detail) {
+    if (opacity <= 0.8) {
+      Navigator.pop(context);
+      return;
+    }
+    _scaleAnimation =
+        _controller.drive(Tween<double>(begin: _scale, end: _scale));
+    final double magnitude = detail.velocity.pixelsPerSecond.distance;
+
+    if (_scale == 1.0) {
+      // return to center
+      _flingAnimation =
+          _controller.drive(Tween<Offset>(begin: _offset, end: Offset(0, 0)));
+    } else {
+      // fling after move
+      if (magnitude < _kMinFlingVelocity) return;
+      final Offset direction = detail.velocity.pixelsPerSecond / magnitude;
       final double distance = (Offset.zero & context.size).shortestSide;
       _flingAnimation = _controller.drive(Tween<Offset>(
           begin: _offset, end: _clampOffset(_offset + direction * distance)));
@@ -450,6 +518,12 @@ class _GridPhotoState extends State<GridPhoto>
                               onScaleStart: _handleOnScaleStart,
                               onScaleUpdate: _handleOnScaleUpdate,
                               onScaleEnd: _handleOnScaleEnd,
+                              onHorizontalDragUpdate:
+                                  _scale == 1.0 ? null : handleHDragUpdate,
+                              onHorizontalDragStart:
+                                  _scale == 1.0 ? null : handleHDragStart,
+                              onHorizontalDragEnd:
+                                  _scale == 1.0 ? null : handleHDragEnd,
                               onTapUp: handleTapUp,
                               child: ClipRect(
                                 child: Transform(
