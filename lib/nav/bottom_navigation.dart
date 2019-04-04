@@ -143,8 +143,8 @@ class _BottomNavigationState extends State<BottomNavigation>
         color: Colors.indigo,
       ),
       NavigationIconView(
-        activeIcon: const Icon(Icons.router),
-        icon: const Icon(OMIcons.router),
+        activeIcon: Icon(Icons.router),
+        icon: Icon(OMIcons.router),
         title: '设备',
         nav: 'device',
         view: () => MyStation(),

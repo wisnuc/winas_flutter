@@ -116,7 +116,7 @@ class _DevicePhotosState extends State<DevicePhotos> {
       if (line is String) {
         acc += headerHeight;
         mapHeight.add([acc, line]);
-      } else if (line is List<Entry>) {
+      } else if (line is List) {
         final int count = (line.length / lineCount).ceil();
         // (count -1) * spacings + cellSize * count
         acc += (count - 1) * spacing + cellSize / lineCount * count;

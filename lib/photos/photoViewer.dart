@@ -1,10 +1,8 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter_redux/flutter_redux.dart';
-
 import '../redux/redux.dart';
 import '../common/cache.dart';
 
@@ -109,33 +107,34 @@ class _PhotoViewerState extends State<PhotoViewer> {
                     elevation: 2.0,
                     child: SafeArea(
                       child: Container(
-                          height: 80,
-                          color: Colors.transparent,
-                          child: Row(
-                            children: <Widget>[
-                              Container(width: 4),
-                              IconButton(
-                                icon: Icon(
-                                  Platform.isIOS
-                                      ? Icons.chevron_left
-                                      : Icons.arrow_back,
-                                ),
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                              ),
-                              Container(width: 16),
-                              Text(
-                                currentItem.name,
-                                style: TextStyle(
-                                  color: Color.fromARGB(
-                                      (opacity * 255 * 0.87).round(), 0, 0, 0),
-                                  fontWeight: FontWeight.normal,
-                                  fontSize: 21,
-                                ),
-                              ),
-                            ],
-                          )),
+                        height: 80,
+                        color: Colors.transparent,
+                        child: Row(
+                          children: <Widget>[
+                            Container(width: 4),
+                            IconButton(
+                              icon: Icon(Icons.close),
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                            ),
+                            Container(width: 16),
+                            Expanded(flex: 1, child: Container()),
+                            IconButton(
+                              icon: Icon(Icons.share),
+                              onPressed: () {},
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.file_download),
+                              onPressed: () {},
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.delete),
+                              onPressed: () {},
+                            )
+                          ],
+                        ),
+                      ),
                     ),
                   )
                 : Container(),
@@ -338,7 +337,7 @@ class _GridPhotoState extends State<GridPhoto>
         videoPlayerController: videoPlayerController,
         aspectRatio: aspectRatio,
         autoPlay: true,
-        looping: true,
+        looping: false,
       );
 
       playerWidget = Chewie(
@@ -424,7 +423,6 @@ class _GridPhotoState extends State<GridPhoto>
                               onScaleStart: _handleOnScaleStart,
                               onScaleUpdate: _handleOnScaleUpdate,
                               onScaleEnd: _handleOnScaleEnd,
-                              // onDoubleTap: _handleonDoubleTap,
                               onTapUp: handleTapUp,
                               child: ClipRect(
                                 child: Transform(
@@ -444,12 +442,14 @@ class _GridPhotoState extends State<GridPhoto>
                   child: thumbData == null && imageData == null
                       ? Center(child: CircularProgressIndicator())
                       : playerWidget != null
-                          ? playerWidget
+                          ? GestureDetector(
+                              onTapUp: handleTapUp,
+                              child: playerWidget,
+                            )
                           : GestureDetector(
                               onScaleStart: _handleOnScaleStart,
                               onScaleUpdate: _handleOnScaleUpdate,
                               onScaleEnd: _handleOnScaleEnd,
-                              // onDoubleTap: _handleonDoubleTap,
                               onTapUp: handleTapUp,
                               child: ClipRect(
                                 child: Transform(
