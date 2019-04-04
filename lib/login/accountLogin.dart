@@ -42,7 +42,7 @@ class _LoginState extends State<Login> {
   String _phoneNumber = '18817301665';
   // String _phoneNumber = '15888524760';
 
-  String _password = '12345678';
+  String _password = '1234567890';
 
   String _error;
 
