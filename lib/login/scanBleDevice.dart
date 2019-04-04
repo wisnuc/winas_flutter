@@ -43,7 +43,7 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
     scanSubscription?.cancel();
     scanSubscription = flutterBlue.scan().listen((scanResult) {
       // if (scanResult.device.name.length == 0) return;
-      if (!scanResult.device.name.startsWith('Wisnuc')) return;
+      if (!scanResult.advertisementData.localName.startsWith('Wisnuc')) return;
       final id = scanResult.device.id;
       int index = results.indexWhere((res) => res.device.id == id);
       if (index > -1) return;
