@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:redux/redux.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:flutter_redux/flutter_redux.dart';
@@ -51,11 +52,25 @@ class _PhotosState extends State<Photos> {
     }
   }
 
-  Future refresh(AppState state, bool isManual) async {
+  /// request and update drive list,
+  Future<void> updateDrives(Store<AppState> store) async {
+    AppState state = store.state;
+    // get current drives data
+    final res = await state.apis.req('drives', null);
+    List<Drive> allDrives = List.from(
+      res.data.map((drive) => Drive.fromMap(drive)),
+    );
+
+    store.dispatch(
+      UpdateDrivesAction(allDrives),
+    );
+  }
+
+  Future refresh(Store<AppState> store, bool isManual) async {
+    AppState state = store.state;
     if (!isManual && state.localUser.uuid == userUUID && albumList.length > 0) {
       return;
     }
-
     int time = DateTime.now().millisecondsSinceEpoch;
     List<String> driveUUIDs = List.from(state.drives.map((d) => d.uuid));
     String places = driveUUIDs.join('.');
@@ -72,6 +87,9 @@ class _PhotosState extends State<Photos> {
         localAssetList = [];
       }
       localAssetList.sort((a, b) => b.createTime - a.createTime);
+
+      await updateDrives(store);
+
       print('get local photo: ${DateTime.now().millisecondsSinceEpoch - time}');
       // all photos and videos
       final res = await state.apis.req('search', {
@@ -250,8 +268,8 @@ class _PhotosState extends State<Photos> {
 
   @override
   Widget build(BuildContext context) {
-    return StoreConnector<AppState, dynamic>(
-      onInit: (store) => refresh(store.state, false).catchError(print),
+    return StoreConnector<AppState, Store<AppState>>(
+      onInit: (store) => refresh(store, false).catchError(print),
       onDispose: (store) => {},
       converter: (store) => store,
       builder: (context, store) {
@@ -291,7 +309,7 @@ class _PhotosState extends State<Photos> {
                   child: CircularProgressIndicator(),
                 )
               : RefreshIndicator(
-                  onRefresh: () => refresh(state, true),
+                  onRefresh: () => refresh(store, true),
                   child: DraggableScrollbar.semicircle(
                     controller: myScrollController,
                     child: Container(

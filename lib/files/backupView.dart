@@ -1,3 +1,4 @@
+import 'package:redux/redux.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
@@ -72,7 +73,7 @@ class _BackupViewState extends State<BackupView> {
 
   @override
   Widget build(BuildContext context) {
-    return StoreConnector<AppState, dynamic>(
+    return StoreConnector<AppState, Store<AppState>>(
       onInit: (store) => refresh(store),
       onDispose: (store) => {},
       converter: (store) => store,

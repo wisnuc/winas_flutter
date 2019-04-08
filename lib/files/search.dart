@@ -93,6 +93,7 @@ class _SearchState extends State<Search> {
     var args = {
       'places': places,
       'order': 'find',
+      'fileOnly': 'true',
     };
 
     if (_searchText != null) {

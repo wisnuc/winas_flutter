@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:redux/redux.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:flutter_redux/flutter_redux.dart';
@@ -85,7 +86,8 @@ class _ConfigDeviceState extends State<ConfigDevice> {
   }
 
   /// try connect to device via ip
-  Future<void> connectDevice(String ip, String token, store) async {
+  Future<void> connectDevice(
+      String ip, String token, Store<AppState> store) async {
     final request = widget.request;
 
     try {
@@ -173,7 +175,7 @@ class _ConfigDeviceState extends State<ConfigDevice> {
         context, '/station', (Route<dynamic> route) => false);
   }
 
-  void nextStep(BuildContext ctx, store) async {
+  void nextStep(BuildContext ctx, Store<AppState> store) async {
     if (status == Status.auth) {
       print('code is $selected');
       // reset token
@@ -558,7 +560,7 @@ class _ConfigDeviceState extends State<ConfigDevice> {
           ? null
           : Builder(
               builder: (ctx) {
-                return StoreConnector<AppState, dynamic>(
+                return StoreConnector<AppState, Store<AppState>>(
                     onInit: (store) => {},
                     onDispose: (store) => {},
                     converter: (store) => store,

@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'package:redux/redux.dart';
 import 'package:flutter/material.dart';
+
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -18,7 +20,8 @@ class _AvatarViewState extends State<AvatarView> {
   String avatarUrl;
   File imageFile;
 
-  Future getImage(BuildContext ctx, store, {bool camera}) async {
+  Future getImage(BuildContext ctx, Store<AppState> store,
+      {bool camera}) async {
     final rawFile = await ImagePicker.pickImage(
       source: camera ? ImageSource.camera : ImageSource.gallery,
     );
@@ -71,7 +74,7 @@ class _AvatarViewState extends State<AvatarView> {
 
   @override
   Widget build(BuildContext context) {
-    return StoreConnector<AppState, dynamic>(
+    return StoreConnector<AppState, Store<AppState>>(
       onInit: (store) => {},
       onDispose: (store) => {},
       converter: (store) => store,
