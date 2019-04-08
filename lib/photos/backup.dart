@@ -261,7 +261,7 @@ class BackupWorker {
   }
 
   /// get Hash from hashViaIsolate or shared_preferences
-  /// use AssetEntity.id + mtime as the photo's identity
+  /// use AssetEntity.id + createTime/mtime as the photo's identity
   Future<String> getHash(String id, String filePath) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String hash = prefs.getString(id);
@@ -284,7 +284,7 @@ class BackupWorker {
     String name = filePath.split('/').last;
     String id = entity.id;
     final stat = await file.stat();
-    int mtime = stat.modified.millisecondsSinceEpoch;
+    int mtime = entity.createTime ?? stat.modified.millisecondsSinceEpoch;
     print(
         'before hash: $name, size: ${stat.size} ${DateTime.now().millisecondsSinceEpoch - time}');
 
@@ -302,7 +302,7 @@ class BackupWorker {
     }
     print(
         'before upload: $name, size: ${stat.size} ${DateTime.now().millisecondsSinceEpoch - time}');
-// update cancelIsolate
+    // update cancelIsolate
     cancelUpload = CancelIsolate();
     // upload photo
     await uploadViaIsolate(apis, targetDir, filePath, hash,

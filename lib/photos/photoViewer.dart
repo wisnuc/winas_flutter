@@ -201,6 +201,7 @@ class _GridPhotoState extends State<GridPhoto>
     _controller?.dispose();
     videoPlayerController?.pause();
     videoPlayerController?.dispose();
+    chewieController?.pause();
     chewieController?.dispose();
     super.dispose();
   }
@@ -385,13 +386,13 @@ class _GridPhotoState extends State<GridPhoto>
       if (key == null) return;
 
       final String url = 'http://${apis.lanIp}:3000/media/$key';
+      print('${widget.photo.name}');
       print('url: $url, $mounted');
 
       // keep singleton
       if (videoPlayerController != null) return;
 
       videoPlayerController = VideoPlayerController.network(url);
-
       double aspectRatio;
       final meta = widget.photo.metadata;
       if (meta.width != null && meta.height != null && meta.width != 0) {

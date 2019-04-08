@@ -116,9 +116,11 @@ class _SearchState extends State<Search> {
 
       // filter archived files
       if (list is List) {
-        _entries = list
-            .map((d) => Entry.fromSearch(d, state.drives))
-            .where((entry) => entry.archived != true);
+        _entries = List.from(
+          list
+              .map((d) => Entry.fromSearch(d, state.drives))
+              .where((entry) => entry.archived != true),
+        );
       } else
         throw 'result is not List';
     } catch (error) {

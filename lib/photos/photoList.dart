@@ -30,15 +30,17 @@ class _PhotoListState extends State<PhotoList> {
   /// calc photoMapDates and mapHeight from given album
   getList(Album album, BuildContext ctx) {
     final items = album.items;
-    if (items.length == 0) return [];
+    final width = MediaQuery.of(ctx).size.width;
+    final cellSize = width - spacing * lineCount + spacing;
+    if (items.length == 0) {
+      return {'photoMapDates': [], 'mapHeight': [], 'cellSize': cellSize};
+    }
 
     /// String headers '2019-03-06' or List of Entry, init with first item
     final List photoMapDates = [
       items[0].hdate,
       [items[0]],
     ];
-
-    final width = MediaQuery.of(ctx).size.width;
 
     items.forEach((entry) {
       final last = photoMapDates.last;
@@ -55,7 +57,7 @@ class _PhotoListState extends State<PhotoList> {
 
     final List mapHeight = [];
     double acc = 0;
-    final cellSize = width - spacing * lineCount + spacing;
+
     photoMapDates.forEach((line) {
       if (line is String) {
         acc += headerHeight;
