@@ -103,9 +103,10 @@ void isolateUpload(SendPort sendPort) {
     final entryJson = message[0] as String;
     final filePath = message[1] as String;
     final sha256Value = message[2] as String;
-    final apisJson = message[3] as String;
-    final isCloud = message[4] as bool;
-    final answerSend = message[5] as SendPort;
+    final mtime = message[3] as int;
+    final apisJson = message[4] as String;
+    final isCloud = message[5] as bool;
+    final answerSend = message[6] as SendPort;
 
     final dir = Entry.fromMap(jsonDecode(entryJson));
 
@@ -124,8 +125,8 @@ void isolateUpload(SendPort sendPort) {
       'op': 'newfile',
       'size': stat.size,
       'sha256': sha256Value,
-      'bctime': stat.modified.millisecondsSinceEpoch,
-      'bmtime': stat.modified.millisecondsSinceEpoch,
+      'bctime': mtime,
+      'bmtime': mtime,
       'policy': ['rename', 'rename'],
     };
 
@@ -169,7 +170,7 @@ Future<String> hashViaIsolate(String filePath,
 
 /// upload file in Isolate
 Future<void> uploadViaIsolate(
-    Apis apis, Entry targetDir, String filePath, String hash,
+    Apis apis, Entry targetDir, String filePath, String hash, int mtime,
     {CancelIsolate cancelIsolate}) async {
   final response = ReceivePort();
 
@@ -188,14 +189,16 @@ Future<void> uploadViaIsolate(
   // final entryJson = message[0] as String;
   // final filePath = message[1] as String;
   // final hash = message[2] as String;
-  // final apisJson = message[3] as String;
-  // final isCloud = message[4] as bool;
-  // final answerSend = message[5] as SendPort;
+  // final mtime = message[3] as int;
+  // final apisJson = message[4] as String;
+  // final isCloud = message[5] as bool;
+  // final answerSend = message[6] as SendPort;
 
   sendPort.send([
     targetDir.toString(),
     filePath,
     hash,
+    mtime,
     apis.toString(),
     apis.isCloud,
     answer.sendPort

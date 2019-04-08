@@ -277,6 +277,7 @@ class Metadata {
 class Entry {
   int size;
   int ctime;
+  int bctime;
   int mtime;
   String name;
   String uuid;
@@ -322,6 +323,7 @@ class Entry {
       'size': size,
       'ctime': ctime,
       'mtime': mtime,
+      'bctime': bctime,
       'name': name,
       'uuid': uuid,
       'type': type,
@@ -342,6 +344,7 @@ class Entry {
     this.size = m['size'] ?? 0;
     this.ctime = m['ctime'] ?? 0;
     this.mtime = m['mtime'] ?? 0;
+    this.bctime = m['bctime'];
     this.name = m['name'];
     this.uuid = m['uuid'];
     this.type = 'file';
@@ -356,7 +359,8 @@ class Entry {
     this.pdrv = drive.uuid;
     this.location = drive.tag ?? drive.type;
     this.archived = m['archived'] ?? false;
-    this.hdate = this.metadata?.hdate ?? prettyDate(this.mtime, showDay: true);
+    this.hdate = this.metadata?.hdate ??
+        prettyDate(this.bctime ?? this.mtime, showDay: true);
   }
 
   Entry.mixNode(Map m, Node n) {

@@ -305,7 +305,7 @@ class BackupWorker {
     // update cancelIsolate
     cancelUpload = CancelIsolate();
     // upload photo
-    await uploadViaIsolate(apis, targetDir, filePath, hash,
+    await uploadViaIsolate(apis, targetDir, filePath, hash, mtime,
         cancelIsolate: cancelUpload);
 
     print(
