@@ -77,6 +77,10 @@ class _PhotoListState extends State<PhotoList> {
     };
   }
 
+  void updateList() {
+    setState(() {});
+  }
+
   void showPhoto(BuildContext ctx, Entry entry, Uint8List thumbData) {
     Navigator.push(
       ctx,
@@ -86,6 +90,7 @@ class _PhotoListState extends State<PhotoList> {
             photo: entry,
             list: widget.album.items,
             thumbData: thumbData,
+            updateList: updateList,
           );
         },
       ),
@@ -114,6 +119,7 @@ class _PhotoListState extends State<PhotoList> {
       converter: (store) => store.state,
       builder: (ctx, state) {
         return Scaffold(
+          key: Key(widget.album.length.toString()),
           appBar: AppBar(
             title: Text(
               widget.album.name,

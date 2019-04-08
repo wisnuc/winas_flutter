@@ -105,7 +105,10 @@ class _PhotosState extends State<Photos> {
       );
 
       // sort allMedia
-      allMedia.sort((a, b) => b.hdate.compareTo(a.hdate));
+      allMedia.sort((a, b) {
+        int order = b.hdate.compareTo(a.hdate);
+        return order == 0 ? b.mtime.compareTo(a.mtime) : order;
+      });
       print('sort photo: ${DateTime.now().millisecondsSinceEpoch - time}');
       final allMediaAlbum = Album(allMedia, '所有照片', places);
 
@@ -162,6 +165,7 @@ class _PhotosState extends State<Photos> {
           loading = false;
         });
       }
+      // TODO: handle error
       throw error;
     }
   }

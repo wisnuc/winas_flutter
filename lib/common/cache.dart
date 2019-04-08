@@ -225,7 +225,8 @@ class CacheManager {
   }
 
   /// get photo path
-  Future<String> getPhotoPath(Entry entry, AppState state) async {
+  Future<String> getPhotoPath(Entry entry, AppState state,
+      {Function onProgress, CancelToken cancelToken}) async {
     String entryPath = _imageDir() + entry.hash;
     String transPath = _transDir() + '/' + Uuid().v4();
     File entryFile = File(entryPath);
@@ -241,12 +242,17 @@ class CacheManager {
     final qs = {'alt': 'data'};
     try {
       // download
-      await state.apis.download(ep, qs, transPath);
+      await state.apis.download(ep, qs, transPath,
+          onProgress: onProgress, cancelToken: cancelToken);
 
       // rename
       await File(transPath).rename(entryPath);
     } catch (error) {
-      print(error);
+      if (error is! DioError || error.type != DioErrorType.CANCEL) {
+        print(error);
+      } else {
+        print('getPhotoPath canceled');
+      }
       return null;
     }
     return entryPath;

@@ -4,20 +4,25 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:share_extend/share_extend.dart';
 import 'package:flutter_redux/flutter_redux.dart';
+
 import '../redux/redux.dart';
+import '../common/utils.dart';
 import '../common/cache.dart';
+import '../files/delete.dart';
+import '../transfer/manager.dart';
 
 const double _kMinFlingVelocity = 800.0;
 
 const videoTypes = 'RM.RMVB.WMV.AVI.MP4.3GP.MKV.MOV.FLV';
 
 class PhotoViewer extends StatefulWidget {
-  const PhotoViewer({Key key, this.photo, this.thumbData, this.list})
+  const PhotoViewer(
+      {Key key, this.photo, this.thumbData, this.list, this.updateList})
       : super(key: key);
   final Uint8List thumbData;
   final List list;
   final Entry photo;
-
+  final Function updateList;
   @override
   _PhotoViewerState createState() => _PhotoViewerState();
 }
@@ -26,10 +31,13 @@ class _PhotoViewerState extends State<PhotoViewer> {
   /// current photo, default: widget.photo
   Entry currentItem;
   ScrollController myScrollController = ScrollController();
+  PageController pageController;
 
   @override
   void initState() {
     currentItem = widget.photo;
+    pageController =
+        PageController(initialPage: widget.list.indexOf(currentItem));
     super.initState();
   }
 
@@ -53,6 +61,67 @@ class _PhotoViewerState extends State<PhotoViewer> {
     }
   }
 
+  void _share(BuildContext ctx, Entry entry, AppState state) async {
+    final dialog = DownloadingDialog(ctx);
+    dialog.openDialog();
+
+    final cm = await CacheManager.getInstance();
+    String entryPath = await cm.getPhotoPath(entry, state,
+        onProgress: dialog.onProgress, cancelToken: dialog.cancelToken);
+
+    dialog.close();
+    if (dialog.canceled) {
+      showSnackBar(ctx, '下载已取消');
+    } else if (entryPath == null) {
+      showSnackBar(ctx, '下载失败');
+    } else {
+      try {
+        ShareExtend.share(entryPath, "file");
+      } catch (error) {
+        print(error);
+        showSnackBar(ctx, '分享失败');
+      }
+    }
+  }
+
+  void _download(BuildContext ctx, Entry entry, AppState state) async {
+    final cm = TransferManager.getInstance();
+    cm.newDownload(entry, state);
+    showSnackBar(ctx, '该文件已加入下载任务');
+  }
+
+  void _delete(BuildContext ctx, Entry entry, AppState state) async {
+    bool success = await showDialog(
+      context: this.context,
+      builder: (BuildContext context) => DeleteDialog(entries: [entry]),
+    );
+
+    if (success == true) {
+      print(pageController);
+
+      showSnackBar(ctx, '删除成功');
+      final isFirstPage = pageController.offset == 0.0;
+
+      // is not FirstPage: return to previousPage
+      if (!isFirstPage) {
+        pageController.previousPage(
+            duration: Duration(milliseconds: 300), curve: Curves.ease);
+      }
+
+      setState(() {
+        widget.list.remove(entry);
+      });
+      widget.updateList();
+
+      // is FirstPage: return to list
+      if (isFirstPage) {
+        Navigator.pop(ctx);
+      }
+    } else if (success == false) {
+      showSnackBar(ctx, '删除失败');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     print('currentItem ${currentItem.uuid}');
@@ -62,8 +131,7 @@ class _PhotoViewerState extends State<PhotoViewer> {
         children: <Widget>[
           Positioned.fill(
             child: PageView.builder(
-              controller:
-                  PageController(initialPage: widget.list.indexOf(currentItem)),
+              controller: pageController,
               itemBuilder: (context, position) {
                 final photo = widget.list[position];
                 // final bool isVideo =
@@ -110,42 +178,38 @@ class _PhotoViewerState extends State<PhotoViewer> {
                       child: Container(
                         height: 80,
                         color: Colors.transparent,
-                        child: Row(
-                          children: <Widget>[
-                            Container(width: 4),
-                            IconButton(
-                              icon: Icon(Icons.close),
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                            ),
-                            Container(width: 16),
-                            Expanded(flex: 1, child: Container()),
-                            StoreConnector<AppState, AppState>(
-                              converter: (store) => store.state,
-                              builder: (context, state) {
-                                return IconButton(
-                                  icon: Icon(Icons.share),
-                                  onPressed: () async {
-                                    final cm = await CacheManager.getInstance();
-                                    final entryPath = await cm.getPhotoPath(
-                                        currentItem, state);
-                                    print('entryPath $entryPath');
-                                    ShareExtend.share(entryPath, "file");
-                                  },
-                                );
-                              },
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.file_download),
-                              onPressed: () {},
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.delete),
-                              onPressed: () {},
-                            )
-                          ],
-                        ),
+                        child: StoreConnector<AppState, AppState>(
+                            converter: (store) => store.state,
+                            builder: (context, state) {
+                              return Row(
+                                children: <Widget>[
+                                  Container(width: 4),
+                                  IconButton(
+                                    icon: Icon(Icons.close),
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                  ),
+                                  Container(width: 16),
+                                  Expanded(flex: 1, child: Container()),
+                                  IconButton(
+                                    icon: Icon(Icons.share),
+                                    onPressed: () =>
+                                        _share(context, currentItem, state),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.file_download),
+                                    onPressed: () =>
+                                        _download(context, currentItem, state),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.delete),
+                                    onPressed: () =>
+                                        _delete(context, currentItem, state),
+                                  )
+                                ],
+                              );
+                            }),
                       ),
                     ),
                   )
