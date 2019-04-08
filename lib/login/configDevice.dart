@@ -89,6 +89,8 @@ class _ConfigDeviceState extends State<ConfigDevice> {
     final request = widget.request;
 
     try {
+      // TODO, waiting for winasdInfo
+      await Future.delayed(Duration(seconds: 2));
       final infoRes = await request.winasdInfo(ip);
       deviceSN = infoRes['device']['sn'] as String;
       if (deviceSN == null) throw 'Failed to get deviceSN from winasd';
@@ -139,6 +141,7 @@ class _ConfigDeviceState extends State<ConfigDevice> {
     try {
       bool started = false;
       while (started != true) {
+        // TODO, check fruitmix status
         await Future.delayed(Duration(seconds: 1));
         final res = await request.winasdInfo(ip);
         print(res);

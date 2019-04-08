@@ -45,7 +45,6 @@ class _DevicePhotoViewerState extends State<DevicePhotoViewer> {
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(
-          // TODO: name
           '照片',
           style: TextStyle(
             color: Color.fromARGB((opacity * 255 * 0.87).round(), 0, 0, 0),
