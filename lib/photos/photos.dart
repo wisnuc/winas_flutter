@@ -64,13 +64,14 @@ class _PhotosState extends State<Photos> {
       // req local photos
       try {
         List<AssetPathEntity> pathList = await PhotoManager.getAssetPathList();
+        // get all photos
         localAssetList = await pathList[0].assetList;
         localAssetList = List.from(localAssetList);
       } catch (e) {
         print(e);
         localAssetList = [];
       }
-
+      localAssetList.sort((a, b) => b.createTime - a.createTime);
       print('get local photo: ${DateTime.now().millisecondsSinceEpoch - time}');
       // all photos and videos
       final res = await state.apis.req('search', {

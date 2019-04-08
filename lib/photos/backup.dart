@@ -62,7 +62,7 @@ class BackupWorker {
   Future<List<AssetEntity>> getAssetList() async {
     List<AssetPathEntity> pathList = await PhotoManager.getAssetPathList();
     List<AssetEntity> localAssetList = await pathList[0].assetList;
-    localAssetList = List.from(localAssetList.reversed);
+    localAssetList.sort((a, b) => b.createTime - a.createTime);
     return localAssetList;
   }
 
