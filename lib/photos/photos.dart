@@ -10,6 +10,7 @@ import './photoList.dart';
 import './devicePhotos.dart';
 import '../redux/redux.dart';
 import '../common/cache.dart';
+import '../icons/winas_icons.dart';
 
 const mediaTypes =
     'JPEG.PNG.JPG.GIF.BMP.RAW.RM.RMVB.WMV.AVI.MP4.3GP.MKV.MOV.FLV';
@@ -30,6 +31,9 @@ class _PhotosState extends State<Photos> {
 
   /// current users's userUUID
   static String userUUID;
+
+  /// req data error
+  bool error = false;
 
   ScrollController myScrollController = ScrollController();
 
@@ -124,6 +128,14 @@ class _PhotosState extends State<Photos> {
       return;
     }
 
+    /// reload after error
+    if (isManual && error) {
+      setState(() {
+        error = false;
+        loading = true;
+      });
+    }
+
     try {
       // req data
       final List res = await Future.wait([localPhotos(), nasPhotos(store)]);
@@ -180,16 +192,17 @@ class _PhotosState extends State<Photos> {
       if (this.mounted) {
         setState(() {
           loading = false;
+          error = false;
         });
       }
-    } catch (error) {
+    } catch (e) {
+      print(e);
       if (this.mounted) {
         setState(() {
           loading = false;
+          error = true;
         });
       }
-      // TODO: handle error
-      throw error;
     }
   }
 
@@ -198,7 +211,7 @@ class _PhotosState extends State<Photos> {
     await Future.delayed(
         isFirst ? Duration(milliseconds: 100) : Duration(seconds: 1));
     if (this.mounted) {
-      if (!loading) {
+      if (!loading && !error) {
         setState(() {});
       }
       autoRefresh();
@@ -308,46 +321,87 @@ class _PhotosState extends State<Photos> {
             backgroundColor: Colors.white,
             iconTheme: IconThemeData(color: Colors.black38),
             title: Text('相簿', style: TextStyle(color: Colors.black87)),
-            actions: <Widget>[
-              Center(
-                child: Text('本机照片备份', style: TextStyle(color: Colors.black87)),
-              ),
-              Switch(
-                activeColor: Colors.teal,
-                value: state.config.autoBackup == true,
-                onChanged: (value) {
-                  store.dispatch(UpdateConfigAction(
-                    Config(
-                      gridView: state.config.gridView,
-                      autoBackup: value,
+            actions: loading || error
+                ? null
+                : <Widget>[
+                    Center(
+                      child: Text('本机照片备份',
+                          style: TextStyle(color: Colors.black87)),
                     ),
-                  ));
-                  if (value == true) {
-                    widget.backupWorker.start();
-                  } else {
-                    widget.backupWorker.abort();
-                  }
-                },
-              )
-            ],
+                    Switch(
+                      activeColor: Colors.teal,
+                      value: state.config.autoBackup == true,
+                      onChanged: (value) {
+                        store.dispatch(UpdateConfigAction(
+                          Config(
+                            gridView: state.config.gridView,
+                            autoBackup: value,
+                          ),
+                        ));
+                        if (value == true) {
+                          widget.backupWorker.start();
+                        } else {
+                          widget.backupWorker.abort();
+                        }
+                      },
+                    )
+                  ],
           ),
           body: loading
               ? Center(
                   child: CircularProgressIndicator(),
                 )
-              : RefreshIndicator(
-                  onRefresh: () => refresh(store, true),
-                  child: DraggableScrollbar.semicircle(
-                    controller: myScrollController,
-                    child: Container(
-                      child: CustomScrollView(
+              : error
+                  ? Center(
+                      child: Column(
+                        children: <Widget>[
+                          Expanded(flex: 4, child: Container()),
+                          Container(
+                            padding: EdgeInsets.all(16),
+                            child: Container(
+                              width: 72,
+                              height: 72,
+                              // padding: EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[400],
+                                borderRadius: BorderRadius.circular(36),
+                              ),
+                              child: Icon(
+                                Winas.logo,
+                                color: Colors.grey[50],
+                                size: 84,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '加载页面失败，请检查网络设置',
+                            style: TextStyle(color: Colors.black38),
+                          ),
+                          FlatButton(
+                            padding: EdgeInsets.all(0),
+                            child: Text(
+                              '重新加载',
+                              style: TextStyle(color: Colors.teal),
+                            ),
+                            onPressed: () => refresh(store, true),
+                          ),
+                          Expanded(flex: 6, child: Container()),
+                        ],
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: () => refresh(store, true),
+                      child: DraggableScrollbar.semicircle(
                         controller: myScrollController,
-                        physics: AlwaysScrollableScrollPhysics(),
-                        slivers: renderSlivers(),
+                        child: Container(
+                          child: CustomScrollView(
+                            controller: myScrollController,
+                            physics: AlwaysScrollableScrollPhysics(),
+                            slivers: renderSlivers(),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
         );
       },
     );
