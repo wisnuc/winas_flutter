@@ -340,6 +340,7 @@ class BackupWorker {
   }
 
   void start() {
+    if (status == Status.running) return;
     startAsync().catchError(print);
     print('backup started');
   }
@@ -354,8 +355,8 @@ class BackupWorker {
       }
       finished = 0;
       status = Status.failed;
+      print('backup aborted');
     }
-    print('backup aborted');
   }
 
   bool get isIdle => status == Status.idle;

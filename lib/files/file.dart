@@ -17,6 +17,7 @@ import '../common/cache.dart';
 import '../common/utils.dart';
 import '../common/intent.dart';
 import '../transfer/manager.dart';
+import '../transfer/transfer.dart';
 import '../icons/winas_icons.dart';
 
 Widget _buildItem(
@@ -189,6 +190,12 @@ class _FilesState extends State<Files> {
       if (filePath != null) {
         final cm = TransferManager.getInstance();
         cm.newUploadSharedFile(filePath, state);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Transfer(),
+          ),
+        );
       }
     }
     return;

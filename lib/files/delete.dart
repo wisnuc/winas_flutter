@@ -48,7 +48,6 @@ class _DeleteDialogState extends State<DeleteDialog> {
       for (List<Entry> list in newEntries) {
         Map<String, dynamic> formdata = Map();
         list.forEach((e) {
-          print(e);
           formdata[e.name] =
               jsonEncode({'op': 'remove', 'uuid': e.uuid, 'hash': e.hash});
         });

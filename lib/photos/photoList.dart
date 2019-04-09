@@ -218,13 +218,9 @@ class _PhotoListState extends State<PhotoList> {
     );
   }
 
-  int updateTimes = 0;
   @override
   void initState() {
-    select = Select(() => this.setState(() {
-          print('updateTimes $updateTimes');
-          updateTimes += 1;
-        }));
+    select = Select(() => this.setState(() {}));
     super.initState();
   }
 
@@ -234,7 +230,6 @@ class _PhotoListState extends State<PhotoList> {
     final List list = res['photoMapDates'];
     final List mapHeight = res['mapHeight'];
     final double cellSize = res['cellSize'];
-    print('render list');
     return StoreConnector<AppState, AppState>(
       onInit: (store) => {},
       onDispose: (store) => {},

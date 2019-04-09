@@ -50,7 +50,7 @@ final List<FileType> fileTypes = List.from([
   [
     '视频',
     iconFromName('a.mkv'),
-    'RM.RMVB.WMV.AVI.MP4.3GP.MKV.MOV.FLV',
+    'RM.RMVB.WMV.AVI.MP4.3GP.MKV.MOV.FLV.MPEG',
   ],
   [
     '音频',

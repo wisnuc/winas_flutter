@@ -24,7 +24,8 @@ List<String> thumbMagic = [
   '3GP',
   'MKV',
   'MOV',
-  'FLV'
+  'FLV',
+  'MPEG',
 ];
 
 /// Ellipsis Text

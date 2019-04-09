@@ -29,6 +29,7 @@ Widget renderIcon(String name, Metadata metadata, {double size: 24}) {
       return aIcon(Winas.mov, Color(0xfff44336));
     case 'mp4':
       return aIcon(Winas.mp4, Color(0xfff44336));
+    case 'mpeg':
     case 'mkv':
       return aIcon(Winas.video, Color(0xfff44336));
 

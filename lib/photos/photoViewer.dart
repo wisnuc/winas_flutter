@@ -13,7 +13,7 @@ import '../transfer/manager.dart';
 
 const double _kMinFlingVelocity = 800.0;
 
-const videoTypes = 'RM.RMVB.WMV.AVI.MP4.3GP.MKV.MOV.FLV';
+const videoTypes = 'RM.RMVB.WMV.AVI.MP4.3GP.MKV.MOV.FLV.MPEG';
 
 class PhotoViewer extends StatefulWidget {
   const PhotoViewer(

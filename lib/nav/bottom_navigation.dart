@@ -112,6 +112,12 @@ class _BottomNavigationState extends State<BottomNavigation>
       if (filePath != null) {
         final cm = TransferManager.getInstance();
         cm.newUploadSharedFile(filePath, state);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Transfer(),
+          ),
+        );
       }
     });
   }
