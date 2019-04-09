@@ -19,6 +19,7 @@ import '../common/intent.dart';
 import '../transfer/manager.dart';
 import '../transfer/transfer.dart';
 import '../icons/winas_icons.dart';
+import '../nav/taskFab.dart';
 
 Widget _buildItem(
   BuildContext context,
@@ -1028,6 +1029,7 @@ class _FilesState extends State<Files> {
               ],
             ),
           ),
+          // floatingActionButton: TaskFab(),
         );
       },
     );
@@ -1103,6 +1105,9 @@ class _FilesState extends State<Files> {
                               ),
                   ),
                 ),
+          // floatingActionButton: TaskFab(),
+          // floatingActionButtonLocation:
+          //     FloatingActionButtonLocation.centerFloat,
         );
       },
     );

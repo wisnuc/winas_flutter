@@ -372,6 +372,7 @@ class _GridPhotoState extends State<GridPhoto>
       ..fling(velocity: magnitude / 1000.0);
   }
 
+  /// on Horizontal Drag Start
   void handleHDragStart(DragStartDetails detail) {
     print('_handleOnScaleStart');
     opacity = 1;
@@ -391,6 +392,7 @@ class _GridPhotoState extends State<GridPhoto>
     });
   }
 
+  /// on Horizontal Drag Update
   void handleHDragUpdate(DragUpdateDetails details) {
     setState(() {
       // Ensure that image location under the focal point stays in the same place despite scaling.
@@ -399,6 +401,7 @@ class _GridPhotoState extends State<GridPhoto>
     });
   }
 
+  /// on Horizontal Drag End
   void handleHDragEnd(DragEndDetails detail) {
     if (opacity <= 0.8) {
       Navigator.pop(context);
