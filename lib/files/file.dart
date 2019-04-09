@@ -401,7 +401,7 @@ class _FilesState extends State<Files> {
           },
           {
             'icon': Icons.open_in_new,
-            'title': '使用其它应用打开',
+            'title': '分享到其它应用',
             'types': ['file'],
             'action': (BuildContext ctx, Entry entry) {
               Navigator.pop(ctx);

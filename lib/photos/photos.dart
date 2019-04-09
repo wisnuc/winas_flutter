@@ -108,7 +108,7 @@ class _PhotosState extends State<Photos> {
     });
 
     final List<Entry> allMedia = List.from(
-      res.data.map((d) => Entry.fromSearch(d, state.drives)).where(
+      res.data.map((d) => Entry.fromSearch(d, drives)).where(
           (d) => d?.metadata?.height != null && d?.metadata?.width != null),
     );
 
@@ -123,8 +123,10 @@ class _PhotosState extends State<Photos> {
   }
 
   Future refresh(Store<AppState> store, bool isManual) async {
-    AppState state = store.state;
-    if (!isManual && state.localUser.uuid == userUUID && albumList.length > 0) {
+    // use store.state to keep the state as latest
+    if (!isManual &&
+        store.state.localUser.uuid == userUUID &&
+        albumList.length > 0) {
       return;
     }
 
@@ -161,7 +163,7 @@ class _PhotosState extends State<Photos> {
 
       // find photos in each backup drives, filter: lenth > 0
       final List<Album> backupAlbums = List.from(
-        state.drives
+        store.state.drives
             .where((d) => d.type == 'backup')
             .map(
               (d) => Album(
@@ -181,14 +183,14 @@ class _PhotosState extends State<Photos> {
       // request album's cover
       for (var album in albumList) {
         if (album is Album) {
-          getCover(album, state).catchError(print);
+          getCover(album, store.state).catchError(print);
         } else if (album is LocalAlbum) {
           getLocalCover(album).catchError(print);
         }
       }
 
       // cache data
-      userUUID = state.localUser.uuid;
+      userUUID = store.state.localUser.uuid;
       if (this.mounted) {
         setState(() {
           loading = false;

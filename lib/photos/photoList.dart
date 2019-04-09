@@ -7,6 +7,7 @@ import './photoItem.dart';
 import './photoViewer.dart';
 import '../redux/redux.dart';
 import '../common/utils.dart';
+import '../files/delete.dart';
 
 class PhotoList extends StatefulWidget {
   final Album album;
@@ -17,6 +18,7 @@ class PhotoList extends StatefulWidget {
 
 class _PhotoListState extends State<PhotoList> {
   ScrollController myScrollController = ScrollController();
+  Select select;
 
   /// crossAxisCount in Gird
   int lineCount = 4;
@@ -106,13 +108,133 @@ class _PhotoListState extends State<PhotoList> {
     return Text(current[1]);
   }
 
+  AppBar selectAppBar(AppState state) {
+    final length = select.selectedEntry.length;
+    return AppBar(
+      title: Text(
+        '选择了$length项',
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.normal,
+        ),
+      ),
+      leading: IconButton(
+        icon: Icon(Icons.close, color: Colors.white),
+        onPressed: () => select.clearSelect(),
+      ),
+      brightness: Brightness.light,
+      elevation: 2.0,
+      iconTheme: IconThemeData(color: Colors.white),
+      actions: <Widget>[
+        // delete selected entry
+        Builder(builder: (ctx) {
+          return IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: length == 0
+                ? null
+                : () async {
+                    bool success = await showDialog(
+                      context: this.context,
+                      builder: (BuildContext context) =>
+                          DeleteDialog(entries: select.selectedEntry),
+                    );
+
+                    if (success == true) {
+                      showSnackBar(ctx, '删除成功');
+                      for (Entry entry in select.selectedEntry) {
+                        widget.album.items.remove(entry);
+                      }
+                    } else if (success == false) {
+                      showSnackBar(ctx, '删除失败');
+                    }
+                    select.clearSelect();
+                    setState(() {});
+                  },
+          );
+        }),
+      ],
+    );
+  }
+
+  AppBar listAppBar(AppState state) {
+    return AppBar(
+      title: Text(
+        widget.album.name,
+        style: TextStyle(
+          color: Colors.black87,
+          fontWeight: FontWeight.normal,
+        ),
+      ),
+      backgroundColor: Colors.white,
+      brightness: Brightness.light,
+      elevation: 2.0,
+      iconTheme: IconThemeData(color: Colors.black38),
+      actions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.more_horiz),
+          onPressed: () {
+            showModalBottomSheet(
+              context: this.context,
+              builder: (BuildContext c) {
+                return SafeArea(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Material(
+                        child: InkWell(
+                          onTap: () {
+                            select.enterSelect();
+                            Navigator.pop(c);
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(16),
+                            child: Text('选择'),
+                          ),
+                        ),
+                      ),
+                      Material(
+                        child: InkWell(
+                          onTap: () {
+                            select.selectAll(widget.album.items);
+                            Navigator.pop(c);
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(16),
+                            child: Text('选择全部'),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  int updateTimes = 0;
+  @override
+  void initState() {
+    select = Select(() => this.setState(() {
+          print('updateTimes $updateTimes');
+          updateTimes += 1;
+        }));
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     final res = getList(widget.album, context);
     final List list = res['photoMapDates'];
     final List mapHeight = res['mapHeight'];
     final double cellSize = res['cellSize'];
-
+    print('render list');
     return StoreConnector<AppState, AppState>(
       onInit: (store) => {},
       onDispose: (store) => {},
@@ -120,19 +242,7 @@ class _PhotoListState extends State<PhotoList> {
       builder: (ctx, state) {
         return Scaffold(
           key: Key(widget.album.length.toString()),
-          appBar: AppBar(
-            title: Text(
-              widget.album.name,
-              style: TextStyle(
-                color: Colors.black87,
-                fontWeight: FontWeight.normal,
-              ),
-            ),
-            backgroundColor: Colors.white,
-            brightness: Brightness.light,
-            elevation: 2.0,
-            iconTheme: IconThemeData(color: Colors.black38),
-          ),
+          appBar: select.selectMode() ? selectAppBar(state) : listAppBar(state),
           body: Container(
             color: Colors.grey[100],
             child: DraggableScrollbar.semicircle(
@@ -168,9 +278,12 @@ class _PhotoListState extends State<PhotoList> {
                         delegate: SliverChildBuilderDelegate(
                           (BuildContext context, int index) {
                             return PhotoItem(
+                              // key: Key(line[index].uuid +
+                              //     line[index].selected.toString()),
                               item: line[index],
                               showPhoto: showPhoto,
                               cellSize: cellSize,
+                              select: select,
                             );
                           },
                           childCount: line.length,

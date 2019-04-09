@@ -6,8 +6,9 @@ import '../redux/redux.dart';
 import '../common/utils.dart';
 
 class DeleteDialog extends StatefulWidget {
-  DeleteDialog({Key key, this.entries}) : super(key: key);
+  DeleteDialog({Key key, this.entries, this.isMedia = false}) : super(key: key);
   final List<Entry> entries;
+  final bool isMedia;
   @override
   _DeleteDialogState createState() => _DeleteDialogState(entries);
 }
@@ -30,7 +31,6 @@ class _DeleteDialogState extends State<DeleteDialog> {
     });
 
     try {
-      Map<String, dynamic> formdata = Map();
       List<Entry> sortedEntries = entries.toList();
       List<List<Entry>> newEntries = [];
       sortedEntries.sort((a, b) => a.pdir.compareTo(b.pdir));
@@ -38,22 +38,25 @@ class _DeleteDialogState extends State<DeleteDialog> {
       for (Entry entry in sortedEntries) {
         if (newEntries.length == 0) {
           newEntries.add([entry]);
-        } else if (newEntries[newEntries.length - 1][0].pdir == entry.pdir) {
-          newEntries[newEntries.length - 1].add(entry);
+        } else if (newEntries.last[0].pdir == entry.pdir &&
+            newEntries.length < 128) {
+          newEntries.last.add(entry);
         } else {
           newEntries.add([entry]);
         }
       }
-      for (List<Entry> entries in newEntries) {
-        entries.forEach((e) {
+      for (List<Entry> list in newEntries) {
+        Map<String, dynamic> formdata = Map();
+        list.forEach((e) {
+          print(e);
           formdata[e.name] =
               jsonEncode({'op': 'remove', 'uuid': e.uuid, 'hash': e.hash});
         });
 
         await state.apis.req('deleteDirOrFile', {
           'formdata': FormData.from(formdata),
-          'dirUUID': entries[0].pdir,
-          'driveUUID': entries[0].pdrv,
+          'dirUUID': list[0].pdir,
+          'driveUUID': list[0].pdrv,
         });
       }
     } catch (error) {
@@ -77,8 +80,9 @@ class _DeleteDialogState extends State<DeleteDialog> {
         return WillPopScope(
           onWillPop: () => Future.value(model.shouldClose),
           child: AlertDialog(
-            title: Text('删除文件或文件夹'),
-            content: Text('确定删除选择的文件或文件夹吗？'),
+            title: Text(widget.isMedia ? '删除图片或视频' : '删除文件或文件夹'),
+            content:
+                Text(widget.isMedia ? '确定删除选择的图片或视频吗？' : '确定删除选择的文件或文件夹吗？'),
             actions: <Widget>[
               FlatButton(
                 textColor: Theme.of(context).primaryColor,

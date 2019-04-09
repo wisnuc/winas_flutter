@@ -205,11 +205,15 @@ class _TransferState extends State<Transfer> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Expanded(flex: 1, child: Container()),
-                            Text(
-                              entry.name,
-                              textAlign: TextAlign.start,
-                              overflow: TextOverflow.fade,
-                              maxLines: 1,
+                            Row(
+                              children: <Widget>[
+                                Text(
+                                  entry.name,
+                                  textAlign: TextAlign.start,
+                                  overflow: TextOverflow.fade,
+                                  maxLines: 1,
+                                ),
+                              ],
                             ),
                             Container(height: 8),
                             Row(

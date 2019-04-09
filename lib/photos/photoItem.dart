@@ -8,11 +8,12 @@ import '../common/taskManager.dart';
 const photoTypes = ['JPEG', 'PNG', 'JPG', 'GIF', 'BMP', 'RAW', 'MP4', 'MOV'];
 
 class PhotoItem extends StatefulWidget {
-  PhotoItem({Key key, this.item, this.showPhoto, this.cellSize})
+  PhotoItem({Key key, this.item, this.showPhoto, this.cellSize, this.select})
       : super(key: key);
   final Entry item;
   final Function showPhoto;
   final double cellSize;
+  final Select select;
   @override
   _PhotoItemState createState() => _PhotoItemState(item);
 }
@@ -38,16 +39,12 @@ class _PhotoItemState extends State<PhotoItem> {
   }
 
   _onTap(BuildContext ctx) {
-    if (entry.selected) {
-      entry.toggleSelect();
+    print('_onTap: ${widget.item}');
+    if (widget.select.selectMode()) {
+      widget.select.toggleSelect(entry);
     } else {
       widget.showPhoto(ctx, entry, thumbData);
     }
-
-    // else if (photoTypes.contains(entry?.metadata?.type)) {
-    //   // is photo
-    //   widget.showPhoto(ctx, entry, thumbData);
-    // }
   }
 
   @override

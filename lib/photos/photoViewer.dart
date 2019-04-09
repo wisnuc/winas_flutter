@@ -93,7 +93,10 @@ class _PhotoViewerState extends State<PhotoViewer> {
   void _delete(BuildContext ctx, Entry entry, AppState state) async {
     bool success = await showDialog(
       context: this.context,
-      builder: (BuildContext context) => DeleteDialog(entries: [entry]),
+      builder: (BuildContext context) => DeleteDialog(
+            entries: [entry],
+            isMedia: true,
+          ),
     );
 
     if (success == true) {
@@ -179,37 +182,38 @@ class _PhotoViewerState extends State<PhotoViewer> {
                         height: 80,
                         color: Colors.transparent,
                         child: StoreConnector<AppState, AppState>(
-                            converter: (store) => store.state,
-                            builder: (context, state) {
-                              return Row(
-                                children: <Widget>[
-                                  Container(width: 4),
-                                  IconButton(
-                                    icon: Icon(Icons.close),
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    },
-                                  ),
-                                  Container(width: 16),
-                                  Expanded(flex: 1, child: Container()),
-                                  IconButton(
-                                    icon: Icon(Icons.share),
-                                    onPressed: () =>
-                                        _share(context, currentItem, state),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.file_download),
-                                    onPressed: () =>
-                                        _download(context, currentItem, state),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.delete),
-                                    onPressed: () =>
-                                        _delete(context, currentItem, state),
-                                  )
-                                ],
-                              );
-                            }),
+                          converter: (store) => store.state,
+                          builder: (context, state) {
+                            return Row(
+                              children: <Widget>[
+                                Container(width: 4),
+                                IconButton(
+                                  icon: Icon(Icons.close),
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                                Container(width: 16),
+                                Expanded(flex: 1, child: Container()),
+                                IconButton(
+                                  icon: Icon(Icons.share),
+                                  onPressed: () =>
+                                      _share(context, currentItem, state),
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.file_download),
+                                  onPressed: () =>
+                                      _download(context, currentItem, state),
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.delete),
+                                  onPressed: () =>
+                                      _delete(context, currentItem, state),
+                                )
+                              ],
+                            );
+                          },
+                        ),
                       ),
                     ),
                   )
