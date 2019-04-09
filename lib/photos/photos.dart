@@ -19,7 +19,7 @@ class Photos extends StatefulWidget {
   Photos({Key key, this.backupWorker}) : super(key: key);
   final BackupWorker backupWorker;
   @override
-  _PhotosState createState() => new _PhotosState();
+  _PhotosState createState() => _PhotosState();
 }
 
 class _PhotosState extends State<Photos> {
@@ -28,7 +28,9 @@ class _PhotosState extends State<Photos> {
   /// Album or LocalAlbum
   static List albumList = [];
 
+  /// current users's userUUID
   static String userUUID;
+
   ScrollController myScrollController = ScrollController();
 
   Future getCover(Album album, AppState state) async {
@@ -52,8 +54,8 @@ class _PhotosState extends State<Photos> {
     }
   }
 
-  /// request and update drive list,
-  Future<void> updateDrives(Store<AppState> store) async {
+  /// request and update drive list
+  Future<List<Drive>> updateDrives(Store<AppState> store) async {
     AppState state = store.state;
     // get current drives data
     final res = await state.apis.req('drives', null);
@@ -64,6 +66,56 @@ class _PhotosState extends State<Photos> {
     store.dispatch(
       UpdateDrivesAction(allDrives),
     );
+    return allDrives;
+  }
+
+  /// req local Photos
+  Future<List<AssetEntity>> localPhotos() async {
+    int time = DateTime.now().millisecondsSinceEpoch;
+    List<AssetEntity> localAssetList;
+    try {
+      List<AssetPathEntity> pathList = await PhotoManager.getAssetPathList();
+      // get all photos
+      localAssetList = await pathList[0].assetList;
+      localAssetList = List.from(localAssetList);
+    } catch (e) {
+      print(e);
+      localAssetList = [];
+    }
+    localAssetList.sort((a, b) => b.createTime - a.createTime);
+    print('get local photo: ${DateTime.now().millisecondsSinceEpoch - time}');
+    return localAssetList;
+  }
+
+  /// req nasPhotos
+  Future<List<Entry>> nasPhotos(Store<AppState> store) async {
+    int time = DateTime.now().millisecondsSinceEpoch;
+    AppState state = store.state;
+    final List<Drive> drives = await updateDrives(store);
+
+    List<String> driveUUIDs = List.from(drives.map((d) => d.uuid));
+    String places = driveUUIDs.join('.');
+
+    // all photos and videos
+    final res = await state.apis.req('search', {
+      'places': places,
+      'types': mediaTypes,
+      'order': 'newest',
+    });
+
+    final List<Entry> allMedia = List.from(
+      res.data.map((d) => Entry.fromSearch(d, state.drives)).where(
+          (d) => d?.metadata?.height != null && d?.metadata?.width != null),
+    );
+
+    // sort allMedia
+    allMedia.sort((a, b) {
+      int order = b.hdate.compareTo(a.hdate);
+      return order == 0 ? b.mtime.compareTo(a.mtime) : order;
+    });
+
+    print('get nas photo: ${DateTime.now().millisecondsSinceEpoch - time}');
+    return allMedia;
   }
 
   Future refresh(Store<AppState> store, bool isManual) async {
@@ -71,46 +123,18 @@ class _PhotosState extends State<Photos> {
     if (!isManual && state.localUser.uuid == userUUID && albumList.length > 0) {
       return;
     }
-    int time = DateTime.now().millisecondsSinceEpoch;
-    List<String> driveUUIDs = List.from(state.drives.map((d) => d.uuid));
-    String places = driveUUIDs.join('.');
-    List<AssetEntity> localAssetList;
+
     try {
-      // req local photos
-      try {
-        List<AssetPathEntity> pathList = await PhotoManager.getAssetPathList();
-        // get all photos
-        localAssetList = await pathList[0].assetList;
-        localAssetList = List.from(localAssetList);
-      } catch (e) {
-        print(e);
-        localAssetList = [];
-      }
-      localAssetList.sort((a, b) => b.createTime - a.createTime);
+      // req data
+      final List res = await Future.wait([localPhotos(), nasPhotos(store)]);
 
-      await updateDrives(store);
+      //local photos
+      List<AssetEntity> localAssetList = res[0];
 
-      print('get local photo: ${DateTime.now().millisecondsSinceEpoch - time}');
-      // all photos and videos
-      final res = await state.apis.req('search', {
-        'places': places,
-        'types': mediaTypes,
-        'order': 'newest',
-      });
+      //nas photos
+      List<Entry> allMedia = res[1];
 
-      print('get nas photo: ${DateTime.now().millisecondsSinceEpoch - time}');
-      final List<Entry> allMedia = List.from(
-        res.data.map((d) => Entry.fromSearch(d, state.drives)).where(
-            (d) => d?.metadata?.height != null && d?.metadata?.width != null),
-      );
-
-      // sort allMedia
-      allMedia.sort((a, b) {
-        int order = b.hdate.compareTo(a.hdate);
-        return order == 0 ? b.mtime.compareTo(a.mtime) : order;
-      });
-      print('sort photo: ${DateTime.now().millisecondsSinceEpoch - time}');
-      final allMediaAlbum = Album(allMedia, '所有照片', places);
+      final allMediaAlbum = Album(allMedia, '所有照片');
 
       final videoArray = videoTypes.split('.');
 
@@ -120,7 +144,7 @@ class _PhotosState extends State<Photos> {
         ),
       );
 
-      final allVideosAlbum = Album(allVideos, '所有视频', places);
+      final allVideosAlbum = Album(allVideos, '所有视频');
       final localAlbum = LocalAlbum(localAssetList, '本机照片');
 
       // find photos in each backup drives, filter: lenth > 0
@@ -131,7 +155,6 @@ class _PhotosState extends State<Photos> {
               (d) => Album(
                     List.from(allMedia.where((entry) => entry.pdrv == d.uuid)),
                     d.label,
-                    d.uuid,
                   ),
             )
             .where((a) => a.length > 0),
@@ -151,7 +174,7 @@ class _PhotosState extends State<Photos> {
           getLocalCover(album).catchError(print);
         }
       }
-      print('get album: ${DateTime.now().millisecondsSinceEpoch - time}');
+
       // cache data
       userUUID = state.localUser.uuid;
       if (this.mounted) {
@@ -170,7 +193,7 @@ class _PhotosState extends State<Photos> {
     }
   }
 
-  /// refresh per second
+  /// refresh per second to show backup progress
   Future autoRefresh({bool isFirst = false}) async {
     await Future.delayed(
         isFirst ? Duration(milliseconds: 100) : Duration(seconds: 1));

@@ -424,11 +424,10 @@ class Node {
 class Album {
   List<Entry> items = [];
   String name;
-  String places;
 
   // thumbData
   Uint8List cover;
-  Album(this.items, this.name, this.places);
+  Album(this.items, this.name);
   get length => items.length;
 
   void setCover(thumbData) {
@@ -440,7 +439,6 @@ class Album {
 class LocalAlbum {
   List<AssetEntity> items = [];
   String name;
-  String places;
 
   // thumbData
   Uint8List cover;
