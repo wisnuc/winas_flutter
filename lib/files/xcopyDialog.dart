@@ -7,8 +7,32 @@ import '../redux/redux.dart';
 import '../common/utils.dart';
 import '../common/renderIcon.dart';
 
-class XCopyView extends StatefulWidget {
-  XCopyView(
+void newXCopyView(BuildContext mainCtx, BuildContext snackBarCtx,
+    List<Entry> entries, String actionType, Function callback) {
+  Navigator.push(
+    mainCtx,
+    MaterialPageRoute(
+      settings: RouteSettings(name: 'xcopy'),
+      fullscreenDialog: true,
+      builder: (xcopyCtx) {
+        return _XCopyView(
+          node: Node(
+            name: '全部文件',
+            tag: 'root',
+            location: 'xcopy',
+          ),
+          src: entries,
+          preCtx: [snackBarCtx, xcopyCtx], // for snackbar and navigation
+          actionType: actionType,
+          callback: callback,
+        );
+      },
+    ),
+  );
+}
+
+class _XCopyView extends StatefulWidget {
+  _XCopyView(
       {Key key,
       this.node,
       this.src,
@@ -28,7 +52,7 @@ class XCopyView extends StatefulWidget {
       _XCopyViewState(node, src, actionType, preCtx, callback);
 }
 
-class _XCopyViewState extends State<XCopyView> {
+class _XCopyViewState extends State<_XCopyView> {
   final Node node;
   final List<Entry> src;
   final Function callback;
@@ -147,7 +171,7 @@ class _XCopyViewState extends State<XCopyView> {
     return true;
   }
 
-  openDir(BuildContext ctx, Entry entry) {
+  void openDir(BuildContext ctx, Entry entry) {
     if (src.any((e) => e.uuid == entry.uuid)) {
       showSnackBar(ctx, '不能选择被操作的文件夹');
     } else if (entry.type != 'file') {
@@ -155,7 +179,7 @@ class _XCopyViewState extends State<XCopyView> {
         context,
         MaterialPageRoute(
           builder: (context) {
-            return XCopyView(
+            return _XCopyView(
               node: Node(
                 name: entry.name,
                 driveUUID: entry.pdrv,
@@ -174,7 +198,7 @@ class _XCopyViewState extends State<XCopyView> {
     }
   }
 
-  close(BuildContext ctx) {
+  void close(BuildContext ctx) {
     // pop deep xcopy page
     Navigator.popUntil(ctx, ModalRoute.withName('xcopy'));
     // pop root page
@@ -196,8 +220,23 @@ class _XCopyViewState extends State<XCopyView> {
     };
     showLoading(ctx);
     try {
-      await state.apis.req('xcopy', args);
-      showSnackBar(preCtx[0], actionType == 'copy' ? '复制成功' : '移动成功');
+      final res = await state.apis.req('xcopy', args);
+      final uuid = res.data['uuid'];
+
+      print('res >>>>>>>>>>>>>>>');
+      print(res.data);
+
+      await Future.delayed(Duration(milliseconds: 1500));
+
+      final taskRes = await state.apis.req('task', {'uuid': uuid});
+      print('taskRes >>>>>>>>>>>>>>>');
+      print(taskRes.data);
+
+      if (taskRes.data['allFinished'] == true) {
+        showSnackBar(preCtx[0], actionType == 'copy' ? '复制成功' : '移动成功');
+      } else {
+        showSnackBar(preCtx[0], actionType == 'copy' ? '复制中' : '移动中');
+      }
     } catch (error) {
       showSnackBar(preCtx[0], actionType == 'copy' ? '复制失败' : '移动失败');
     }

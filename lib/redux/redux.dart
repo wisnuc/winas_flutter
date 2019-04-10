@@ -560,23 +560,27 @@ class Config {
   bool gridView = false;
   bool showArchive = false;
   bool autoBackup = false;
+  bool showTaskFab = false;
 
   Config({
     this.gridView = false,
     this.showArchive = false,
     this.autoBackup = false,
+    this.showTaskFab = false,
   });
 
   Config.combine(Config oldConfig, Config newConfig) {
     this.gridView = newConfig.gridView ?? oldConfig.gridView;
     this.autoBackup = newConfig.autoBackup ?? oldConfig.autoBackup;
     this.showArchive = newConfig.showArchive ?? oldConfig.showArchive;
+    this.showTaskFab = newConfig.showTaskFab ?? oldConfig.showTaskFab;
   }
 
   Config.fromMap(Map m) {
     this.gridView = m['gridView'] == true;
     this.autoBackup = m['autoBackup'] == true;
     this.showArchive = m['showArchive'] == true;
+    this.showTaskFab = false;
   }
 
   @override
@@ -585,6 +589,7 @@ class Config {
       'gridView': gridView,
       'autoBackup': autoBackup,
       'showArchive': showArchive,
+      'showTaskFab': showTaskFab,
     };
     return jsonEncode(m);
   }

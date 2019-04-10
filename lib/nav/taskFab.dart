@@ -1,12 +1,8 @@
-import 'dart:convert';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 
+import './taskView.dart';
 import '../redux/redux.dart';
-import '../common/utils.dart';
-
-const double _kMinFlingVelocity = 800.0;
 
 class TaskFab extends StatefulWidget {
   TaskFab({Key key, this.hasBottom}) : super(key: key);
@@ -17,7 +13,7 @@ class TaskFab extends StatefulWidget {
 
 class _TaskFabState extends State<TaskFab> with SingleTickerProviderStateMixin {
   bool loading = false;
-
+  bool extend = false;
   Animation<Offset> _flingAnimation;
   AnimationController _controller;
 
@@ -64,7 +60,8 @@ class _TaskFabState extends State<TaskFab> with SingleTickerProviderStateMixin {
     // fling after move
     final Offset direction = details.velocity.pixelsPerSecond / magnitude;
     final double distance = (Offset.zero & context.size).shortestSide;
-    final newOffset = _offset + direction * distance;
+    final newOffset =
+        magnitude < 800 ? _offset : _offset + direction * distance;
 
     // keep minimum padding
     double dx =
@@ -93,63 +90,54 @@ class _TaskFabState extends State<TaskFab> with SingleTickerProviderStateMixin {
     return minRight - _offset.dx;
   }
 
-  void onPressed() async {
+  void onPressed() {
     Navigator.push(
       context,
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (context) {
-          return openView();
+          return TaskView(
+            toggle: toggle,
+          );
         },
       ),
     );
   }
 
-  Widget openView() {
-    return StoreConnector<AppState, AppState>(
-      onInit: (store) => {},
-      onDispose: (store) => {},
-      converter: (store) => store.state,
-      builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              '正在进行中的复制/移动任务',
-              style: TextStyle(
-                color: Colors.black87,
-                fontWeight: FontWeight.normal,
-              ),
-            ),
-            backgroundColor: Colors.white,
-            brightness: Brightness.light,
-            elevation: 2.0,
-            iconTheme: IconThemeData(color: Colors.black38),
-          ),
-          body: Container(
-            color: Colors.grey[200],
-          ),
-        );
-      },
-    );
+  void toggle() {
+    setState(() {
+      extend = !extend;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      bottom: getBottom(context),
-      right: getRight(context),
-      child: GestureDetector(
-        onScaleUpdate: _handleOnScaleUpdate,
-        onScaleStart: _handleOnScaleStart,
-        onScaleEnd: _handleOnScaleEnd,
-        behavior: HitTestBehavior.translucent,
-        child: FloatingActionButton.extended(
-          backgroundColor: Colors.blue[400],
-          onPressed: onPressed,
-          label: Text('正在复制/剪切'),
-          icon: Icon(Icons.swap_horiz),
-        ),
-      ),
+    return StoreConnector<AppState, Config>(
+      onInit: (store) => {},
+      onDispose: (store) => {},
+      converter: (store) => store.state.config,
+      builder: (context, config) {
+        bool showFab = config.gridView == true;
+        bool isFinished = false;
+        return Positioned(
+          bottom: getBottom(context),
+          right: getRight(context),
+          child: showFab
+              ? GestureDetector(
+                  onScaleUpdate: _handleOnScaleUpdate,
+                  onScaleStart: _handleOnScaleStart,
+                  onScaleEnd: _handleOnScaleEnd,
+                  child: FloatingActionButton.extended(
+                    backgroundColor: Colors.grey[600],
+                    onPressed: onPressed,
+                    label: Text(!isFinished ? '正在复制/剪切' : '任务完成'),
+                    icon: Icon(
+                        !isFinished ? Icons.swap_horiz : Icons.check_circle),
+                  ),
+                )
+              : Container(),
+        );
+      },
     );
   }
 }

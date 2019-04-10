@@ -161,26 +161,8 @@ class _SearchState extends State<Search> {
             'types': node.location == 'backup' ? [] : ['file', 'directory'],
             'action': (BuildContext ctx, Entry entry) async {
               Navigator.pop(ctx);
-              Navigator.push(
-                this.context,
-                MaterialPageRoute(
-                  settings: RouteSettings(name: 'xcopy'),
-                  fullscreenDialog: true,
-                  builder: (xcopyCtx) {
-                    return XCopyView(
-                      node: Node(
-                        name: '全部文件',
-                        tag: 'root',
-                        location: 'xcopy',
-                      ),
-                      src: [entry],
-                      preCtx: [ctx, xcopyCtx], // for snackbar and navigation
-                      actionType: 'copy',
-                      callback: () => _onSearch(state),
-                    );
-                  },
-                ),
-              );
+              newXCopyView(
+                  this.context, ctx, [entry], 'copy', () => _onSearch(state));
             }
           },
           {
@@ -189,26 +171,8 @@ class _SearchState extends State<Search> {
             'types': node.location == 'backup' ? [] : ['file', 'directory'],
             'action': (BuildContext ctx, Entry entry) async {
               Navigator.pop(ctx);
-              Navigator.push(
-                this.context,
-                MaterialPageRoute(
-                  settings: RouteSettings(name: 'xcopy'),
-                  fullscreenDialog: true,
-                  builder: (xcopyCtx) {
-                    return XCopyView(
-                      node: Node(
-                        name: '全部文件',
-                        tag: 'root',
-                        location: 'xcopy',
-                      ),
-                      src: [entry],
-                      preCtx: [ctx, xcopyCtx], // for snackbar and navigation
-                      actionType: 'move',
-                      callback: () => _onSearch(state),
-                    );
-                  },
-                ),
-              );
+              newXCopyView(
+                  this.context, ctx, [entry], 'move', () => _onSearch(state));
             }
           },
           {
@@ -304,33 +268,11 @@ class _SearchState extends State<Search> {
             icon: Icon(Icons.content_copy),
             onPressed: select.selectedEntry.any((e) => e.location == 'backup')
                 ? null
-                : () {
-                    Navigator.push(
-                      this.context,
-                      MaterialPageRoute(
-                        settings: RouteSettings(name: 'xcopy'),
-                        fullscreenDialog: true,
-                        builder: (xcopyCtx) {
-                          return XCopyView(
-                              node: Node(
-                                name: '全部文件',
-                                tag: 'root',
-                                location: 'xcopy',
-                              ),
-                              src: select.selectedEntry,
-                              preCtx: [
-                                ctx,
-                                xcopyCtx
-                              ], // for snackbar and navigation
-                              actionType: 'copy',
-                              callback: () {
-                                select.clearSelect();
-                                _onSearch(state);
-                              });
-                        },
-                      ),
-                    );
-                  },
+                : () => newXCopyView(
+                        this.context, ctx, select.selectedEntry, 'copy', () {
+                      select.clearSelect();
+                      _onSearch(state);
+                    }),
           );
         }),
         // move selected entry
@@ -339,33 +281,11 @@ class _SearchState extends State<Search> {
             icon: Icon(Icons.forward),
             onPressed: select.selectedEntry.any((e) => e.location == 'backup')
                 ? null
-                : () {
-                    Navigator.push(
-                      this.context,
-                      MaterialPageRoute(
-                        settings: RouteSettings(name: 'xcopy'),
-                        fullscreenDialog: true,
-                        builder: (xcopyCtx) {
-                          return XCopyView(
-                              node: Node(
-                                name: '全部文件',
-                                tag: 'root',
-                                location: 'xcopy',
-                              ),
-                              src: select.selectedEntry,
-                              preCtx: [
-                                ctx,
-                                xcopyCtx
-                              ], // for snackbar and navigation
-                              actionType: 'move',
-                              callback: () {
-                                select.clearSelect();
-                                _onSearch(state);
-                              });
-                        },
-                      ),
-                    );
-                  },
+                : () => newXCopyView(
+                        this.context, ctx, select.selectedEntry, 'move', () {
+                      select.clearSelect();
+                      _onSearch(state);
+                    }),
           );
         }),
         // delete selected entry

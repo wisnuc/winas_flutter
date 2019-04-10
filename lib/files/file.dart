@@ -308,26 +308,8 @@ class _FilesState extends State<Files> {
             'types': node.location == 'backup' ? [] : ['file', 'directory'],
             'action': (BuildContext ctx, Entry entry) async {
               Navigator.pop(ctx);
-              Navigator.push(
-                this.context,
-                MaterialPageRoute(
-                  settings: RouteSettings(name: 'xcopy'),
-                  fullscreenDialog: true,
-                  builder: (xcopyCtx) {
-                    return XCopyView(
-                      node: Node(
-                        name: '全部文件',
-                        tag: 'root',
-                        location: 'xcopy',
-                      ),
-                      src: [entry],
-                      preCtx: [ctx, xcopyCtx], // for snackbar and navigation
-                      actionType: 'copy',
-                      callback: () => refresh(state),
-                    );
-                  },
-                ),
-              );
+              newXCopyView(
+                  this.context, ctx, [entry], 'copy', () => refresh(state));
             }
           },
           {
@@ -336,26 +318,8 @@ class _FilesState extends State<Files> {
             'types': node.location == 'backup' ? [] : ['file', 'directory'],
             'action': (BuildContext ctx, Entry entry) async {
               Navigator.pop(ctx);
-              Navigator.push(
-                this.context,
-                MaterialPageRoute(
-                  settings: RouteSettings(name: 'xcopy'),
-                  fullscreenDialog: true,
-                  builder: (xcopyCtx) {
-                    return XCopyView(
-                      node: Node(
-                        name: '全部文件',
-                        tag: 'root',
-                        location: 'xcopy',
-                      ),
-                      src: [entry],
-                      preCtx: [ctx, xcopyCtx], // for snackbar and navigation
-                      actionType: 'move',
-                      callback: () => refresh(state),
-                    );
-                  },
-                ),
-              );
+              newXCopyView(
+                  this.context, ctx, [entry], 'move', () => refresh(state));
             }
           },
           {
@@ -637,74 +601,30 @@ class _FilesState extends State<Files> {
         Builder(builder: (ctx) {
           return IconButton(
             icon: Icon(Icons.content_copy),
-            onPressed:
-                select.selectedEntry.any((e) => e.location == 'backup') ||
-                        length == 0
-                    ? null
-                    : () {
-                        Navigator.push(
-                          this.context,
-                          MaterialPageRoute(
-                            settings: RouteSettings(name: 'xcopy'),
-                            fullscreenDialog: true,
-                            builder: (xcopyCtx) {
-                              return XCopyView(
-                                  node: Node(
-                                    name: '全部文件',
-                                    tag: 'root',
-                                    location: 'xcopy',
-                                  ),
-                                  src: select.selectedEntry,
-                                  preCtx: [
-                                    ctx,
-                                    xcopyCtx
-                                  ], // for snackbar and navigation
-                                  actionType: 'copy',
-                                  callback: () {
-                                    select.clearSelect();
-                                    refresh(state);
-                                  });
-                            },
-                          ),
-                        );
-                      },
+            onPressed: select.selectedEntry
+                        .any((e) => e.location == 'backup') ||
+                    length == 0
+                ? null
+                : () => newXCopyView(
+                        this.context, ctx, select.selectedEntry, 'copy', () {
+                      select.clearSelect();
+                      refresh(state);
+                    }),
           );
         }),
         // move selected entry
         Builder(builder: (ctx) {
           return IconButton(
             icon: Icon(Icons.forward),
-            onPressed:
-                select.selectedEntry.any((e) => e.location == 'backup') ||
-                        length == 0
-                    ? null
-                    : () {
-                        Navigator.push(
-                          this.context,
-                          MaterialPageRoute(
-                            settings: RouteSettings(name: 'xcopy'),
-                            fullscreenDialog: true,
-                            builder: (xcopyCtx) {
-                              return XCopyView(
-                                  node: Node(
-                                    name: '全部文件',
-                                    tag: 'root',
-                                    location: 'xcopy',
-                                  ),
-                                  src: select.selectedEntry,
-                                  preCtx: [
-                                    ctx,
-                                    xcopyCtx
-                                  ], // for snackbar and navigation
-                                  actionType: 'move',
-                                  callback: () {
-                                    select.clearSelect();
-                                    refresh(state);
-                                  });
-                            },
-                          ),
-                        );
-                      },
+            onPressed: select.selectedEntry
+                        .any((e) => e.location == 'backup') ||
+                    length == 0
+                ? null
+                : () => newXCopyView(
+                        this.context, ctx, select.selectedEntry, 'move', () {
+                      select.clearSelect();
+                      refresh(state);
+                    }),
           );
         }),
         // delete selected entry

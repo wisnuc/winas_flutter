@@ -239,6 +239,14 @@ class Apis {
         r = tpost('tasks', args);
         break;
 
+      case 'task':
+        r = tget('tasks/${args['uuid']}', null);
+        break;
+
+      case 'tasks':
+        r = tget('tasks', null);
+        break;
+
       case 'search':
         r = tget('files', args);
         break;
