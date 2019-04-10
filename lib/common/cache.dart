@@ -4,8 +4,9 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 import 'package:async/async.dart';
-import 'package:synchronized/synchronized.dart';
+
 import 'package:path_provider/path_provider.dart';
+import 'package:synchronized/synchronized.dart' as synchronized;
 
 import '../redux/redux.dart';
 
@@ -34,7 +35,7 @@ class CacheManager {
 
   CacheManager._();
 
-  static Lock _lock = Lock();
+  static synchronized.Lock _lock = synchronized.Lock();
 
   String _rootDir;
 
@@ -182,7 +183,6 @@ class CacheManager {
       // read data
       thumbData = await entryFile.readAsBytes();
     } catch (error) {
-      print(error);
       return null;
     }
     return thumbData;

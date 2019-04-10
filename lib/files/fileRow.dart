@@ -257,7 +257,9 @@ class _FileRowState extends State<FileRow> {
 
   _getThumb(AppState state) {
     // check hash and file type
-    if (entry.hash == null || !thumbMagic.contains(entry?.metadata?.type)) {
+    if (!isGrid ||
+        entry.hash == null ||
+        !thumbMagic.contains(entry?.metadata?.type)) {
       return;
     }
 

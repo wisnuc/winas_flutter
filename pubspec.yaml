@@ -63,13 +63,15 @@ dependencies:
   # wifi ssid
   wifi: 0.1.5
 
+  # request
+  dio: 2.1.1
+  # fix bug in PUT List<int> method
+  # dio:
+  #   git: https://github.com/juncaixinchi/dio.git
+
+
   # custom modified packages
   #
-  # dio: 1.0.13
-  # fix bug in PUT List<int> method, close fd, fix bug of 'open too many files'
-  dio:
-    git: https://github.com/juncaixinchi/dio.git
-
   # draggable_scrollbar: 0.0.4
   # to use draggable-scrollbar with sliver list
   draggable_scrollbar:
