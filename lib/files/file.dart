@@ -1105,9 +1105,6 @@ class _FilesState extends State<Files> {
                               ),
                   ),
                 ),
-          // floatingActionButton: TaskFab(),
-          // floatingActionButtonLocation:
-          //     FloatingActionButtonLocation.centerFloat,
         );
       },
     );
@@ -1123,13 +1120,20 @@ class _FilesState extends State<Files> {
         }
         return Future.value(true);
       },
-      child: node.tag == 'home'
-          ? homeView()
-          : (node.tag == 'dir' || node.tag == 'built-in')
-              ? directoryView()
-              : Center(
-                  child: Text('Error !'),
-                ),
+      child: Stack(
+        children: <Widget>[
+          Positioned.fill(
+            child: node.tag == 'home'
+                ? homeView()
+                : (node.tag == 'dir' || node.tag == 'built-in')
+                    ? directoryView()
+                    : Center(child: Text('Error !')),
+          ),
+
+          /// xcopy task fab
+          TaskFab(hasBottom: node.tag == 'home'),
+        ],
+      ),
     );
   }
 }
