@@ -66,7 +66,7 @@ class Apis {
     }
   }
 
-  /// request with token
+  /// get with token
   tget(String ep, Map<String, dynamic> args) {
     assert(token != null);
     if (isCloud ?? true) return command('GET', ep, args);
@@ -74,13 +74,22 @@ class Apis {
     return dio.get('$lanAdrress/$ep', queryParameters: args);
   }
 
-  /// request with token
+  /// post with token
   tpost(String ep, dynamic args, {CancelToken cancelToken}) {
     assert(token != null);
     if (isCloud ?? true)
       return command('POST', ep, args, cancelToken: cancelToken);
     dio.options.headers['Authorization'] = 'JWT $lanToken';
     return dio.post('$lanAdrress/$ep', data: args, cancelToken: cancelToken);
+  }
+
+  /// delete with token
+  tdel(String ep, dynamic args, {CancelToken cancelToken}) {
+    assert(token != null);
+    if (isCloud ?? true)
+      return command('DELETE', ep, args, cancelToken: cancelToken);
+    dio.options.headers['Authorization'] = 'JWT $lanToken';
+    return dio.delete('$lanAdrress/$ep', data: args, cancelToken: cancelToken);
   }
 
   /// request via cloud
@@ -245,6 +254,10 @@ class Apis {
 
       case 'tasks':
         r = tget('tasks', null);
+        break;
+
+      case 'delTask':
+        r = tdel('tasks/${args['uuid']}', null);
         break;
 
       case 'search':

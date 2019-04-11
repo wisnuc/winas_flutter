@@ -1,39 +1,8 @@
-import 'package:redux/redux.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_redux/flutter_redux.dart';
 
-import '../redux/redux.dart';
-
-/// xcopyTask
-class Task {
-  String name;
-  String uuid;
-  bool isFinished;
-  Widget icon;
-
-  /// copy
-  String type;
-
-  Task.fromMap(Map m) {
-    this.uuid = m['uuid'];
-    this.isFinished = m['allFinished'] == true || m['finished'] == true;
-    final entries = m['entries'] as List;
-    this.name = entries.length > 0 ? entries[0] : '';
-    this.type = m['type'];
-    this.icon = Icon(this.type == 'copy' ? Icons.content_copy : Icons.forward);
-  }
-
-  @override
-  String toString() {
-    final map = {
-      'name': name,
-      'uuid': uuid,
-      'type': type,
-      'allFinished': isFinished,
-    };
-    return map.toString();
-  }
-}
+import './xcopyTasks.dart';
+import '../common/utils.dart';
+import '../common/appBarSlivers.dart';
 
 class TaskView extends StatefulWidget {
   TaskView({Key key, this.toggle}) : super(key: key);
@@ -44,89 +13,156 @@ class TaskView extends StatefulWidget {
 
 class _TaskViewState extends State<TaskView> {
   bool loading = true;
+  ScrollController myScrollController = ScrollController();
+
+  /// scrollController's listener to get offset
+  void listener() {
+    setState(() {
+      paddingLeft = (myScrollController.offset * 1.25).clamp(16.0, 72.0);
+    });
+  }
+
+  final instance = XCopyTasks.getInstance();
+
   @override
   void initState() {
+    tasks = instance.tasks;
+    reqList().catchError(print);
+    myScrollController.addListener(listener);
     super.initState();
   }
 
   @override
   void dispose() {
+    myScrollController.removeListener(listener);
+    instance.clearAllFinished();
     super.dispose();
   }
 
   List<Task> tasks = [];
 
-  Future reqList(Store<AppState> store) async {
-    AppState state = store.state;
-    final res = await state.apis.req('tasks', null);
-    tasks = List.from(res.data.map((task) => Task.fromMap(task)));
+  // relist and auto refresh per 500 milliseconds
+  Future reqList() async {
+    await Future.delayed(Duration(milliseconds: 500));
+    final instance = XCopyTasks.getInstance();
     if (this.mounted) {
       setState(() {
-        loading = false;
+        tasks = instance.tasks;
       });
+      reqList().catchError(print);
     }
+  }
+
+  /// left padding of appbar
+  double paddingLeft = 16;
+
+  /// slivers
+  List<Widget> getSlivers() {
+    final String titleName = '复制/移动任务';
+    List<Widget> slivers = appBarSlivers(paddingLeft, titleName);
+    if (tasks == null) {
+      slivers.add(
+        SliverToBoxAdapter(
+          child: Container(
+            height: 256,
+            child: Center(child: CircularProgressIndicator()),
+          ),
+        ),
+      );
+    } else if (tasks.length == 0) {
+      slivers.addAll([
+        SliverToBoxAdapter(
+          child: Icon(
+            Icons.web_asset,
+            color: Colors.grey[300],
+            size: 84,
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Container(
+            height: 32,
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Center(
+            child: Text('当前无传输任务'),
+          ),
+        ),
+      ]);
+    } else {
+      slivers.add(
+        SliverFixedExtentList(
+          itemExtent: 64,
+          delegate: SliverChildBuilderDelegate(
+            (BuildContext context, int index) {
+              final task = tasks[index];
+              return Container(
+                decoration:
+                    BoxDecoration(border: Border.all(color: Colors.grey[200])),
+                child: Row(
+                  children: <Widget>[
+                    Container(
+                      child: task.icon,
+                      padding: EdgeInsets.all(16),
+                    ),
+                    Container(width: 16),
+                    Expanded(
+                      flex: 1,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Expanded(flex: 1, child: Container()),
+                          Text(task.uuid.substring(0, 20)),
+                          Expanded(flex: 1, child: Container()),
+                          task.isFinished
+                              ? Container()
+                              : LinearProgressIndicator(
+                                  backgroundColor: Colors.grey[200],
+                                  valueColor:
+                                      AlwaysStoppedAnimation(Colors.teal[300]),
+                                ),
+                          Expanded(flex: 1, child: Container()),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      width: 72,
+                      height: 72,
+                      child: task.isFinished
+                          ? Icon(Icons.check_circle)
+                          : IconButton(
+                              icon: Icon(Icons.close),
+                              onPressed: () async {
+                                showLoading(context);
+                                try {
+                                  await instance.cancelTask(task);
+                                } catch (e) {
+                                  print(e);
+                                }
+                                Navigator.pop(context);
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              );
+            },
+            childCount: tasks.length,
+          ),
+        ),
+      );
+    }
+    return slivers;
   }
 
   @override
   Widget build(BuildContext context) {
-    return StoreConnector<AppState, AppState>(
-      onInit: (store) => reqList(store),
-      onDispose: (store) => {},
-      converter: (store) => store.state,
-      builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              '正在进行中的复制/移动任务',
-              style: TextStyle(
-                color: Colors.black87,
-                fontWeight: FontWeight.normal,
-              ),
-            ),
-            // leading: IconButton(
-            //   icon: Icon(Icons.close),
-            //   onPressed: widget.toggle,
-            // ),
-            backgroundColor: Colors.white,
-            brightness: Brightness.light,
-            elevation: 2.0,
-            iconTheme: IconThemeData(color: Colors.black38),
-          ),
-          body: Container(
-            color: Colors.grey[200],
-            child: ListView.builder(
-              itemBuilder: (ctx, index) {
-                final task = tasks[index];
-                return Container(
-                  child: Row(
-                    children: <Widget>[
-                      Container(
-                        child: task.icon,
-                        padding: EdgeInsets.all(16),
-                      ),
-                      Container(width: 16),
-                      Expanded(
-                        flex: 1,
-                        child: Container(),
-                      ),
-                      Container(
-                        padding: EdgeInsets.all(16),
-                        width: 72,
-                        height: 72,
-                        child: task.isFinished
-                            ? Icon(Icons.check_circle)
-                            : Icon(Icons.close),
-                      ),
-                    ],
-                  ),
-                );
-              },
-              itemCount: tasks.length,
-              cacheExtent: 64.0,
-            ),
-          ),
-        );
-      },
+    return Scaffold(
+      body: CustomScrollView(
+        controller: myScrollController,
+        slivers: getSlivers(),
+      ),
     );
   }
 }

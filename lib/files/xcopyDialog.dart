@@ -1,3 +1,4 @@
+import 'package:redux/redux.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
@@ -205,7 +206,9 @@ class _XCopyViewState extends State<_XCopyView> {
     Navigator.pop(preCtx[1]);
   }
 
-  Future fire(BuildContext ctx, AppState state) async {
+  /// send xcopy request
+  Future fire(BuildContext ctx, Store<AppState> store) async {
+    AppState state = store.state;
     var args = {
       'batch': true,
       'type': actionType,
@@ -223,19 +226,26 @@ class _XCopyViewState extends State<_XCopyView> {
       final res = await state.apis.req('xcopy', args);
       final uuid = res.data['uuid'];
 
-      print('res >>>>>>>>>>>>>>>');
-      print(res.data);
-
-      await Future.delayed(Duration(milliseconds: 1500));
+      // wait 1 seconds
+      await Future.delayed(Duration(milliseconds: 100));
 
       final taskRes = await state.apis.req('task', {'uuid': uuid});
-      print('taskRes >>>>>>>>>>>>>>>');
-      print(taskRes.data);
 
-      if (taskRes.data['allFinished'] == true) {
+      if (taskRes.data['allFinished'] == true ||
+          taskRes.data['finished'] == true) {
         showSnackBar(preCtx[0], actionType == 'copy' ? '复制成功' : '移动成功');
       } else {
-        showSnackBar(preCtx[0], actionType == 'copy' ? '复制中' : '移动中');
+        // showSnackBar(preCtx[0], actionType == 'copy' ? '复制中' : '移动中');
+
+        // show taskfab
+        store.dispatch(
+          UpdateConfigAction(
+            Config.combine(
+              store.state.config,
+              Config(showTaskFab: true),
+            ),
+          ),
+        );
       }
     } catch (error) {
       showSnackBar(preCtx[0], actionType == 'copy' ? '复制失败' : '移动失败');
@@ -299,11 +309,11 @@ class _XCopyViewState extends State<_XCopyView> {
 
   @override
   Widget build(BuildContext context) {
-    return StoreConnector<AppState, AppState>(
+    return StoreConnector<AppState, Store<AppState>>(
       onInit: (store) => _refresh(store.state),
       onDispose: (store) => {},
-      converter: (store) => store.state,
-      builder: (ctx, state) {
+      converter: (store) => store,
+      builder: (ctx, store) {
         return Scaffold(
           appBar: AppBar(
             title: Text(
@@ -330,7 +340,7 @@ class _XCopyViewState extends State<_XCopyView> {
                             builder: (BuildContext context) =>
                                 NewFolder(node: node),
                           ).then((success) =>
-                              success == true ? _refresh(state) : null);
+                              success == true ? _refresh(store.state) : null);
                         },
                 );
               }),
@@ -341,7 +351,7 @@ class _XCopyViewState extends State<_XCopyView> {
                   child: CircularProgressIndicator(),
                 )
               : RefreshIndicator(
-                  onRefresh: () => _refresh(state),
+                  onRefresh: () => _refresh(store.state),
                   child: _error != null
                       ? Center(
                           child: Text('出错啦！'),
@@ -474,7 +484,7 @@ class _XCopyViewState extends State<_XCopyView> {
                         ? Text('复制到此文件夹')
                         : Text('移动到此文件夹'),
                     onPressed:
-                        shouldFire() ? () => fire(scaffoldCtx, state) : null,
+                        shouldFire() ? () => fire(scaffoldCtx, store) : null,
                   );
                 }),
               ],
