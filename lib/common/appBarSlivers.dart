@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-List<Widget> appBarSlivers(double left, String title) {
+List<Widget> appBarSlivers(double left, String title, {List<Widget> action}) {
   return [
     SliverAppBar(
       pinned: true,
@@ -17,6 +17,7 @@ List<Widget> appBarSlivers(double left, String title) {
           fontWeight: FontWeight.normal,
         ),
       ),
+      actions: action,
     ),
     SliverToBoxAdapter(
       child: Container(

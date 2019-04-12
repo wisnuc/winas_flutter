@@ -16,7 +16,11 @@ class Task {
   String name;
   String uuid;
   bool isFinished;
+  bool isBatch;
   Widget icon;
+
+  /// description of task
+  String text;
 
   /// copy
   String type;
@@ -24,10 +28,28 @@ class Task {
   Task.fromMap(Map m) {
     this.uuid = m['uuid'];
     this.isFinished = m['allFinished'] == true || m['finished'] == true;
-    final entries = m['entries'] as List;
-    this.name =
-        entries.length > 0 && entries[0] is Map ? entries[0]['name'] : '';
+
+    final current = m['current'] as Map;
+    this.isBatch = m['batch'] == true;
+
+    this.name = '';
+    if (this.isBatch && current != null) {
+      final entries = current['entries'];
+      if (entries is List && entries.length > 0) {
+        this.name = entries[0];
+      }
+    } else if (!this.isBatch) {
+      final entries = m['entries'];
+      if (entries is List && entries.length > 0) {
+        this.name = entries[0];
+      }
+    }
+
     this.type = m['type'];
+
+    this.text = (this.type == 'copy' ? '复制' : '移动') +
+        (this.isFinished ? '完成' : this.name);
+
     this.icon = Icon(this.type == 'copy' ? Icons.content_copy : Icons.forward);
   }
 
@@ -77,6 +99,12 @@ class XCopyTasks {
     }
   }
 
+  Future<void> refresh() async {
+    final res = await myStore.state.apis.req('tasks', null);
+    final list = List.from(res.data.map((task) => Task.fromMap(task)));
+    tasks = List.from(list.reversed);
+  }
+
   void startPolling(Store<AppState> store, Function onFinished) {
     print('startPolling ${status.toString()}');
     if (status == Status.idle) {
@@ -94,6 +122,7 @@ class XCopyTasks {
   /// cancel given xcopy task
   Future<void> cancelTask(Task task) async {
     await myStore.state.apis.req('delTask', {'uuid': task.uuid});
+    await refresh();
   }
 
   /// clear all finished xcopy task
@@ -104,5 +133,16 @@ class XCopyTasks {
             .req('delTask', {'uuid': task.uuid}).catchError(print);
       }
     });
+  }
+
+  /// clear all finished xcopy task
+  Future<void> cancelAllTaskAsync() async {
+    if (tasks is! List) return;
+
+    List<Future> futures = List.from(tasks
+        .map((task) => myStore.state.apis.req('delTask', {'uuid': task.uuid})));
+
+    await Future.wait(futures);
+    await refresh();
   }
 }

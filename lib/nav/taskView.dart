@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
+import './delete.dart';
 import './xcopyTasks.dart';
 import '../common/utils.dart';
 import '../common/appBarSlivers.dart';
 
 class TaskView extends StatefulWidget {
-  TaskView({Key key, this.toggle}) : super(key: key);
-  final Function toggle;
+  TaskView({Key key}) : super(key: key);
+
   @override
   _TaskViewState createState() => _TaskViewState();
 }
@@ -44,7 +45,6 @@ class _TaskViewState extends State<TaskView> {
   // relist and auto refresh per 500 milliseconds
   Future reqList() async {
     await Future.delayed(Duration(milliseconds: 500));
-    final instance = XCopyTasks.getInstance();
     if (this.mounted) {
       setState(() {
         tasks = instance.tasks;
@@ -59,7 +59,31 @@ class _TaskViewState extends State<TaskView> {
   /// slivers
   List<Widget> getSlivers() {
     final String titleName = '复制/移动任务';
-    List<Widget> slivers = appBarSlivers(paddingLeft, titleName);
+    List<Widget> slivers = appBarSlivers(paddingLeft, titleName, action: [
+      Builder(
+        builder: (ctx) {
+          return FlatButton(
+            child: Text('全部清除'),
+            textColor: Colors.teal,
+            onPressed: instance?.tasks?.length != 0
+                ? () async {
+                    bool success = await showDialog(
+                      context: ctx,
+                      builder: (BuildContext context) => DeleteDialog(
+                            xCopyTasks: instance,
+                          ),
+                    );
+                    if (success == true) {
+                      showSnackBar(ctx, '清除成功');
+                    } else if (success == false) {
+                      showSnackBar(ctx, '清除失败');
+                    }
+                  }
+                : null,
+          );
+        },
+      )
+    ]);
     if (tasks == null) {
       slivers.add(
         SliverToBoxAdapter(
@@ -112,7 +136,12 @@ class _TaskViewState extends State<TaskView> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Expanded(flex: 1, child: Container()),
-                          Text(task.uuid.substring(0, 20)),
+                          Text(
+                            task.text,
+                            overflow: TextOverflow.fade,
+                            softWrap: false,
+                            maxLines: 1,
+                          ),
                           Expanded(flex: 1, child: Container()),
                           task.isFinished
                               ? Container()
@@ -131,16 +160,27 @@ class _TaskViewState extends State<TaskView> {
                       height: 72,
                       child: task.isFinished
                           ? Icon(Icons.check_circle)
-                          : IconButton(
-                              icon: Icon(Icons.close),
-                              onPressed: () async {
-                                showLoading(context);
-                                try {
-                                  await instance.cancelTask(task);
-                                } catch (e) {
-                                  print(e);
-                                }
-                                Navigator.pop(context);
+                          : Builder(
+                              builder: (ctx) {
+                                return IconButton(
+                                  icon: Icon(Icons.close),
+                                  onPressed: () async {
+                                    bool success = await showDialog(
+                                      context: ctx,
+                                      builder: (BuildContext context) =>
+                                          DeleteDialog(
+                                            task: task,
+                                            xCopyTasks: instance,
+                                          ),
+                                    );
+
+                                    if (success == true) {
+                                      showSnackBar(ctx, '取消成功');
+                                    } else if (success == false) {
+                                      showSnackBar(ctx, '取消失败');
+                                    }
+                                  },
+                                );
                               },
                             ),
                     ),

@@ -98,9 +98,7 @@ class _TaskFabState extends State<TaskFab> with SingleTickerProviderStateMixin {
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (context) {
-          return TaskView(
-            toggle: toggle,
-          );
+          return TaskView();
         },
       ),
     );
@@ -175,9 +173,7 @@ class _TaskFabState extends State<TaskFab> with SingleTickerProviderStateMixin {
         return Positioned(
           bottom: getBottom(context),
           left: getLeft(context),
-          // TODO: fake true
           child: showFab
-              // child: true
               ? AnimatedOpacity(
                   opacity: isFinished ? 0 : 1,
                   duration: Duration(seconds: 1),
