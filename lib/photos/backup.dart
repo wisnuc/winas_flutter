@@ -301,7 +301,7 @@ class BackupWorker {
     cancelUpload = CancelIsolate();
 
     // upload photo
-    File file = await entity.file;
+    File file = await entity.originFile;
     String filePath = file.path;
 
     await uploadViaIsolate(apis, targetDir, filePath, hash, mtime,

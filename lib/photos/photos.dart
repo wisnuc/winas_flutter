@@ -224,6 +224,8 @@ class _PhotosState extends State<Photos> {
                   child: Text(
                     album.name,
                     style: TextStyle(fontSize: 15),
+                    overflow: TextOverflow.fade,
+                    maxLines: 1,
                   ),
                 ),
                 Container(
@@ -252,7 +254,6 @@ class _PhotosState extends State<Photos> {
             : Container(
                 padding: EdgeInsets.only(left: 16, right: 8),
                 color: Colors.blue,
-                height: 40,
                 child: Row(
                   children: <Widget>[
                     Center(
