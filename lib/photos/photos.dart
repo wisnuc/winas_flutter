@@ -112,17 +112,21 @@ class _PhotosState extends State<Photos> {
       //nas photos
       List<Entry> allMedia = await nasPhotos(store);
 
-      final allMediaAlbum = Album(allMedia, '所有照片');
+      final List<Entry> allVideos = [];
+      final List<Entry> allPhotos = [];
 
       final videoArray = videoTypes.split('.');
 
-      final List<Entry> allVideos = List.from(
-        allMedia.where(
-          (entry) => videoArray.contains(entry?.metadata?.type),
-        ),
-      );
+      for (Entry entry in allMedia) {
+        if (videoArray.contains(entry?.metadata?.type)) {
+          allVideos.add(entry);
+        } else {
+          allPhotos.add(entry);
+        }
+      }
 
-      final allVideosAlbum = Album(allVideos, '所有视频');
+      final allPhotosAlbum = Album(allPhotos, '照片');
+      final allVideosAlbum = Album(allVideos, '视频');
 
       // find photos in each backup drives, filter: lenth > 0
       final List<Album> backupAlbums = List.from(
@@ -138,7 +142,7 @@ class _PhotosState extends State<Photos> {
       );
 
       albumList = [];
-      albumList.add(allMediaAlbum);
+      albumList.add(allPhotosAlbum);
       albumList.add(allVideosAlbum);
       albumList.addAll(backupAlbums);
 
@@ -184,6 +188,60 @@ class _PhotosState extends State<Photos> {
     autoRefresh(isFirst: true).catchError(print);
   }
 
+  Widget renderAlbum(Album album) {
+    return Container(
+      child: Material(
+        child: InkWell(
+          onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) {
+                    return PhotoList(album: album);
+                  },
+                ),
+              ),
+          child: Container(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: album.cover != null
+                      ? Container(
+                          constraints: BoxConstraints.expand(),
+                          child: Image.memory(
+                            album.cover,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Container(
+                          color: Colors.grey[300],
+                        ),
+                ),
+                Container(
+                  padding: EdgeInsets.fromLTRB(0, 4, 0, 4),
+                  width: double.infinity,
+                  child: Text(
+                    album.name,
+                    style: TextStyle(fontSize: 15),
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.fromLTRB(0, 0, 0, 4),
+                  width: double.infinity,
+                  child: Text(
+                    '${album.length.toString()} 项内容',
+                    style: TextStyle(color: Colors.black54, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   List<Widget> renderSlivers(Store store) {
     final worker = widget.backupWorker;
     return <Widget>[
@@ -194,13 +252,16 @@ class _PhotosState extends State<Photos> {
             : Container(
                 padding: EdgeInsets.only(left: 16, right: 8),
                 color: Colors.blue,
+                height: 40,
                 child: Row(
                   children: <Widget>[
                     Center(
                       child: Text(
-                        worker.isFinished
-                            ? '备份已经完成'
-                            : worker.isRunning ? '备份照片中' : '本机照片备份',
+                        store.state.config.autoBackup == true
+                            ? worker.isFinished
+                                ? '备份已经完成'
+                                : worker.isRunning ? '备份中' : '照片备份功能'
+                            : '照片备份功能',
                         style: TextStyle(color: Colors.white),
                       ),
                     ),
@@ -215,7 +276,7 @@ class _PhotosState extends State<Photos> {
                       flex: 1,
                     ),
                     Text(
-                      store.state.config.autoBackup == true ? '' : '备份已关闭',
+                      store.state.config.autoBackup == true ? '' : '已关闭',
                       style: TextStyle(color: Colors.white),
                     ),
                     Switch(
@@ -234,7 +295,7 @@ class _PhotosState extends State<Photos> {
                           widget.backupWorker.abort();
                         }
                       },
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -251,6 +312,20 @@ class _PhotosState extends State<Photos> {
             : Container(),
       ),
 
+      // backup title
+      SliverToBoxAdapter(
+        child: albumList.length < 3
+            ? Container()
+            : Container(
+                padding: EdgeInsets.only(top: 16, left: 16, right: 8),
+                // padding: EdgeInsets.all(16),
+                child: Text(
+                  '全部',
+                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+              ),
+      ),
+
       // all photos
       SliverPadding(
         padding: EdgeInsets.all(16),
@@ -264,55 +339,7 @@ class _PhotosState extends State<Photos> {
           delegate: SliverChildBuilderDelegate(
             (BuildContext context, int index) {
               final album = albumList[index];
-              return Container(
-                child: Material(
-                  child: InkWell(
-                    onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) {
-                              return PhotoList(album: album);
-                            },
-                          ),
-                        ),
-                    child: Container(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            flex: 1,
-                            child: album.cover != null
-                                ? Container(
-                                    constraints: BoxConstraints.expand(),
-                                    child: Image.memory(
-                                      album.cover,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                : Container(
-                                    color: Colors.grey[300],
-                                  ),
-                          ),
-                          Container(
-                            padding: EdgeInsets.fromLTRB(0, 4, 0, 4),
-                            width: double.infinity,
-                            child: Text(
-                              album.name,
-                            ),
-                          ),
-                          Container(
-                            padding: EdgeInsets.fromLTRB(0, 0, 0, 4),
-                            width: double.infinity,
-                            child: Text(
-                              album.length.toString(),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
+              return renderAlbum(album);
             },
             childCount: albumList.length > 2 ? 2 : albumList.length,
           ),
@@ -324,9 +351,12 @@ class _PhotosState extends State<Photos> {
         child: albumList.length < 3
             ? Container()
             : Container(
-                padding: EdgeInsets.only(left: 16, right: 8),
+                padding: EdgeInsets.only(top: 8, left: 16, right: 8),
                 // padding: EdgeInsets.all(16),
-                child: Text('来自备份的照片', style: TextStyle(fontSize: 18)),
+                child: Text(
+                  '来自',
+                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                ),
               ),
       ),
 
@@ -343,55 +373,7 @@ class _PhotosState extends State<Photos> {
           delegate: SliverChildBuilderDelegate(
             (BuildContext context, int index) {
               final album = albumList[index + 2];
-              return Container(
-                child: Material(
-                  child: InkWell(
-                    onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) {
-                              return PhotoList(album: album);
-                            },
-                          ),
-                        ),
-                    child: Container(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            flex: 1,
-                            child: album.cover != null
-                                ? Container(
-                                    constraints: BoxConstraints.expand(),
-                                    child: Image.memory(
-                                      album.cover,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                : Container(
-                                    color: Colors.grey[300],
-                                  ),
-                          ),
-                          Container(
-                            padding: EdgeInsets.fromLTRB(0, 4, 0, 4),
-                            width: double.infinity,
-                            child: Text(
-                              album.name,
-                            ),
-                          ),
-                          Container(
-                            padding: EdgeInsets.fromLTRB(0, 0, 0, 4),
-                            width: double.infinity,
-                            child: Text(
-                              album.length.toString(),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
+              return renderAlbum(album);
             },
             childCount: albumList.length > 2 ? albumList.length - 2 : 0,
           ),
@@ -409,64 +391,67 @@ class _PhotosState extends State<Photos> {
       builder: (context, store) {
         return Scaffold(
           appBar: AppBar(
-            elevation: 2.0, // shadow
+            elevation: 0.0,
             brightness: Brightness.light,
             backgroundColor: Colors.white,
             iconTheme: IconThemeData(color: Colors.black38),
             title: Text('相簿', style: TextStyle(color: Colors.black87)),
+            centerTitle: false,
           ),
-          body: loading
-              ? Center(
-                  child: CircularProgressIndicator(),
-                )
-              : error
-                  ? Center(
-                      child: Column(
-                        children: <Widget>[
-                          Expanded(flex: 4, child: Container()),
-                          Container(
-                            padding: EdgeInsets.all(16),
-                            child: Container(
-                              width: 72,
-                              height: 72,
-                              // padding: EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[400],
-                                borderRadius: BorderRadius.circular(36),
-                              ),
-                              child: Icon(
-                                Winas.logo,
-                                color: Colors.grey[50],
-                                size: 84,
+          body: SafeArea(
+            child: loading
+                ? Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : error
+                    ? Center(
+                        child: Column(
+                          children: <Widget>[
+                            Expanded(flex: 4, child: Container()),
+                            Container(
+                              padding: EdgeInsets.all(16),
+                              child: Container(
+                                width: 72,
+                                height: 72,
+                                // padding: EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[400],
+                                  borderRadius: BorderRadius.circular(36),
+                                ),
+                                child: Icon(
+                                  Winas.logo,
+                                  color: Colors.grey[50],
+                                  size: 84,
+                                ),
                               ),
                             ),
-                          ),
-                          Text(
-                            '加载页面失败，请检查网络设置',
-                            style: TextStyle(color: Colors.black38),
-                          ),
-                          FlatButton(
-                            padding: EdgeInsets.all(0),
-                            child: Text(
-                              '重新加载',
-                              style: TextStyle(color: Colors.teal),
+                            Text(
+                              '加载页面失败，请检查网络设置',
+                              style: TextStyle(color: Colors.black38),
                             ),
-                            onPressed: () => refresh(store, true),
+                            FlatButton(
+                              padding: EdgeInsets.all(0),
+                              child: Text(
+                                '重新加载',
+                                style: TextStyle(color: Colors.teal),
+                              ),
+                              onPressed: () => refresh(store, true),
+                            ),
+                            Expanded(flex: 6, child: Container()),
+                          ],
+                        ),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: () => refresh(store, true),
+                        child: Container(
+                          child: CustomScrollView(
+                            controller: myScrollController,
+                            physics: AlwaysScrollableScrollPhysics(),
+                            slivers: renderSlivers(store),
                           ),
-                          Expanded(flex: 6, child: Container()),
-                        ],
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: () => refresh(store, true),
-                      child: Container(
-                        child: CustomScrollView(
-                          controller: myScrollController,
-                          physics: AlwaysScrollableScrollPhysics(),
-                          slivers: renderSlivers(store),
                         ),
                       ),
-                    ),
+          ),
         );
       },
     );
