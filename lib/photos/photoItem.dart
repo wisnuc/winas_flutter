@@ -68,7 +68,7 @@ class _PhotoItemState extends State<PhotoItem> {
           child: Material(
             child: InkWell(
               onTap: () => _onTap(ctx),
-              onLongPress: () {},
+              onLongPress: () => widget.select.toggleSelect(entry),
               child: Stack(
                 children: <Widget>[
                   Positioned.fill(

@@ -16,13 +16,11 @@ const MAX_FILE = 1000;
 
 class PhotoEntry {
   String id;
-  String name;
   String hash;
-  int size;
   int date;
   String hdate;
 
-  PhotoEntry(this.id, this.name, this.hash, this.size, this.date) {
+  PhotoEntry(this.id, this.hash, this.date) {
     this.hdate = prettyDate(date, showMonth: true);
   }
 }
@@ -261,55 +259,56 @@ class BackupWorker {
   }
 
   /// get Hash from hashViaIsolate or shared_preferences
-  /// use AssetEntity.id + createTime/mtime as the photo's identity
-  Future<String> getHash(String id, String filePath) async {
+  /// use AssetEntity.id + createTime as the photo's identity
+  Future<String> getHash(String id, AssetEntity entity) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String hash = prefs.getString(id);
     if (hash == null) {
       cancelHash = CancelIsolate();
+      File file = await entity.file;
+      String filePath = file.path;
       hash = await hashViaIsolate(filePath, cancelIsolate: cancelHash);
       if (hash == null) throw 'hash error';
+      await prefs.setString(id, hash);
     }
-    await prefs.setString(id, hash);
     return hash;
   }
 
   Future<void> uploadSingle(
       AssetEntity entity, List<RemoteList> remoteDirs, Entry rootDir) async {
-    final time = DateTime.now().millisecondsSinceEpoch;
+    final time = getNow();
 
-    File file = await entity.file;
-
-    String filePath = file.path;
-    String name = filePath.split('/').last;
     String id = entity.id;
-    final stat = await file.stat();
-    int mtime = entity.createTime ?? stat.modified.millisecondsSinceEpoch;
-    print(
-        'before hash: $name, size: ${stat.size} ${DateTime.now().millisecondsSinceEpoch - time}');
+    int mtime = entity.createTime;
 
-    String hash = await getHash('$id+$mtime', filePath);
-    print('after hash ${DateTime.now().millisecondsSinceEpoch - time}');
-    final photoEntry = PhotoEntry(id, name, hash, stat.size, mtime);
+    print('before hash: $id, ${getNow() - time}');
+    String hash = await getHash('$id+$mtime', entity);
+
+    print('after hash, ${getNow() - time}');
+    final photoEntry = PhotoEntry(id, hash, mtime);
 
     final targetDir = await getTargetDir(remoteDirs, photoEntry, rootDir);
 
     // already backuped, continue next
     if (targetDir == null) {
       finished += 1;
-      print('backup ignore: ${file.path}');
+      print('backup ignore: $id, ${getNow() - time}');
       return;
     }
-    print(
-        'before upload: $name, size: ${stat.size} ${DateTime.now().millisecondsSinceEpoch - time}');
+
+    print('before upload: $id, ${getNow() - time}');
     // update cancelIsolate
     cancelUpload = CancelIsolate();
+
     // upload photo
+    File file = await entity.file;
+    String filePath = file.path;
+
     await uploadViaIsolate(apis, targetDir, filePath, hash, mtime,
         cancelIsolate: cancelUpload);
 
     print(
-        'backup success: ${file.path} in ${DateTime.now().millisecondsSinceEpoch - time} ms');
+        'backup success: $id in ${DateTime.now().millisecondsSinceEpoch - time} ms');
     finished += 1;
   }
 

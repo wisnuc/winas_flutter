@@ -250,6 +250,9 @@ String prettyDate(int time, {bool showDay: false, bool showMonth: false}) {
   return '$year-$month-$day $hour:$minute';
 }
 
+/// get DateTime.now().millisecondsSinceEpoch
+int getNow() => DateTime.now().millisecondsSinceEpoch;
+
 /// Ellipsis Text
 Widget ellipsisText(String text, {TextStyle style}) {
   return Expanded(
