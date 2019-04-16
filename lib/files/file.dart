@@ -12,6 +12,8 @@ import './fileRow.dart';
 import './newFolder.dart';
 import './xcopyDialog.dart';
 import './tokenExpired.dart';
+import './deviceNotOnline.dart';
+
 import '../redux/redux.dart';
 import '../common/cache.dart';
 import '../common/utils.dart';
@@ -158,6 +160,13 @@ class _FilesState extends State<Files> {
         showDialog(
           context: context,
           builder: (BuildContext context) => TokenExpired(),
+        );
+      } else if (error is DioError &&
+          error?.response?.data is Map &&
+          error.response.data['message'] == 'Station is not online') {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) => DeviceNotOnline(),
         );
       } else {
         setState(() {
@@ -776,16 +785,105 @@ class _FilesState extends State<Files> {
     );
   }
 
-  Widget homeView() {
+  Widget mainScrollView(AppState state, bool isHome) {
+    return CustomScrollView(
+      key: Key(entries.length.toString()),
+      controller: myScrollController,
+      physics: AlwaysScrollableScrollPhysics(),
+      slivers: <Widget>[
+        // file nav view
+        SliverFixedExtentList(
+          itemExtent: 96.0,
+          delegate: SliverChildBuilderDelegate(
+            (BuildContext context, int index) {
+              return Container(
+                color: Colors.grey[200],
+                height: 96,
+                child: Row(
+                  children: widget.fileNavViews
+                      .map<Widget>((FileNavView fileNavView) =>
+                          fileNavView.navButton(context))
+                      .toList(),
+                ),
+              );
+            },
+            childCount: !isHome || select.selectMode() ? 0 : 1,
+          ),
+        ),
+
+        // List is empty
+        SliverFixedExtentList(
+          itemExtent: MediaQuery.of(context).size.height - 320,
+          delegate: SliverChildBuilderDelegate(
+            (BuildContext context, int index) {
+              return Column(
+                children: <Widget>[
+                  Expanded(flex: 1, child: Container()),
+                  Container(
+                    padding: EdgeInsets.all(16),
+                    child: Container(
+                      width: 72,
+                      height: 72,
+                      // padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[400],
+                        borderRadius: BorderRadius.circular(36),
+                      ),
+                      child:
+                          Icon(Winas.logo, color: Colors.grey[200], size: 84),
+                    ),
+                  ),
+                  Text(isHome ? '您还未上传任何文件' : '空文件夹'),
+                  Expanded(
+                    flex: 2,
+                    child: Container(),
+                  ),
+                ],
+              );
+            },
+            childCount: entries.length == 0 && !loading ? 1 : 0,
+          ),
+        ),
+
+        // show dir title
+        dirTitle(),
+
+        // dir Grid or Row view
+        state.config.gridView ? dirGrid(state) : dirRow(state),
+
+        // file title
+        fileTitle(),
+
+        // file Grid or Row view
+        state.config.gridView ? fileGrid(state) : fileRow(state),
+
+        SliverFixedExtentList(
+          itemExtent: 24,
+          delegate: SliverChildBuilderDelegate(
+            (context, index) => Container(),
+            childCount: 1,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// main view of file list
+  ///
+  /// if isHome == true:
+  ///
+  /// 1. show homeViewAppBar
+  /// 2. file nav view
+  Widget mainView(bool isHome) {
     return StoreConnector<AppState, AppState>(
-      onInit: (store) => refresh(store.state),
-      // refresh(store.state).catchError((error) => print(error)),
+      onInit: (store) => refresh(store.state).catchError(print),
       onDispose: (store) => {},
       converter: (store) => store.state,
       builder: (context, state) {
         return Scaffold(
-          appBar:
-              select.selectMode() ? selectAppBar(state) : homeViewAppBar(state),
+          appBar: select.selectMode()
+              ? selectAppBar(state)
+              : isHome ? homeViewAppBar(state) : directoryViewAppBar(state),
           body: SafeArea(
             child: Stack(
               alignment: Alignment.center,
@@ -837,103 +935,12 @@ class _FilesState extends State<Files> {
                           )
                         : Container(
                             color: Colors.grey[200],
-                            child: DraggableScrollbar.semicircle(
-                              controller: myScrollController,
-                              child: CustomScrollView(
-                                key: Key(entries.length.toString()),
-                                controller: myScrollController,
-                                physics: AlwaysScrollableScrollPhysics(),
-                                slivers: <Widget>[
-                                  // file nav view
-                                  SliverFixedExtentList(
-                                    itemExtent: 96.0,
-                                    delegate: SliverChildBuilderDelegate(
-                                      (BuildContext context, int index) {
-                                        return Container(
-                                          color: Colors.grey[200],
-                                          height: 96,
-                                          child: Row(
-                                            children: widget.fileNavViews
-                                                .map<Widget>(
-                                                    (FileNavView fileNavView) =>
-                                                        fileNavView
-                                                            .navButton(context))
-                                                .toList(),
-                                          ),
-                                        );
-                                      },
-                                      childCount: select.selectMode() ? 0 : 1,
-                                    ),
-                                  ),
-
-                                  // List is empty
-                                  SliverFixedExtentList(
-                                    itemExtent:
-                                        MediaQuery.of(context).size.height -
-                                            320,
-                                    delegate: SliverChildBuilderDelegate(
-                                      (BuildContext context, int index) {
-                                        return Column(
-                                          children: <Widget>[
-                                            Expanded(
-                                                flex: 1, child: Container()),
-                                            Container(
-                                              padding: EdgeInsets.all(16),
-                                              child: Container(
-                                                width: 72,
-                                                height: 72,
-                                                // padding: EdgeInsets.all(16),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.grey[400],
-                                                  borderRadius:
-                                                      BorderRadius.circular(36),
-                                                ),
-                                                child: Icon(Winas.logo,
-                                                    color: Colors.grey[200],
-                                                    size: 84),
-                                              ),
-                                            ),
-                                            Text('您还未上传任何文件'),
-                                            Expanded(
-                                              flex: 2,
-                                              child: Container(),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                      childCount:
-                                          entries.length == 0 && !loading
-                                              ? 1
-                                              : 0,
-                                    ),
-                                  ),
-
-                                  // show dir title
-                                  dirTitle(),
-
-                                  // dir Grid or Row view
-                                  state.config.gridView
-                                      ? dirGrid(state)
-                                      : dirRow(state),
-
-                                  // file title
-                                  fileTitle(),
-
-                                  // file Grid or Row view
-                                  state.config.gridView
-                                      ? fileGrid(state)
-                                      : fileRow(state),
-
-                                  SliverFixedExtentList(
-                                    itemExtent: 24,
-                                    delegate: SliverChildBuilderDelegate(
-                                      (context, index) => Container(),
-                                      childCount: 1,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                            child: entries.length > 100
+                                ? DraggableScrollbar.semicircle(
+                                    controller: myScrollController,
+                                    child: mainScrollView(state, isHome),
+                                  )
+                                : mainScrollView(state, isHome),
                           ),
                   ),
                 ),
@@ -949,82 +956,6 @@ class _FilesState extends State<Files> {
               ],
             ),
           ),
-          // floatingActionButton: TaskFab(),
-        );
-      },
-    );
-  }
-
-  Widget directoryView() {
-    return StoreConnector<AppState, AppState>(
-      onInit: (store) =>
-          refresh(store.state).catchError((error) => print(error)),
-      onDispose: (store) => {},
-      converter: (store) => store.state,
-      builder: (context, state) {
-        return Scaffold(
-          appBar: select.selectMode()
-              ? selectAppBar(state)
-              : directoryViewAppBar(state),
-          body: loading
-              ? Center(
-                  child: CircularProgressIndicator(),
-                )
-              : Theme(
-                  data: Theme.of(context).copyWith(primaryColor: Colors.teal),
-                  child: RefreshIndicator(
-                    onRefresh: () => refresh(state),
-                    child: _error != null
-                        ? Center(
-                            child: Text('出错啦！'),
-                          )
-                        : entries.length == 0
-                            ? Column(
-                                children: <Widget>[
-                                  Expanded(flex: 2, child: Container()),
-                                  Icon(Icons.folder_open,
-                                      color: Colors.grey[300], size: 84),
-                                  Text(
-                                    '空文件夹',
-                                    style: TextStyle(color: Colors.black38),
-                                  ),
-                                  Expanded(flex: 3, child: Container()),
-                                ],
-                              )
-                            : Container(
-                                color: Colors.grey[200],
-                                child: DraggableScrollbar.semicircle(
-                                  controller: myScrollController,
-                                  child: CustomScrollView(
-                                    key: Key(entries.length.toString()),
-                                    controller: myScrollController,
-                                    physics: AlwaysScrollableScrollPhysics(),
-                                    slivers: <Widget>[
-                                      // dir title
-                                      dirTitle(),
-                                      // dir Grid or Row view
-                                      state.config.gridView
-                                          ? dirGrid(state)
-                                          : dirRow(state),
-                                      // file title
-                                      fileTitle(),
-                                      // file Grid or Row view
-                                      state.config.gridView
-                                          ? fileGrid(state)
-                                          : fileRow(state),
-                                      SliverFixedExtentList(
-                                        itemExtent: 24,
-                                        delegate: SliverChildBuilderDelegate(
-                                          (context, index) => Container(),
-                                          childCount: 1,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                  ),
-                ),
         );
       },
     );
@@ -1044,9 +975,9 @@ class _FilesState extends State<Files> {
         children: <Widget>[
           Positioned.fill(
             child: node.tag == 'home'
-                ? homeView()
+                ? mainView(true)
                 : (node.tag == 'dir' || node.tag == 'built-in')
-                    ? directoryView()
+                    ? mainView(false)
                     : Center(child: Text('Error !')),
           ),
 

@@ -31,6 +31,7 @@ class Request {
   void interceptDio() {
     InterceptorsWrapper interceptorsWrapper = InterceptorsWrapper(
       onResponse: (Response response) {
+        if (response.data == null) return null;
         var res = response.data['data'];
         // save cloud token not lanToken
         if (res is Map && res['token'] != null && res['id'] != null) {

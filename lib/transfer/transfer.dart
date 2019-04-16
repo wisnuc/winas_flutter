@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:open_file/open_file.dart';
 import 'package:flutter_redux/flutter_redux.dart';
-import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import './manager.dart';
 import './removable.dart';
 import '../redux/redux.dart';
@@ -382,22 +381,19 @@ class _TransferState extends State<Transfer> {
                       )
                     : Container(
                         color: Colors.grey[200],
-                        child: DraggableScrollbar.semicircle(
+                        child: CustomScrollView(
                           controller: myScrollController,
-                          child: CustomScrollView(
-                            controller: myScrollController,
-                            physics: AlwaysScrollableScrollPhysics(),
-                            slivers: <Widget>[
-                              SliverFixedExtentList(
-                                itemExtent: 72,
-                                delegate: SliverChildBuilderDelegate(
-                                  (BuildContext ctx, int index) =>
-                                      renderRow(ctx, list, index, state),
-                                  childCount: list.length,
-                                ),
-                              )
-                            ],
-                          ),
+                          physics: AlwaysScrollableScrollPhysics(),
+                          slivers: <Widget>[
+                            SliverFixedExtentList(
+                              itemExtent: 72,
+                              delegate: SliverChildBuilderDelegate(
+                                (BuildContext ctx, int index) =>
+                                    renderRow(ctx, list, index, state),
+                                childCount: list.length,
+                              ),
+                            )
+                          ],
                         ),
                       ),
           ),

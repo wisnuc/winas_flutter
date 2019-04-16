@@ -2,7 +2,6 @@ import 'dart:typed_data';
 import 'package:redux/redux.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_redux/flutter_redux.dart';
-import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 
 import './backup.dart';
 import './photoList.dart';
