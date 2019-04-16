@@ -265,7 +265,7 @@ class BackupWorker {
     String hash = prefs.getString(id);
     if (hash == null) {
       cancelHash = CancelIsolate();
-      File file = await entity.file;
+      File file = await entity.originFile;
       String filePath = file.path;
       hash = await hashViaIsolate(filePath, cancelIsolate: cancelHash);
       if (hash == null) throw 'hash error';
