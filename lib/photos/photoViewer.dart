@@ -483,7 +483,10 @@ class _GridPhotoState extends State<GridPhoto>
       playerWidget = Chewie(
         controller: chewieController,
       );
-      setState(() {});
+
+      if (this.mounted) {
+        setState(() {});
+      }
     } else {
       // download raw photo
       imageData = await cm.getPhoto(widget.photo, state);
