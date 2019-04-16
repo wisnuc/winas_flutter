@@ -337,6 +337,7 @@ class BackupWorker {
     }
 
     status = Status.finished;
+    finished = 0;
   }
 
   void start() {

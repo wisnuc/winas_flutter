@@ -140,13 +140,13 @@ class _PhotosState extends State<Photos> {
 
     try {
       // req data
-      final List res = await Future.wait([localPhotos(), nasPhotos(store)]);
+      // final List res = await Future.wait([localPhotos(), nasPhotos(store)]);
 
       //local photos
-      List<AssetEntity> localAssetList = res[0];
+      // List<AssetEntity> localAssetList = res[0];
 
       //nas photos
-      List<Entry> allMedia = res[1];
+      List<Entry> allMedia = await nasPhotos(store);
 
       final allMediaAlbum = Album(allMedia, '所有照片');
 
@@ -159,7 +159,7 @@ class _PhotosState extends State<Photos> {
       );
 
       final allVideosAlbum = Album(allVideos, '所有视频');
-      final localAlbum = LocalAlbum(localAssetList, '本机照片');
+      // final localAlbum = LocalAlbum(localAssetList, '本机照片');
 
       // find photos in each backup drives, filter: lenth > 0
       final List<Album> backupAlbums = List.from(
@@ -177,7 +177,7 @@ class _PhotosState extends State<Photos> {
       albumList = [];
       albumList.add(allMediaAlbum);
       albumList.add(allVideosAlbum);
-      albumList.add(localAlbum);
+      // albumList.add(localAlbum);
       albumList.addAll(backupAlbums);
 
       // request album's cover
@@ -226,8 +226,74 @@ class _PhotosState extends State<Photos> {
     autoRefresh(isFirst: true).catchError(print);
   }
 
-  List<Widget> renderSlivers() {
+  List<Widget> renderSlivers(Store store) {
+    final worker = widget.backupWorker;
     return <Widget>[
+      // backup switch
+      SliverToBoxAdapter(
+        child: loading || error
+            ? Container()
+            : Container(
+                padding: EdgeInsets.only(left: 16, right: 8),
+                color: Colors.blue,
+                child: Row(
+                  children: <Widget>[
+                    Center(
+                      child: Text(
+                        worker.isFinished
+                            ? '备份已经完成'
+                            : worker.isRunning ? '备份照片中' : '本机照片备份',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                    Container(width: 16),
+                    Expanded(
+                      child: Container(
+                        child: Text(
+                          worker.isRunning ? worker.progress : '',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      flex: 1,
+                    ),
+                    Text(
+                      store.state.config.autoBackup == true ? '' : '备份已关闭',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    Switch(
+                      activeColor: Colors.white,
+                      value: store.state.config.autoBackup == true,
+                      onChanged: (value) {
+                        store.dispatch(UpdateConfigAction(
+                          Config(
+                            gridView: store.state.config.gridView,
+                            autoBackup: value,
+                          ),
+                        ));
+                        if (value == true) {
+                          widget.backupWorker.start();
+                        } else {
+                          widget.backupWorker.abort();
+                        }
+                      },
+                    )
+                  ],
+                ),
+              ),
+      ),
+      // backup loading
+      SliverToBoxAdapter(
+        child: worker.isRunning
+            ? Container(
+                child: LinearProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation(Colors.blue[700]),
+                  backgroundColor: Colors.blue,
+                ),
+              )
+            : Container(),
+      ),
+
+      // all photos
       SliverPadding(
         padding: EdgeInsets.all(16),
         sliver: SliverGrid(
@@ -240,8 +306,6 @@ class _PhotosState extends State<Photos> {
           delegate: SliverChildBuilderDelegate(
             (BuildContext context, int index) {
               final album = albumList[index];
-              final worker = widget.backupWorker;
-              bool isBackuping = worker.isRunning && (album is LocalAlbum);
               return Container(
                 child: Material(
                   child: InkWell(
@@ -282,16 +346,14 @@ class _PhotosState extends State<Photos> {
                             padding: EdgeInsets.fromLTRB(0, 4, 0, 4),
                             width: double.infinity,
                             child: Text(
-                              isBackuping ? album.name + '-备份中' : album.name,
+                              album.name,
                             ),
                           ),
                           Container(
                             padding: EdgeInsets.fromLTRB(0, 0, 0, 4),
                             width: double.infinity,
                             child: Text(
-                              isBackuping
-                                  ? worker.progress
-                                  : album.length.toString(),
+                              album.length.toString(),
                             ),
                           ),
                         ],
@@ -301,7 +363,92 @@ class _PhotosState extends State<Photos> {
                 ),
               );
             },
-            childCount: albumList.length,
+            childCount: 2,
+          ),
+        ),
+      ),
+
+      SliverToBoxAdapter(
+        child: albumList.length - 2 < 1
+            ? Container()
+            : Container(
+                padding: EdgeInsets.only(left: 16, right: 8),
+                // padding: EdgeInsets.all(16),
+                child: Text('来自备份的照片', style: TextStyle(fontSize: 18)),
+              ),
+      ),
+
+      // backup drives
+      SliverPadding(
+        padding: EdgeInsets.all(16),
+        sliver: SliverGrid(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 16.0,
+            crossAxisSpacing: 16.0,
+            childAspectRatio: 0.8,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (BuildContext context, int index) {
+              final album = albumList[index + 2];
+              return Container(
+                child: Material(
+                  child: InkWell(
+                    onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) {
+                              if (album is Album) {
+                                return PhotoList(album: album);
+                              } else if (album is LocalAlbum) {
+                                return DevicePhotos(
+                                  album: album,
+                                  backupWorker: widget.backupWorker,
+                                );
+                              }
+                            },
+                          ),
+                        ),
+                    child: Container(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            flex: 1,
+                            child: album.cover != null
+                                ? Container(
+                                    constraints: BoxConstraints.expand(),
+                                    child: Image.memory(
+                                      album.cover,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                : Container(
+                                    color: Colors.grey[300],
+                                  ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.fromLTRB(0, 4, 0, 4),
+                            width: double.infinity,
+                            child: Text(
+                              album.name,
+                            ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.fromLTRB(0, 0, 0, 4),
+                            width: double.infinity,
+                            child: Text(
+                              album.length.toString(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+            childCount: albumList.length - 2,
           ),
         ),
       ),
@@ -315,7 +462,6 @@ class _PhotosState extends State<Photos> {
       onDispose: (store) => {},
       converter: (store) => store,
       builder: (context, store) {
-        AppState state = store.state;
         return Scaffold(
           appBar: AppBar(
             elevation: 2.0, // shadow
@@ -323,31 +469,6 @@ class _PhotosState extends State<Photos> {
             backgroundColor: Colors.white,
             iconTheme: IconThemeData(color: Colors.black38),
             title: Text('相簿', style: TextStyle(color: Colors.black87)),
-            actions: loading || error
-                ? null
-                : <Widget>[
-                    Center(
-                      child: Text('本机照片备份',
-                          style: TextStyle(color: Colors.black87)),
-                    ),
-                    Switch(
-                      activeColor: Colors.teal,
-                      value: state.config.autoBackup == true,
-                      onChanged: (value) {
-                        store.dispatch(UpdateConfigAction(
-                          Config(
-                            gridView: state.config.gridView,
-                            autoBackup: value,
-                          ),
-                        ));
-                        if (value == true) {
-                          widget.backupWorker.start();
-                        } else {
-                          widget.backupWorker.abort();
-                        }
-                      },
-                    )
-                  ],
           ),
           body: loading
               ? Center(
@@ -399,7 +520,7 @@ class _PhotosState extends State<Photos> {
                           child: CustomScrollView(
                             controller: myScrollController,
                             physics: AlwaysScrollableScrollPhysics(),
-                            slivers: renderSlivers(),
+                            slivers: renderSlivers(store),
                           ),
                         ),
                       ),
