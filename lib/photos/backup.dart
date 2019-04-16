@@ -58,6 +58,8 @@ class BackupWorker {
 
   /// get all local photos and videos
   Future<List<AssetEntity>> getAssetList() async {
+    final result = await PhotoManager.requestPermission();
+    if (!result) return [];
     List<AssetPathEntity> pathList = await PhotoManager.getAssetPathList();
     List<AssetEntity> localAssetList = await pathList[0].assetList;
     localAssetList.sort((a, b) => b.createTime - a.createTime);
