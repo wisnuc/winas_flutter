@@ -378,12 +378,53 @@ class _StationListState extends State<StationList> {
                     stationList != null &&
                     stationList.length > 0
                 ? <Widget>[
-                    IconButton(
-                        icon: Icon(Icons.bluetooth, color: Colors.black38),
-                        onPressed: () {
-                          startScanBLEDevice(Action.wifi);
-                        }),
                     refreshButton(),
+                    IconButton(
+                      icon: Icon(Icons.more_horiz),
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: ctx,
+                          builder: (BuildContext c) {
+                            return SafeArea(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  // start all
+                                  Material(
+                                    child: InkWell(
+                                      onTap: () async {
+                                        Navigator.pop(c);
+                                        startScanBLEDevice(Action.wifi);
+                                      },
+                                      child: Container(
+                                        width: double.infinity,
+                                        padding: EdgeInsets.all(16),
+                                        child: Text('配置设备Wi-Fi'),
+                                      ),
+                                    ),
+                                  ),
+                                  // start all
+                                  Material(
+                                    child: InkWell(
+                                      onTap: () async {
+                                        Navigator.pop(c);
+                                        startScanBLEDevice(Action.bind);
+                                      },
+                                      child: Container(
+                                        width: double.infinity,
+                                        padding: EdgeInsets.all(16),
+                                        child: Text('绑定新设备'),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    )
                   ]
                 : [
                     refreshButton(),

@@ -6,6 +6,8 @@ import './network.dart';
 import './deviceInfo.dart';
 import './newDeviceName.dart';
 import './firmwareUpdate.dart';
+
+import '../login/ble.dart';
 import '../redux/redux.dart';
 import '../common/utils.dart';
 import '../login/stationList.dart';
@@ -227,7 +229,10 @@ class _MyStationState extends State<MyStation> {
                   context,
                   MaterialPageRoute(
                     builder: (context) {
-                      return ScanBleDevice(request: state.cloud);
+                      return ScanBleDevice(
+                        request: state.cloud,
+                        action: Action.bind,
+                      );
                     },
                   ),
                 );

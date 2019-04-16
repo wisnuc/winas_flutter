@@ -44,7 +44,7 @@ class _ConfigDeviceState extends State<ConfigDevice> {
   String ssid;
 
   /// password for Wi-Fi
-  String pwd = '';
+  String pwd = 'wisnuc123456';
 
   /// Error for set wifi Error;
   String errorText;
@@ -79,7 +79,7 @@ class _ConfigDeviceState extends State<ConfigDevice> {
     final device = widget.device;
     final wifiCommand =
         '{"action":"addAndActive", "seq": 123, "token": "$token", "body":{"ssid":"$ssid", "pwd":"$wifiPwd"}}';
-    final wifiRes = await withTimeout(connectWifi(device, wifiCommand), 10);
+    final wifiRes = await withTimeout(connectWifi(device, wifiCommand), 20);
     print('wifiRes: $wifiRes');
     final ip = wifiRes['data']['address'];
     return ip;
@@ -91,9 +91,26 @@ class _ConfigDeviceState extends State<ConfigDevice> {
     final request = widget.request;
 
     try {
-      // TODO, waiting for winasdInfo
-      await Future.delayed(Duration(seconds: 2));
-      final infoRes = await request.winasdInfo(ip);
+      bool started = false;
+      var infoRes;
+      // polling for winas Started, channel Connected
+      while (started != true) {
+        await Future.delayed(Duration(seconds: 2));
+        var res;
+        try {
+          res = await request.winasdInfo(ip);
+        } catch (e) {
+          print(e);
+          continue;
+        }
+
+        final channel = res['channel'];
+        if (channel != null && channel['state'] == 'Connected') {
+          started = true;
+          infoRes = res;
+        }
+      }
+
       deviceSN = infoRes['device']['sn'] as String;
       if (deviceSN == null) throw 'Failed to get deviceSN from winasd';
     } catch (e) {
@@ -103,16 +120,20 @@ class _ConfigDeviceState extends State<ConfigDevice> {
       });
       return;
     }
+
+    print('connect');
+    print(widget.action);
     // switch by Action, bind device or login device directly
     if (widget.action == Action.bind) {
       bindDevice(ip, token, store).catchError(print);
     } else if (widget.action == Action.wifi) {
-      loginDevice(ip, token, store);
+      loginDevice(ip, token, store).catchError(print);
     }
   }
 
   /// start to bind device
   Future<void> bindDevice(String ip, String token, store) async {
+    print('bindDevice start');
     final request = widget.request;
 
     setState(() {
@@ -148,8 +169,9 @@ class _ConfigDeviceState extends State<ConfigDevice> {
         final res = await request.winasdInfo(ip);
         print(res);
         final winas = res['winas'];
-        if (winas != null) {
-          if (winas['state'] == "Started") {
+        final channel = res['channel'];
+        if (winas != null && channel != null) {
+          if (winas['state'] == "Started" && channel['state'] == 'Connected') {
             started = true;
           } else if (winas['state'] == "Failed") {
             throw 'Winas Failed';
