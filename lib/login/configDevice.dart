@@ -164,14 +164,32 @@ class _ConfigDeviceState extends State<ConfigDevice> {
     try {
       bool started = false;
       while (started != true) {
-        // TODO, check fruitmix status
         await Future.delayed(Duration(seconds: 1));
         final res = await request.winasdInfo(ip);
         print(res);
         final winas = res['winas'];
         final channel = res['channel'];
+        // http://ip:3001/winasd/info
+        // {
+        //   "winas": {
+        //     "state": "Started",
+        //     "isBeta": true,
+        //     "users": [
+        //       {
+        //       "uuid": "8d23bb8a-d6fa-4abe-831e-6eb25ce5ff19",
+        //       "winasUserId": "6947667a-f8ff-498c-b0cb-ebc4d97715d7"
+        //       }
+        //     ]
+        //   },
+        //   "channel": {
+        //     "state": "Connected"
+        //   },
+        //   ...
+        // }
         if (winas != null && channel != null) {
-          if (winas['state'] == "Started" && channel['state'] == 'Connected') {
+          if (winas['state'] == "Started" &&
+              channel['state'] == 'Connected' &&
+              winas['users'] is List) {
             started = true;
           } else if (winas['state'] == "Failed") {
             throw 'Winas Failed';
