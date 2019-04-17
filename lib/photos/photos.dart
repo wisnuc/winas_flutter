@@ -153,19 +153,17 @@ class _PhotosState extends State<Photos> {
 
       // cache data
       userUUID = store.state.localUser.uuid;
+      loading = false;
+      error = false;
       if (this.mounted) {
-        setState(() {
-          loading = false;
-          error = false;
-        });
+        setState(() {});
       }
     } catch (e) {
       print(e);
+      loading = false;
+      error = true;
       if (this.mounted) {
-        setState(() {
-          loading = false;
-          error = true;
-        });
+        setState(() {});
       }
     }
   }

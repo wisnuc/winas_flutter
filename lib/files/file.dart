@@ -169,10 +169,11 @@ class _FilesState extends State<Files> {
           builder: (BuildContext context) => DeviceNotOnline(),
         );
       } else {
-        setState(() {
-          loading = false;
-          _error = error;
-        });
+        loading = false;
+        _error = error;
+        if (this.mounted) {
+          setState(() {});
+        }
       }
       return;
     }
@@ -824,7 +825,6 @@ class _FilesState extends State<Files> {
                     child: Container(
                       width: 72,
                       height: 72,
-                      // padding: EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.grey[400],
                         borderRadius: BorderRadius.circular(36),
@@ -834,10 +834,7 @@ class _FilesState extends State<Files> {
                     ),
                   ),
                   Text(isHome ? '您还未上传任何文件' : '空文件夹'),
-                  Expanded(
-                    flex: 2,
-                    child: Container(),
-                  ),
+                  Expanded(flex: isHome ? 2 : 0, child: Container()),
                 ],
               );
             },
