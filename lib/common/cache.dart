@@ -118,7 +118,7 @@ class CacheManager {
     if (res.type != FileSystemEntityType.notFound) {
       return entryPath;
     }
-    String transPath = _transDir() + '/' + Uuid().v4();
+    String transPath = _transDir() + Uuid().v4();
     final ep = 'drives/${entry.pdrv}/dirs/${entry.pdir}/entries/${entry.uuid}';
     final qs = {'name': entry.name, 'hash': entry.hash};
     try {
@@ -159,7 +159,7 @@ class CacheManager {
       return thumbData;
     }
 
-    String transPath = _transDir() + '/' + Uuid().v4();
+    String transPath = _transDir() + Uuid().v4();
 
     final ep = 'media/${entry.hash}';
     final qs = {
@@ -228,7 +228,7 @@ class CacheManager {
   Future<String> getPhotoPath(Entry entry, AppState state,
       {Function onProgress, CancelToken cancelToken}) async {
     String entryPath = _imageDir() + entry.hash;
-    String transPath = _transDir() + '/' + Uuid().v4();
+    String transPath = _transDir() + Uuid().v4();
     File entryFile = File(entryPath);
 
     FileStat res = await entryFile.stat();

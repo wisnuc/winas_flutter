@@ -220,7 +220,7 @@ class TransferManager {
     await _lock.synchronized(() async {
       String json = jsonEncode(transferList);
       String path = _downloadDir() + 'list.json';
-      String transPath = _transDir() + '/' + Uuid().v4();
+      String transPath = _transDir() + Uuid().v4();
       File file = File(transPath);
       await file.writeAsString(json);
       await file.rename(path);
@@ -239,7 +239,7 @@ class TransferManager {
     // use unique transferItem uuid
     String entryDir = _downloadDir() + item.uuid + '/';
     String entryPath = entryDir + entry.name;
-    String transPath = _transDir() + '/' + Uuid().v4();
+    String transPath = _transDir() + Uuid().v4();
     item.setFilePath(entryPath);
     CancelToken cancelToken = CancelToken();
     item.start(cancelToken, () => _cleanDir(entryDir).catchError(print));

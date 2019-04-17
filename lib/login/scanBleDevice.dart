@@ -79,16 +79,17 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
     // cancel previous BLE device connection
     deviceConnection?.cancel();
     print('connecting ${scanResult.device.name} ...');
-
+    bool done = false;
     deviceConnection = flutterBlue
         .connect(device, timeout: Duration(seconds: 60), autoConnect: false)
         .listen((s) {
       print(s);
-
+      if (done) return;
       if (s == BluetoothDeviceState.connected) {
+        done = true;
         callback(null, device);
       } else {
-        // TODO: fix Disconnected after connected
+        done = true;
         callback('Disconnected', null);
       }
     });
