@@ -294,13 +294,16 @@ class Request {
 
   Future setAvatar(List<int> imageData, {CancelToken cancelToken}) async {
     assert(token != null);
-    dio.options.headers['Authorization'] = token;
     interceptDio();
     return dio.put(
       '$cloudAddress/user/avatar',
-      data: imageData,
+      data: Stream.fromIterable(imageData.map((e) => [e])),
       options: Options(
-        contentType: ContentType.binary,
+        headers: {
+          HttpHeaders.contentTypeHeader: 'application/octet-stream',
+          HttpHeaders.authorizationHeader: token,
+          HttpHeaders.contentLengthHeader: imageData.length,
+        },
       ),
       cancelToken: cancelToken,
     );

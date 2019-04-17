@@ -115,9 +115,8 @@ class _ProgressState extends State<Progress> {
   @override
   void initState() {
     widget.ctrl.stream.listen((value) {
-      setState(() {
-        progress = value.clamp(0, 1);
-      });
+      progress = (value as double).clamp(0, 1);
+      setState(() {});
     });
     super.initState();
   }
@@ -213,7 +212,6 @@ class DownloadingDialog {
   void onProgress(int a, int b) {
     progress = a / b;
     ctrl.sink.add(progress);
-    print(progress);
   }
 }
 
