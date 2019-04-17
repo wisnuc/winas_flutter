@@ -119,7 +119,13 @@ void writeData(
     }
   });
 
-  device.writeCharacteristic(writeCharact, data.codeUnits).catchError((error) {
+  device
+      .writeCharacteristic(
+    writeCharact,
+    data.codeUnits,
+    type: CharacteristicWriteType.withResponse,
+  )
+      .catchError((error) {
     if (!fired) {
       fired = true;
       callback(error, null);
