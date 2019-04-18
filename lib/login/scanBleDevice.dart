@@ -40,10 +40,25 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
 
   String error;
 
-  void startBLESearch() {
+  Future<void> startBLESearch() async {
     FlutterBlue flutterBlue = FlutterBlue.instance;
     error = null;
     scanSubscription?.cancel();
+
+    try {
+      bool isAvailable = await flutterBlue.isAvailable;
+      if (!isAvailable) throw 'bluetooth is not available';
+
+      bool isOn = await flutterBlue.isOn;
+      if (!isOn) throw 'bluetooth is not on';
+    } catch (e) {
+      print(e);
+      error = '蓝牙不可用，请确认已打开蓝牙';
+      if (mounted) {
+        setState(() {});
+      }
+      return;
+    }
 
     scanSubscription = flutterBlue.scan().listen((scanResult) {
       // filter device
@@ -62,9 +77,9 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
     }, onError: (e) {
       print(e);
       if (e is PlatformException && e.code == 'no_permissions') {
-        error = '未能获取所需权限，请重试';
+        error = '未能获取所需权限，请在设置中允许权限';
       } else {
-        error = '扫描设备失败，请重试';
+        error = '扫描设备失败，请确认蓝牙已打开';
       }
 
       if (mounted) {
@@ -265,6 +280,20 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
                   ),
                   Container(height: 16),
                   Text(error),
+                  FlatButton(
+                    padding: EdgeInsets.all(0),
+                    child: Text(
+                      '重新扫描',
+                      style: TextStyle(color: Colors.teal),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        results.clear();
+                        error = null;
+                      });
+                      startBLESearch();
+                    },
+                  ),
                   Expanded(child: Container(), flex: 2),
                 ],
               ),
