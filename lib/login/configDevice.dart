@@ -156,6 +156,25 @@ class _ConfigDeviceState extends State<ConfigDevice> {
   }
 
   /// try login to device
+  ///  http://ip:3001/winasd/info
+  ///  ```json
+  ///  {
+  ///     "winas": {
+  ///       "state": "Started",
+  ///       "isBeta": true,
+  ///       "users": [
+  ///        {
+  ///         "uuid": "8d23bb8a-d6fa-4abe-831e-6eb25ce5ff19",
+  ///         "winasUserId": "6947667a-f8ff-498c-b0cb-ebc4d97715d7"
+  ///         }
+  ///      ]
+  ///     },
+  ///     "channel": {
+  ///       "state": "Connected"
+  ///     },
+  ///     ...
+  ///  }
+  ///  ```
   Future<void> loginDevice(String ip, String token, store) async {
     final request = widget.request;
     setState(() {
@@ -170,23 +189,7 @@ class _ConfigDeviceState extends State<ConfigDevice> {
         print(res);
         final winas = res['winas'];
         final channel = res['channel'];
-        // http://ip:3001/winasd/info
-        // {
-        //   "winas": {
-        //     "state": "Started",
-        //     "isBeta": true,
-        //     "users": [
-        //       {
-        //       "uuid": "8d23bb8a-d6fa-4abe-831e-6eb25ce5ff19",
-        //       "winasUserId": "6947667a-f8ff-498c-b0cb-ebc4d97715d7"
-        //       }
-        //     ]
-        //   },
-        //   "channel": {
-        //     "state": "Connected"
-        //   },
-        //   ...
-        // }
+
         if (winas != null && channel != null) {
           if (winas['state'] == "Started" &&
               channel['state'] == 'Connected' &&
@@ -525,8 +528,9 @@ class _ConfigDeviceState extends State<ConfigDevice> {
                     borderRadius: BorderRadius.circular(48),
                   ),
                   onPressed: () {
-                    // return to list
-                    Navigator.popUntil(ctx, ModalRoute.withName('stationList'));
+                    // pop all page
+                    Navigator.pushNamedAndRemoveUntil(context, '/deviceList',
+                        (Route<dynamic> route) => false);
                   },
                   child: Row(
                     children: <Widget>[
