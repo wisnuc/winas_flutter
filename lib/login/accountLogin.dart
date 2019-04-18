@@ -181,6 +181,7 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.teal,
       appBar: AppBar(
         elevation: 0.0, // no shadow
         actions: <Widget>[

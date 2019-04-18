@@ -123,6 +123,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.teal,
       appBar: AppBar(
         elevation: 0.0, // no shadow
         actions: <Widget>[
@@ -150,78 +151,80 @@ class _LoginPageState extends State<LoginPage> {
             constraints: BoxConstraints.expand(),
             padding: EdgeInsets.all(16),
             color: Colors.teal,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                SizedBox(
-                  child: Text('欢迎使用闻上云盘',
-                      style: TextStyle(fontSize: 28.0, color: Colors.white),
-                      textAlign: TextAlign.left),
-                  width: double.infinity,
-                ),
-                Container(height: 48.0),
-                Container(
-                  height: 56,
-                  width: double.infinity,
-                  child: RaisedButton(
-                    color: Colors.white,
-                    elevation: 1.0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(48),
-                    ),
-                    onPressed: () => wechatAuth(ctx, callback),
-                    child: Row(
-                      children: <Widget>[
-                        Icon(Winas.wechat, color: pColor),
-                        Expanded(child: Container()),
-                        Text(
-                          '使用微信登录注册',
-                          style: TextStyle(color: pColor, fontSize: 16),
-                        ),
-                        Expanded(child: Container()),
-                        Container(width: 24),
-                      ],
-                    ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  SizedBox(
+                    child: Text('欢迎使用闻上云盘',
+                        style: TextStyle(fontSize: 28.0, color: Colors.white),
+                        textAlign: TextAlign.left),
+                    width: double.infinity,
                   ),
-                ),
-                Container(height: 32.0),
-                Container(
-                  height: 56,
-                  padding: EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                  width: double.infinity,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
+                  Container(height: 48.0),
+                  Container(
+                    height: 56,
+                    width: double.infinity,
                     child: RaisedButton(
-                      color: pColor,
+                      color: Colors.white,
                       elevation: 1.0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(48),
                       ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => Registry(),
+                      onPressed: () => wechatAuth(ctx, callback),
+                      child: Row(
+                        children: <Widget>[
+                          Icon(Winas.wechat, color: pColor),
+                          Expanded(child: Container()),
+                          Text(
+                            '使用微信登录注册',
+                            style: TextStyle(color: pColor, fontSize: 16),
                           ),
-                        );
-                      },
-                      child: Text(
-                        '创建账号',
-                        style: TextStyle(color: Colors.white, fontSize: 16),
+                          Expanded(child: Container()),
+                          Container(width: 24),
+                        ],
                       ),
                     ),
                   ),
-                ),
-                Container(height: 32.0),
-                Text('点击继续、创建账号即表明同意闻上云盘的产品使用协议隐私政策',
-                    style: TextStyle(fontSize: 12.0, color: Colors.white),
-                    textAlign: TextAlign.left),
-                Container(height: 48.0),
-              ],
+                  Container(height: 32.0),
+                  Container(
+                    height: 56,
+                    padding: EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                    width: double.infinity,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(28),
+                      child: RaisedButton(
+                        color: pColor,
+                        elevation: 1.0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => Registry(),
+                            ),
+                          );
+                        },
+                        child: Text(
+                          '创建账号',
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(height: 32.0),
+                  Text('点击继续、创建账号即表明同意闻上云盘的产品使用协议隐私政策',
+                      style: TextStyle(fontSize: 12.0, color: Colors.white),
+                      textAlign: TextAlign.left),
+                  Container(height: 48.0),
+                ],
+              ),
             ),
           );
         },
