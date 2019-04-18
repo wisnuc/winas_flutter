@@ -149,11 +149,11 @@ class Request {
   }
 
   /// unbind device
-  Future unbindDevice(String ip, String encrypted) async {
+  Future unbindDevice(String ip, String encrypted, String authToken) async {
     // return Future.value('fake success');
     final res = await dio.post(
       'http://$ip:3001/winasd/unbind',
-      data: {'encrypted': encrypted},
+      data: {'encrypted': encrypted, 'authToken': authToken},
       options: Options(connectTimeout: 10000),
     );
     print('unbindDevice res $res');

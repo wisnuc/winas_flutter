@@ -66,6 +66,19 @@ class ResetDevice extends StatelessWidget {
                         showLoading(ctx);
                         final isLAN = await state.apis.testLAN();
                         if (isLAN) {
+                          try {
+                            final res =
+                                await state.apis.req('reqLocalAuth', null);
+                            print(res);
+                            final colors = res.data['colors'];
+                            if (colors is! List) throw 'get color code error';
+                          } catch (e) {
+                            print(e);
+                            Navigator.pop(ctx);
+                            showSnackBar(ctx, '请求设备验证失败');
+                            return;
+                          }
+
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
@@ -104,21 +117,35 @@ class _ResetDevice extends StatefulWidget {
 }
 
 class _ResetDeviceState extends State<_ResetDevice> {
-  String selected;
+  List<String> selected;
 
   Status status = Status.auth;
 
+  /// color codes
+  static const List<List<String>> colorCodes = [
+    ['红色灯 常亮', '#ff0000', 'alwaysOn'],
+    ['绿色灯 常亮', '#00ff00', 'alwaysOn'],
+    ['蓝色灯 常亮', '#0000ff', 'alwaysOn'],
+    ['红色灯 闪烁', '#ff0000', 'breath'],
+    ['绿色灯 闪烁', '#00ff00', 'breath'],
+    ['蓝色灯 闪烁', '#0000ff', 'breath'],
+  ];
+
   /// check color code
-  // Future<String> checkCode(AppState state, String code) async {
-  //   final args = {"action": "auth", "code": code};
-  //   final res = await state.apis.req('deviceAuth', args);
-  //   String token = res['data']['token'];
-  //   print(token);
-  //   return token;
-  // }
+  Future<String> checkCode(AppState state, List<String> code) async {
+    final args = {
+      'color': [code[1], code[2]]
+    };
+    final res = await state.apis.req('localAuth', args);
+    print(res);
+    String token = res.data['token'];
+    print(token);
+    return token;
+  }
 
   /// start to bind device
-  Future<void> restDevice(BuildContext ctx, AppState state) async {
+  Future<void> restDevice(
+      BuildContext ctx, AppState state, String token) async {
     setState(() {
       status = Status.reseting;
     });
@@ -127,7 +154,7 @@ class _ResetDeviceState extends State<_ResetDevice> {
       final res = await state.cloud.req('encrypted', null);
       final encrypted = res.data['encrypted'] as String;
       final resetRes =
-          await state.cloud.unbindDevice(state.apis.lanIp, encrypted);
+          await state.cloud.unbindDevice(state.apis.lanIp, encrypted, token);
       print('resetRes: $resetRes');
       setState(() {
         status = Status.success;
@@ -146,10 +173,10 @@ class _ResetDeviceState extends State<_ResetDevice> {
       print('code is $selected');
       showLoading(ctx);
       try {
-        await Future.delayed(Duration(seconds: 2));
+        String token = await checkCode(state, selected);
         Navigator.pop(ctx);
 
-        restDevice(ctx, state).catchError(print);
+        restDevice(ctx, state, token).catchError(print);
       } catch (e) {
         print(e);
         Navigator.pop(ctx);
@@ -161,14 +188,6 @@ class _ResetDeviceState extends State<_ResetDevice> {
   }
 
   Widget renderAuth() {
-    List<String> colorCodes = [
-      '红色灯 常亮',
-      '绿色灯 常亮',
-      '蓝色灯 常亮',
-      '红色灯 闪烁',
-      '绿色灯 闪烁',
-      '蓝色灯 闪烁',
-    ];
     List<Widget> widgets = [
       Container(
         padding: EdgeInsets.all(16),
@@ -203,7 +222,7 @@ class _ResetDeviceState extends State<_ResetDevice> {
                       });
                     },
                     value: code,
-                    title: Text(code, maxLines: 1),
+                    title: Text(code[0], maxLines: 1),
                   ),
                 ),
               ),
@@ -239,8 +258,8 @@ class _ResetDeviceState extends State<_ResetDevice> {
               borderRadius: BorderRadius.circular(48),
             ),
             onPressed: () {
-              // return to list
-              Navigator.pop(ctx);
+              Navigator.pushNamedAndRemoveUntil(
+                  context, '/deviceList', (Route<dynamic> route) => false);
             },
             child: Row(
               children: <Widget>[

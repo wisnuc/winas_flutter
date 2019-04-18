@@ -139,17 +139,18 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
     String status = '';
     switch (value) {
       case 1:
-        status = '待配置';
+        status = widget.action == Action.bind ? '待绑定' : '请先绑定设备';
         break;
 
       case 2:
-        status = '已绑定';
+        status = widget.action == Action.bind ? '已被绑定' : '可配置Wi-Fi';
         break;
 
       default:
         status = '设备异常';
     }
-    bool enabled = widget.action == Action.wifi || value == 1;
+    bool enabled = (widget.action == Action.wifi && value == 2) ||
+        (widget.action == Action.bind && value == 1);
     return {
       'status': status,
       'enabled': enabled,
@@ -241,25 +242,28 @@ class _ScanBleDeviceState extends State<ScanBleDevice> {
                                 ),
                               );
                             },
-                            child: Container(
-                              height: 64,
-                              padding: EdgeInsets.all(16),
-                              child: Row(
-                                children: <Widget>[
-                                  Text(
-                                    scanResult.device.name,
-                                    style: TextStyle(fontSize: 21),
-                                  ),
-                                  Expanded(
-                                    flex: 1,
-                                    child: Container(),
-                                  ),
-                                  Text(
-                                    status,
-                                    style: TextStyle(color: Colors.black54),
-                                  ),
-                                  Icon(Icons.chevron_right),
-                                ],
+                            child: Opacity(
+                              opacity: enabled ? 1 : 0.5,
+                              child: Container(
+                                height: 64,
+                                padding: EdgeInsets.all(16),
+                                child: Row(
+                                  children: <Widget>[
+                                    Text(
+                                      scanResult.device.name,
+                                      style: TextStyle(fontSize: 21),
+                                    ),
+                                    Expanded(
+                                      flex: 1,
+                                      child: Container(),
+                                    ),
+                                    Text(
+                                      status,
+                                      style: TextStyle(color: Colors.black54),
+                                    ),
+                                    Icon(Icons.chevron_right),
+                                  ],
+                                ),
                               ),
                             ),
                           ),

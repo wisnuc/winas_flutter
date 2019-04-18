@@ -116,6 +116,7 @@ class _FirmwareState extends State<Firmware> {
           child: Row(
             children: <Widget>[
               Builder(builder: (BuildContext ctx) {
+                // TODO: firmware update
                 return FlatButton(
                   onPressed: () async {
                     final model = Model();

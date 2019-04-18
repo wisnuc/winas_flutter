@@ -269,6 +269,15 @@ class Apis {
             ? command('GET', 'winasd/info', null)
             : dio.get('http://${this.lanIp}:3001/winasd/info');
         break;
+
+      case 'reqLocalAuth':
+        r = dio.patch('http://${this.lanIp}:3001/winasd/localAuth');
+        break;
+
+      case 'localAuth':
+        r = dio.post('http://${this.lanIp}:3001/winasd/localAuth',
+            data: {'color': args['color']});
+        break;
     }
     return r;
   }

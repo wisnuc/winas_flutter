@@ -276,6 +276,7 @@ class _ConfigDeviceState extends State<ConfigDevice> {
     }
   }
 
+  /// color codes
   static const List<List<String>> colorCodes = [
     ['红色灯 常亮', '#ff0000', 'alwaysOn'],
     ['绿色灯 常亮', '#00ff00', 'alwaysOn'],
@@ -430,8 +431,9 @@ class _ConfigDeviceState extends State<ConfigDevice> {
               borderRadius: BorderRadius.circular(48),
             ),
             onPressed: () {
-              // return to list
-              Navigator.popUntil(ctx, ModalRoute.withName('stationList'));
+              // return to deviceList
+              Navigator.pushNamedAndRemoveUntil(
+                  context, '/deviceList', (Route<dynamic> route) => false);
             },
             child: Row(
               children: <Widget>[
