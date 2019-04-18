@@ -153,11 +153,13 @@ class _MyStationState extends State<MyStation> {
 
     countTotal = countTotal == 0 ? 1 : countTotal;
 
-    int videoSize = max(videoRaw / countTotal, 3.0).ceil();
-    int imageSize = max(imageRaw / countTotal, 3.0).ceil();
-    int audioSize = max(audioRaw / countTotal, 3.0).ceil();
-    int documentSize = max(documentRaw / countTotal, 3.0).ceil();
-    int otherSize = max(othersRaw / countTotal, 3.0).ceil();
+    int videoSize = videoRaw == 0 ? 0 : max(videoRaw / countTotal, 3.0).ceil();
+    int imageSize = imageRaw == 0 ? 0 : max(imageRaw / countTotal, 3.0).ceil();
+    int audioSize = audioRaw == 0 ? 0 : max(audioRaw / countTotal, 3.0).ceil();
+    int documentSize =
+        documentRaw == 0 ? 0 : max(documentRaw / countTotal, 3.0).ceil();
+    int otherSize =
+        othersRaw == 0 ? 0 : max(othersRaw / countTotal, 3.0).ceil();
     int restSize = max(
         100 - videoSize - imageSize - audioSize - documentSize - otherSize, 0);
 
@@ -351,8 +353,12 @@ class _MyStationState extends State<MyStation> {
                                           flex: u['flex'],
                                           child: Container(
                                             color: u['color'],
-                                            margin: EdgeInsets.fromLTRB(0, 0,
-                                                u == usageData.last ? 0 : 3, 0),
+                                            margin: EdgeInsets.only(
+                                              right: u == usageData.last ||
+                                                      u['flex'] == 0
+                                                  ? 0
+                                                  : 3,
+                                            ),
                                           ),
                                         ))
                                     .toList(),

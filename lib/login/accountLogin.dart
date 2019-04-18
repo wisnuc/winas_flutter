@@ -223,25 +223,28 @@ class _LoginState extends State<Login> {
           hintColor: Colors.white,
           brightness: Brightness.dark,
         ),
-        child: Center(
-          child: Container(
-            constraints: BoxConstraints.expand(),
-            padding: EdgeInsets.all(16),
-            color: Colors.teal,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                SizedBox(
-                  child: Text(
-                    '登录',
-                    textAlign: TextAlign.left,
-                    style: TextStyle(fontSize: 28.0, color: Colors.white),
+        child: Container(
+          color: Colors.teal,
+          constraints: BoxConstraints.expand(),
+          child: SingleChildScrollView(
+            child: Container(
+              padding: EdgeInsets.all(16),
+              color: Colors.teal,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  SizedBox(
+                    child: Text(
+                      '登录',
+                      textAlign: TextAlign.left,
+                      style: TextStyle(fontSize: 28.0, color: Colors.white),
+                    ),
+                    width: double.infinity,
                   ),
-                  width: double.infinity,
-                ),
-                Container(height: 48.0),
-                _currentTextField(),
-              ],
+                  Container(height: 48.0),
+                  _currentTextField(),
+                ],
+              ),
             ),
           ),
         ),
