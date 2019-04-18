@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
@@ -250,6 +251,7 @@ class _GridPhotoState extends State<GridPhoto>
   Animation<Offset> _flingAnimation;
   Animation<double> _scaleAnimation;
   Offset _offset = Offset.zero;
+  ImageInfo info;
   double _scale = 1.0;
   Offset _normalizedOffset;
   double _previousScale;
@@ -274,13 +276,58 @@ class _GridPhotoState extends State<GridPhoto>
     super.dispose();
   }
 
-  // The maximum offset value is 0,0. If the size of this renderer's box is w,h
-  // then the minimum offset value is w - _scale * w, h - _scale * h.
+  Size getTrueSize() {
+    final clientW = context.size.width;
+    final clientH = context.size.height;
+    if (info is ImageInfo) {
+      final w = info.image.width;
+      final h = info.image.height;
+
+      print('$w,$h,$clientH,$clientW');
+      if (w / h > clientW / clientH) {
+        return Size(clientW, h / w * clientW);
+      }
+      return Size(w / h * clientH, clientH);
+    } else {
+      return Size(clientW, clientH);
+    }
+  }
+
+  // keep value in maximum and minimum offset value
   Offset _clampOffset(Offset offset) {
-    final Size size = context.size;
-    final Offset minOffset = Offset(size.width, size.height) * (1.0 - _scale);
-    return Offset(
-        offset.dx.clamp(minOffset.dx, 0.0), offset.dy.clamp(minOffset.dy, 0.0));
+    final Size size = getTrueSize();
+    print('Size: $size');
+
+    double maxDx =
+        context.size.width - (context.size.width + size.width) / 2 * _scale;
+
+    double minDx = (size.width - context.size.width) / 2 * _scale;
+
+    if (maxDx < minDx) {
+      final tmp = maxDx;
+      maxDx = minDx;
+      minDx = tmp;
+    }
+
+    // max dy = H - (H + h) / 2 * scale
+    double maxDy =
+        context.size.height - (context.size.height + size.height) / 2 * _scale;
+    // min dy
+    double minDy = (size.height - context.size.height) / 2 * _scale;
+
+    if (maxDy < minDy) {
+      final tmp = maxDy;
+      maxDy = minDy;
+      minDy = tmp;
+    }
+
+    print('maxDy $maxDy minDy $minDy');
+
+    final res =
+        Offset(offset.dx.clamp(minDx, maxDx), offset.dy.clamp(minDy, maxDy));
+
+    print('offset $offset res $res');
+    return res;
   }
 
   void _handleFlingAnimation() {
@@ -431,6 +478,22 @@ class _GridPhotoState extends State<GridPhoto>
       ..fling(velocity: magnitude / 1000.0);
   }
 
+  Future<ImageInfo> _getImage(imageProvider) {
+    final Completer completer = Completer<ImageInfo>();
+    final ImageStream stream =
+        imageProvider.resolve(const ImageConfiguration());
+    final listener = (ImageInfo info, bool synchronousCall) {
+      if (!completer.isCompleted) {
+        completer.complete(info);
+      }
+    };
+    stream.addListener(listener);
+    completer.future.then((_) {
+      stream.removeListener(listener);
+    });
+    return completer.future;
+  }
+
   Uint8List imageData;
   Uint8List thumbData;
 
@@ -490,6 +553,7 @@ class _GridPhotoState extends State<GridPhoto>
     } else {
       // download raw photo
       imageData = await cm.getPhoto(widget.photo, state);
+      info = await _getImage(MemoryImage(imageData));
 
       if (imageData != null && this.mounted) {
         print('imageData updated');
@@ -521,7 +585,9 @@ class _GridPhotoState extends State<GridPhoto>
       if (_scale == 1.0) {
         scaleEnd = 2.0;
         // offsetEnd = event.globalPosition * scaleEnd / -2;
-        offsetEnd = event.globalPosition * scaleEnd / -2;
+
+        offsetEnd = Offset(context.size.width / -2, context.size.height / -2);
+        // offsetEnd = _offset;
       } else {
         scaleEnd = 1.0;
         offsetEnd = Offset(0, 0);
