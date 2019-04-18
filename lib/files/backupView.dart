@@ -187,6 +187,11 @@ class _BackupViewState extends State<BackupView> {
                               delegate:
                                   SliverChildBuilderDelegate((context, index) {
                                 Drive drive = drives[index];
+                                print('drive $drive');
+                                bool isMobile = [
+                                  'Mobile-iOS',
+                                  'Mobile-Android',
+                                ].contains(drive?.client?.type);
                                 return Material(
                                   child: InkWell(
                                     onTap: () => Navigator.push(
@@ -216,14 +221,17 @@ class _BackupViewState extends State<BackupView> {
                                             height: 40,
                                             decoration: BoxDecoration(
                                               // color: Colors.cyan[800],
-                                              color: Colors.indigo[800],
+                                              color: isMobile
+                                                  ? Colors.black
+                                                  : Colors.blue,
                                               borderRadius: BorderRadius.all(
                                                 Radius.circular(20),
                                               ),
                                             ),
                                             child: Icon(
-                                              // Icons.phone_iphone,
-                                              Icons.laptop,
+                                              isMobile
+                                                  ? Icons.phone_iphone
+                                                  : Icons.laptop,
                                               color: Colors.white,
                                             ),
                                           ),

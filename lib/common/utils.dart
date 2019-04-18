@@ -13,8 +13,8 @@ void showSnackBar(BuildContext ctx, String message) {
   );
 
   // Find the Scaffold in the Widget tree and use it to show a SnackBar!
-  // Scaffold.of(ctx, nullOk: true)?.showSnackBar(snackBar);
-  Scaffold.of(ctx).showSnackBar(snackBar);
+  Scaffold.of(ctx, nullOk: true)?.showSnackBar(snackBar);
+  // Scaffold.of(ctx).showSnackBar(snackBar);
 }
 
 Future<T> _showLoading<T>({

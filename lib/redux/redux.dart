@@ -154,7 +154,7 @@ class DriveClient {
   /// Idle, Working, Failed
   String status;
 
-  /// Win-PC, Linux-PC, Mac-PC, iOS, Android
+  /// Win-PC, Linux-PC, Mac-PC, Mobile-iOS, Mobile-Android
   String type;
 
   DriveClient({this.type});
@@ -166,6 +166,7 @@ class DriveClient {
     this.lastBackupTime = m['lastBackupTime'];
     this.type = m['type'];
   }
+
   @override
   String toString() {
     Map<String, dynamic> m = {

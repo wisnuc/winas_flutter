@@ -34,7 +34,7 @@ class ConfigDevice extends StatefulWidget {
 }
 
 class _ConfigDeviceState extends State<ConfigDevice> {
-  String selected;
+  List<String> selected;
   String token;
 
   /// sn of current device
@@ -62,8 +62,9 @@ class _ConfigDeviceState extends State<ConfigDevice> {
   }
 
   /// check color code
-  Future<String> checkCode(BluetoothDevice device, String code) async {
-    final authCommand = '{"action":"auth","seq":2,"code":"$code"}';
+  Future<String> checkCode(BluetoothDevice device, List<String> code) async {
+    final authCommand =
+        '{"action":"auth","seq":2,"body":{"color":["${code[1]}","${code[2]}"]}}';
     print(authCommand);
     final res = await getLocalAuth(device, authCommand);
     print('checkCode res: $res');
@@ -275,15 +276,16 @@ class _ConfigDeviceState extends State<ConfigDevice> {
     }
   }
 
+  static const List<List<String>> colorCodes = [
+    ['红色灯 常亮', '#ff0000', 'alwaysOn'],
+    ['绿色灯 常亮', '#00ff00', 'alwaysOn'],
+    ['蓝色灯 常亮', '#0000ff', 'alwaysOn'],
+    ['红色灯 闪烁', '#ff0000', 'breath'],
+    ['绿色灯 闪烁', '#00ff00', 'breath'],
+    ['蓝色灯 闪烁', '#0000ff', 'breath'],
+  ];
+
   Widget renderAuth() {
-    List<String> colorCodes = [
-      '红色灯 常亮',
-      '绿色灯 常亮',
-      '蓝色灯 常亮',
-      '红色灯 闪烁',
-      '绿色灯 闪烁',
-      '蓝色灯 闪烁',
-    ];
     List<Widget> widgets = [
       Container(
         padding: EdgeInsets.all(16),
@@ -318,7 +320,7 @@ class _ConfigDeviceState extends State<ConfigDevice> {
                       });
                     },
                     value: code,
-                    title: Text(code, maxLines: 1),
+                    title: Text(code[0], maxLines: 1),
                   ),
                 ),
               ),
