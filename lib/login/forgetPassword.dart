@@ -205,9 +205,14 @@ class _ForgetPasswordState extends State<ForgetPassword> {
             autofocus: true,
             decoration: InputDecoration(
                 labelText: "手机号",
+                labelStyle: TextStyle(
+                  fontSize: 21,
+                  color: Colors.white,
+                  height: 0.8,
+                ),
                 prefixIcon: Icon(Icons.person, color: Colors.white),
                 errorText: _error),
-            style: TextStyle(fontSize: 24),
+            style: TextStyle(fontSize: 24, color: Colors.white),
             maxLength: 11,
             keyboardType: TextInputType.number,
           ),
@@ -236,9 +241,14 @@ class _ForgetPasswordState extends State<ForgetPassword> {
             focusNode: focusNode1,
             decoration: InputDecoration(
                 labelText: "4位验证码",
+                labelStyle: TextStyle(
+                  fontSize: 21,
+                  color: Colors.white,
+                  height: 0.8,
+                ),
                 prefixIcon: Icon(Icons.verified_user, color: Colors.white),
                 errorText: _error),
-            style: TextStyle(fontSize: 24),
+            style: TextStyle(fontSize: 24, color: Colors.white),
             maxLength: 4,
             keyboardType: TextInputType.number,
           ),
@@ -352,6 +362,7 @@ class _ForgetPasswordState extends State<ForgetPassword> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.teal,
       appBar: AppBar(
         elevation: 0.0, // no shadow
         actions: _status == 'code'

@@ -134,11 +134,7 @@ class _LoginPageState extends State<LoginPage> {
               // Navigator to Login
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) {
-                    return Login();
-                  },
-                ),
+                MaterialPageRoute(builder: (context) => Login()),
               );
             },
           ),
@@ -147,21 +143,26 @@ class _LoginPageState extends State<LoginPage> {
       body: StoreConnector<AppState, Function>(
         converter: (store) => (BuildContext ctx) => accoutLogin(ctx, store),
         builder: (ctx, callback) {
-          return Container(
-            constraints: BoxConstraints.expand(),
-            padding: EdgeInsets.all(16),
-            color: Colors.teal,
-            child: SingleChildScrollView(
+          return SingleChildScrollView(
+            child: Container(
+              padding: EdgeInsets.all(16),
+              height: MediaQuery.of(context).size.height - 108,
+              color: Colors.teal,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  SizedBox(
-                    child: Text('欢迎使用闻上云盘',
-                        style: TextStyle(fontSize: 28.0, color: Colors.white),
-                        textAlign: TextAlign.left),
+                  // title
+                  Container(
+                    margin: EdgeInsets.only(bottom: 48),
+                    child: Text(
+                      '欢迎使用闻上云盘',
+                      style: TextStyle(fontSize: 28.0, color: Colors.white),
+                      textAlign: TextAlign.left,
+                    ),
                     width: double.infinity,
                   ),
-                  Container(height: 48.0),
+
+                  // wechat login
                   Container(
                     height: 56,
                     width: double.infinity,
@@ -186,8 +187,10 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
-                  Container(height: 32.0),
+
+                  // create account
                   Container(
+                    margin: EdgeInsets.only(top: 32, bottom: 32),
                     height: 56,
                     padding: EdgeInsets.all(4),
                     decoration: BoxDecoration(
@@ -218,11 +221,13 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
-                  Container(height: 32.0),
+
+                  // license
                   Text('点击继续、创建账号即表明同意闻上云盘的产品使用协议隐私政策',
                       style: TextStyle(fontSize: 12.0, color: Colors.white),
                       textAlign: TextAlign.left),
-                  Container(height: 48.0),
+
+                  Container(height: 64.0),
                 ],
               ),
             ),

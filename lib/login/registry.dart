@@ -426,9 +426,14 @@ class _RegistryState extends State<Registry> {
             autofocus: true,
             decoration: InputDecoration(
                 labelText: "手机号",
+                labelStyle: TextStyle(
+                  fontSize: 21,
+                  color: Colors.white,
+                  height: 0.8,
+                ),
                 prefixIcon: Icon(Icons.person, color: Colors.white),
                 errorText: _error),
-            style: TextStyle(fontSize: 24),
+            style: TextStyle(fontSize: 24, color: Colors.white),
             maxLength: 11,
             keyboardType: TextInputType.number,
           ),
@@ -457,9 +462,14 @@ class _RegistryState extends State<Registry> {
             focusNode: focusNode1,
             decoration: InputDecoration(
                 labelText: "4位验证码",
+                labelStyle: TextStyle(
+                  fontSize: 21,
+                  color: Colors.white,
+                  height: 0.8,
+                ),
                 prefixIcon: Icon(Icons.verified_user, color: Colors.white),
                 errorText: _error),
-            style: TextStyle(fontSize: 24),
+            style: TextStyle(fontSize: 24, color: Colors.white),
             maxLength: 4,
             keyboardType: TextInputType.number,
           ),
@@ -488,6 +498,11 @@ class _RegistryState extends State<Registry> {
             focusNode: focusNode2,
             decoration: InputDecoration(
                 labelText: "密码",
+                labelStyle: TextStyle(
+                  fontSize: 21,
+                  color: Colors.white,
+                  height: 0.8,
+                ),
                 prefixIcon: Icon(Icons.lock, color: Colors.white),
                 suffixIcon: IconButton(
                   icon: Icon(showPwd ? Icons.visibility : Icons.visibility_off,
@@ -499,7 +514,7 @@ class _RegistryState extends State<Registry> {
                   },
                 ),
                 errorText: _error),
-            style: TextStyle(fontSize: 24),
+            style: TextStyle(fontSize: 24, color: Colors.white),
             obscureText: showPwd,
           ),
         ];
@@ -536,6 +551,7 @@ class _RegistryState extends State<Registry> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.teal,
       appBar: AppBar(
         elevation: 0.0, // no shadow
         actions: _status == 'code'
