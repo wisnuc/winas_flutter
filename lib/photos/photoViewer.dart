@@ -128,7 +128,6 @@ class _PhotoViewerState extends State<PhotoViewer> {
 
   @override
   Widget build(BuildContext context) {
-    print('currentItem ${currentItem.uuid}');
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Stack(
@@ -138,10 +137,7 @@ class _PhotoViewerState extends State<PhotoViewer> {
               controller: pageController,
               itemBuilder: (context, position) {
                 final photo = widget.list[position];
-                // final bool isVideo =
-                //     videoTypes.split('.').contains(photo.metadata.type);
 
-                final bool isVideo = true;
                 final view = GridPhoto(
                   updateOpacity: updateOpacity,
                   photo: photo,
@@ -149,14 +145,7 @@ class _PhotoViewerState extends State<PhotoViewer> {
                   toggleTitle: toggleTitle,
                   showTitle: showTitle,
                 );
-                return Container(
-                  child: isVideo
-                      ? view
-                      : Hero(
-                          tag: photo.uuid,
-                          child: view,
-                        ),
-                );
+                return Container(child: view);
               },
               itemCount: widget.list.length,
               onPageChanged: (int index) {
@@ -169,23 +158,23 @@ class _PhotoViewerState extends State<PhotoViewer> {
               },
             ),
           ),
+          // title
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            height: 80,
             child: showTitle
                 ? Material(
                     color: Color.fromARGB(240, 255, 255, 255),
                     elevation: 2.0,
                     child: SafeArea(
-                      child: Container(
-                        height: 80,
-                        color: Colors.transparent,
-                        child: StoreConnector<AppState, AppState>(
-                          converter: (store) => store.state,
-                          builder: (context, state) {
-                            return Row(
+                      child: StoreConnector<AppState, AppState>(
+                        converter: (store) => store.state,
+                        builder: (context, state) {
+                          return Container(
+                            color: Colors.transparent,
+                            padding: EdgeInsets.only(top: 4, bottom: 4),
+                            child: Row(
                               children: <Widget>[
                                 Container(width: 4),
                                 IconButton(
@@ -212,9 +201,9 @@ class _PhotoViewerState extends State<PhotoViewer> {
                                       _delete(context, currentItem, state),
                                 )
                               ],
-                            );
-                          },
-                        ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   )
@@ -282,8 +271,6 @@ class _GridPhotoState extends State<GridPhoto>
     if (info is ImageInfo) {
       final w = info.image.width;
       final h = info.image.height;
-
-      print('$w,$h,$clientH,$clientW');
       if (w / h > clientW / clientH) {
         return Size(clientW, h / w * clientW);
       }
@@ -296,13 +283,13 @@ class _GridPhotoState extends State<GridPhoto>
   // keep value in maximum and minimum offset value
   Offset _clampOffset(Offset offset) {
     final Size size = getTrueSize();
-    print('Size: $size');
 
     double maxDx =
         context.size.width - (context.size.width + size.width) / 2 * _scale;
 
     double minDx = (size.width - context.size.width) / 2 * _scale;
 
+    // keep min < max
     if (maxDx < minDx) {
       final tmp = maxDx;
       maxDx = minDx;
@@ -321,12 +308,8 @@ class _GridPhotoState extends State<GridPhoto>
       minDy = tmp;
     }
 
-    print('maxDy $maxDy minDy $minDy');
-
     final res =
         Offset(offset.dx.clamp(minDx, maxDx), offset.dy.clamp(minDy, maxDy));
-
-    print('offset $offset res $res');
     return res;
   }
 
@@ -346,7 +329,6 @@ class _GridPhotoState extends State<GridPhoto>
   Offset prevPosition;
 
   void _handleOnScaleStart(ScaleStartDetails details) {
-    print('_handleOnScaleStart');
     opacity = 1;
     prevPosition = details.focalPoint;
 
@@ -365,15 +347,12 @@ class _GridPhotoState extends State<GridPhoto>
   }
 
   void _handleOnScaleUpdate(ScaleUpdateDetails details) {
-    print('_handleOnScaleUpdate ${details.scale}');
     if (_scale == 1.0 && details.scale == 1.0) {
       /// rate of downScale to close viewer
       final rate = 255;
 
       Offset delta = details.focalPoint - prevPosition;
       prevPosition = details.focalPoint;
-      print(delta);
-      print(details.focalPoint);
 
       _offset += delta;
 
@@ -421,9 +400,7 @@ class _GridPhotoState extends State<GridPhoto>
 
   /// on Horizontal Drag Start
   void handleHDragStart(DragStartDetails detail) {
-    print('_handleOnScaleStart');
     opacity = 1;
-    prevPosition = detail.globalPosition;
 
     // toggle title
     canceled = true;
@@ -433,18 +410,22 @@ class _GridPhotoState extends State<GridPhoto>
     updateOpacity();
     setState(() {
       _previousScale = _scale;
-      _normalizedOffset = (prevPosition - _offset) / _scale;
-      // The fling animation stops if an input gesture starts.
+      prevPosition = detail.globalPosition;
       _controller.stop();
     });
   }
 
   /// on Horizontal Drag Update
   void handleHDragUpdate(DragUpdateDetails details) {
+    Offset delta = details.globalPosition - prevPosition;
+
+    // quick fix bug of Twofingers drag which not recognized as scale
+    if (delta.distance > 32) delta = Offset(0, 0);
+    prevPosition = details.globalPosition;
+
     setState(() {
       // Ensure that image location under the focal point stays in the same place despite scaling.
-      _offset =
-          _clampOffset(details.globalPosition - _normalizedOffset * _scale);
+      _offset = _clampOffset(_offset + delta);
     });
   }
 
@@ -584,10 +565,7 @@ class _GridPhotoState extends State<GridPhoto>
       Offset offsetEnd;
       if (_scale == 1.0) {
         scaleEnd = 2.0;
-        // offsetEnd = event.globalPosition * scaleEnd / -2;
-
         offsetEnd = Offset(context.size.width / -2, context.size.height / -2);
-        // offsetEnd = _offset;
       } else {
         scaleEnd = 1.0;
         offsetEnd = Offset(0, 0);
@@ -618,73 +596,74 @@ class _GridPhotoState extends State<GridPhoto>
       converter: (store) => store.state,
       builder: (context, state) {
         return Container(
-            color: widget.showTitle
-                ? Color.fromARGB((opacity * 255).round(), 255, 255, 255)
-                : Color.fromARGB((opacity * 255).round(), 0, 0, 0),
-            child: Stack(
-              children: <Widget>[
-                Positioned.fill(
-                  child: thumbData == null
-                      ? Center(child: CircularProgressIndicator())
-                      : playerWidget != null
-                          ? Container()
-                          : GestureDetector(
-                              onScaleStart: _handleOnScaleStart,
-                              onScaleUpdate: _handleOnScaleUpdate,
-                              onScaleEnd: _handleOnScaleEnd,
-                              onTapUp: handleTapUp,
-                              child: ClipRect(
-                                child: Transform(
-                                  transform: Matrix4.identity()
-                                    ..translate(_offset.dx, _offset.dy)
-                                    ..scale(_scale),
-                                  child: Image.memory(
-                                    thumbData,
-                                    fit: BoxFit.contain,
-                                    gaplessPlayback: true,
-                                  ),
-                                ),
-                              ),
-                            ),
-                ),
-                Positioned.fill(
-                  child: thumbData == null && imageData == null
-                      ? Center(child: CircularProgressIndicator())
-                      : playerWidget != null
-                          ? GestureDetector(
-                              onTapUp: handleTapUp,
-                              child: playerWidget,
-                            )
-                          : GestureDetector(
-                              onScaleStart: _handleOnScaleStart,
-                              onScaleUpdate: _handleOnScaleUpdate,
-                              onScaleEnd: _handleOnScaleEnd,
-                              onHorizontalDragUpdate:
-                                  _scale == 1.0 ? null : handleHDragUpdate,
-                              onHorizontalDragStart:
-                                  _scale == 1.0 ? null : handleHDragStart,
-                              onHorizontalDragEnd:
-                                  _scale == 1.0 ? null : handleHDragEnd,
-                              onTapUp: handleTapUp,
-                              child: ClipRect(
-                                child: Transform(
-                                  transform: Matrix4.identity()
-                                    ..translate(_offset.dx, _offset.dy)
-                                    ..scale(_scale),
-                                  child: Image.memory(
-                                    imageData ?? thumbData,
-                                    fit: BoxFit.contain,
-                                    gaplessPlayback: true,
-                                  ),
-                                ),
-                              ),
-                            ),
-                ),
-                imageData == null && playerWidget == null
+          color: widget.showTitle
+              ? Color.fromARGB((opacity * 255).round(), 255, 255, 255)
+              : Color.fromARGB((opacity * 255).round(), 0, 0, 0),
+          child: Stack(
+            children: <Widget>[
+              Positioned.fill(
+                child: thumbData == null
                     ? Center(child: CircularProgressIndicator())
-                    : Container(),
-              ],
-            ));
+                    : playerWidget != null
+                        ? Container()
+                        : GestureDetector(
+                            onScaleStart: _handleOnScaleStart,
+                            onScaleUpdate: _handleOnScaleUpdate,
+                            onScaleEnd: _handleOnScaleEnd,
+                            onTapUp: handleTapUp,
+                            child: ClipRect(
+                              child: Transform(
+                                transform: Matrix4.identity()
+                                  ..translate(_offset.dx, _offset.dy)
+                                  ..scale(_scale),
+                                child: Image.memory(
+                                  thumbData,
+                                  fit: BoxFit.contain,
+                                  gaplessPlayback: true,
+                                ),
+                              ),
+                            ),
+                          ),
+              ),
+              Positioned.fill(
+                child: thumbData == null && imageData == null
+                    ? Center(child: CircularProgressIndicator())
+                    : playerWidget != null
+                        ? GestureDetector(
+                            onTapUp: handleTapUp,
+                            child: playerWidget,
+                          )
+                        : GestureDetector(
+                            onScaleStart: _handleOnScaleStart,
+                            onScaleUpdate: _handleOnScaleUpdate,
+                            onScaleEnd: _handleOnScaleEnd,
+                            onHorizontalDragUpdate:
+                                _scale == 1.0 ? null : handleHDragUpdate,
+                            onHorizontalDragStart:
+                                _scale == 1.0 ? null : handleHDragStart,
+                            onHorizontalDragEnd:
+                                _scale == 1.0 ? null : handleHDragEnd,
+                            onTapUp: handleTapUp,
+                            child: ClipRect(
+                              child: Transform(
+                                transform: Matrix4.identity()
+                                  ..translate(_offset.dx, _offset.dy)
+                                  ..scale(_scale),
+                                child: Image.memory(
+                                  imageData ?? thumbData,
+                                  fit: BoxFit.contain,
+                                  gaplessPlayback: true,
+                                ),
+                              ),
+                            ),
+                          ),
+              ),
+              imageData == null && playerWidget == null
+                  ? Center(child: CircularProgressIndicator())
+                  : Container(),
+            ],
+          ),
+        );
       },
     );
   }
