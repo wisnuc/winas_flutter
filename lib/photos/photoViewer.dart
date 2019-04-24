@@ -63,7 +63,7 @@ class _PhotoViewerState extends State<PhotoViewer> {
   }
 
   void _share(BuildContext ctx, Entry entry, AppState state) async {
-    final dialog = DownloadingDialog(ctx);
+    final dialog = DownloadingDialog(ctx, entry.size);
     dialog.openDialog();
 
     final cm = await CacheManager.getInstance();

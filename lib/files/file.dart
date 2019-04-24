@@ -259,7 +259,7 @@ class _FilesState extends State<Files> {
   // download and openFile via system or share to other app
   void _download(BuildContext ctx, Entry entry, AppState state,
       {bool share: false}) async {
-    final dialog = DownloadingDialog(ctx);
+    final dialog = DownloadingDialog(ctx, entry.size);
     dialog.openDialog();
 
     final cm = await CacheManager.getInstance();

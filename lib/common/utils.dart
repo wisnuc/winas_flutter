@@ -103,7 +103,7 @@ void showNormalDialog<T>({BuildContext context, String text, Model model}) {
 
 class Progress extends StatefulWidget {
   Progress({Key key, this.ctrl, this.onCancel}) : super(key: key);
-  final StreamController ctrl;
+  final StreamController<double> ctrl;
   final Function onCancel;
   @override
   _ProgressState createState() => _ProgressState();
@@ -115,7 +115,7 @@ class _ProgressState extends State<Progress> {
   @override
   void initState() {
     widget.ctrl.stream.listen((value) {
-      progress = (value as double).clamp(0, 1);
+      progress = value.clamp(0, 1);
       setState(() {});
     });
     super.initState();
@@ -167,12 +167,13 @@ class DownloadingDialog {
   final BuildContext ctx;
   bool canceled = false;
   bool closed = false;
-  DownloadingDialog(this.ctx);
+  final int total;
+  DownloadingDialog(this.ctx, this.total);
   CancelToken cancelToken = CancelToken();
 
   Model model = Model();
 
-  final StreamController ctrl = StreamController();
+  final StreamController<double> ctrl = StreamController();
 
   openDialog<T>() {
     showDialog<T>(
@@ -210,7 +211,7 @@ class DownloadingDialog {
   }
 
   void onProgress(int a, int b) {
-    progress = a / b;
+    progress = a / total;
     ctrl.sink.add(progress);
   }
 }
